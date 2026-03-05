@@ -19,6 +19,9 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        active_button: "w-full py-5 rounded-2xl border-4 font-extrabold text-2xl flex items-center justify-center gap-3 transition-all duration-300 bg-[#BF0436] text-white border-[#8C0327] border-b-8 shadow-[0_6px_0_0_#254159] hover:bg-[#8C0327] active:border-b-4 active:translate-y-1",
+        disabled_button: 
+              "w-full py-5 rounded-2xl border-4 font-extrabold text-2xl flex items-center justify-center gap-3 transition-all duration-300 bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed border-b-8",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
