@@ -1,6 +1,6 @@
 services:
-  database:
-    container_name: database
+  core_database:
+    container_name: core_database
     image: postgres:16
     env_file: .env
     ports:
@@ -13,6 +13,17 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
+
+  migration:
+    container_name: core_migration
+    build: .
+    command: bash scripts/migrate.sh
+    env_file: .env
+    environment:
+      POSTGRES_HOST: core_database
+    depends_on:
+      core_database:
+        condition: service_healthy
 
 volumes:
   core_service_database:

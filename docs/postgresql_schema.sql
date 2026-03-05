@@ -32,8 +32,6 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     username text NOT NULL UNIQUE,
     timezone VARCHAR(255) NOT NULL,
-    current_streak SMALLINT DEFAULT 0 CHECK (current_streak >= 0),
-    longest_streak SMALLINT DEFAULT 0 CHECK (longest_streak >= 0),
     accumulated_points INT DEFAULT 0 CHECK (accumulated_points >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -43,6 +41,14 @@ CREATE TABLE game_sessions (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     game_id INT NOT NULL REFERENCES games(id),
     score INT NOT NULL CHECK (score >= 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE streaks (
+    id SERIAL PRIMARY KEY ,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT ,
+    current_streak SMALLINT DEFAULT 0 CHECK (current_streak >= 0),
+    longest_streak SMALLINT DEFAULT 0 CHECK (longest_streak >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

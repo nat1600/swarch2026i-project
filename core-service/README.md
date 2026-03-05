@@ -21,6 +21,10 @@ The core service exposes a REST API built with **FastAPI** and persists data in 
 
 ```
 core-service/
+├── alembic/
+│   ├── versions/              # Auto-generated migration scripts (committed to repo)
+│   ├── env.py                 # Alembic runtime config; imports all models for autogenerate
+│   └── README
 ├── app/
 │   ├── core/
 │   │   ├── config.py          # Settings loaded from .env
@@ -37,6 +41,9 @@ core-service/
 │   ├── services/
 │   │   └── phrase_service.py  # Business logic layer
 │   └── main.py                # FastAPI app factory
+├── scripts/
+│   └── migrate.sh             # Convenience wrapper: prints state, runs upgrade head
+├── alembic.ini                # Alembic configuration file
 ├── docker-compose.yml         # PostgreSQL container
 ├── pyproject.toml
 └── .env.example
@@ -118,10 +125,48 @@ docker compose up -d
 uv sync
 ```
 
-### 3. Run the development server
+### 3. Apply migrations
+
+```bash
+bash scripts/migrate.sh
+```
+
+### 4. Run the development server
 
 ```bash
 uvicorn app.main:app --reload 
 ```
 
 The API will be available at `http://localhost:8000` and the interactive docs at `http://localhost:8000/docs`.
+
+## Database Migrations
+
+Migrations are managed with [Alembic](https://alembic.sqlalchemy.org/). All migration scripts live in `alembic/versions/` and are committed to the repository — never edit them by hand after they have been applied.
+
+### Check the current migration state
+
+```bash
+uv run alembic current
+```
+
+### Create a new migration after changing a model
+
+```bash
+uv run alembic revision --autogenerate -m "short description of change"
+```
+
+Review the generated file in `alembic/versions/` before applying it. Autogenerate cannot detect every kind of change (e.g. renamed columns), so always verify the output.
+
+### Apply all pending migrations
+
+```bash
+uv run alembic upgrade head
+# or use the convenience script:
+bash scripts/migrate.sh
+```
+
+### Roll back the last migration
+
+```bash
+uv run alembic downgrade -1
+```
