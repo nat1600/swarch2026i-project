@@ -1,5 +1,4 @@
-from collections.abc import Generator
-
+from typing import Generator
 from fastapi import Request
 from sqlalchemy.orm import Session
 
