@@ -1,170 +1,262 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, User, Globe2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useUser } from "@auth0/nextjs-auth0/client";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-// Lista de idiomas disponibles (puedes expandirla luego conectándola a tu backend)
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+// 1. Definimos el esquema de validación con Zod
+const onboardingSchema = z.object({
+  username: z
+    .string()
+    .min(3, "El usuario debe tener al menos 3 letras")
+    .max(20, "El usuario no puede tener más de 20 letras")
+    .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guiones bajos (_)"),
+  native_language: z.enum(
+    ["Spanish", "English", "French"],
+    "Selecciona tu idioma nativo",
+  ),
+  learning_language: z.enum(
+    ["Spanish", "English", "French"],
+    "Selecciona el idioma que quieres aprender",
+  ),
+});
+
+type OnboardingFormValues = z.infer<typeof onboardingSchema>;
+
 const LANGUAGES = [
-  { id: "en", name: "Inglés", emoji: "🇺🇸" },
-  { id: "fr", name: "Francés", emoji: "🇫🇷" },
-  { id: "it", name: "Italiano", emoji: "🇮🇹" },
-  { id: "de", name: "Alemán", emoji: "🇩🇪" },
-  { id: "ca", name: "Catalán", emoji: "🐉" },
-  { id: "pt", name: "Portugués", emoji: "🇧🇷" },
+  { id: "Spanish", name: "Español", emoji: "🇪🇸" },
+  { id: "English", name: "Inglés", emoji: "🇺🇸" },
+  { id: "French", name: "Francés", emoji: "🇫🇷" },
 ];
 
 export default function OnboardingPage() {
   const { user, isLoading } = useUser();
-  const [selectedLang, setSelectedLang] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
+  // 2. Inicializamos React Hook Form
+  const form = useForm<OnboardingFormValues>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      username: "",
+      // Puedes dejar estos vacíos para obligar al usuario a elegir
+    },
+  });
+
+  // 3. Manejador del Submit (Aquí entra Apollo Client)
+  const onSubmit = async (values: OnboardingFormValues) => {
+    if (!user?.sub) return;
+    setIsStarting(true);
+
+    try {
+      toast.success("¡Perfil creado! 🎯", {
+        description: `Preparando tu aventura, ${values.username}...`,
+      });
+
+      // ---------------------------------------------------------
+      // 🚀 AQUÍ VA TU MUTACIÓN DE APOLLO CLIENT
+      // ---------------------------------------------------------
+      /*
+      await createProfileMutation({
+        variables: {
+          auth0Id: user.sub,
+          username: values.username,
+          nativeLanguage: values.native_language,
+          learningLanguage: values.learning_language,
+        }
+      });
+      */
+
+      // Simulamos el tiempo de red
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Redirigimos al inicio
+      window.location.href = "/home";
+    } catch (error) {
+      setIsStarting(false);
+      toast.error("Hubo un error al guardar tu perfil. Intenta de nuevo.");
+      console.error(error);
+    }
+  };
+
+  // Pantalla de carga mientras Auth0 verifica la sesión
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full bg-parla-light flex items-center justify-center font-app">
+      <div className="min-h-screen w-full bg-parla-mist flex items-center justify-center font-app">
         <Sparkles className="text-parla-red animate-spin" size={48} />
       </div>
     );
   }
 
+  // Protección de ruta
   if (!isLoading && !user) {
     window.location.href = "/login";
-    return null; // Mientras se redirige, no renderizamos nada
+    return null;
   }
 
-  const handleStart = () => {
-    if (!selectedLang) return;
-    setIsStarting(true);
-
-    const langName = LANGUAGES.find((l) => l.id === selectedLang)?.name;
-    toast.success(`¡Excelente elección! 🎯`, {
-      description: `Preparando tu primera lección de ${langName}...`,
-    });
-
-    // Aquí harías la mutación a tu API (Apollo Client) para guardar el idioma del usuario
-    setTimeout(() => {
-      // Redirigir al dashboard principal
-      redirect("/home");
-    }, 2000);
-  };
-
   return (
-    <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-        .font-app { font-family: 'Nunito', sans-serif; }
-        
-        /* Fondo animado suave */
-        .bg-wave {
-          background-color: #A9CBD9;
-          background-image: repeating-radial-gradient(
-            circle at 0 0, 
-            transparent 0, 
-            #A9CBD9 40px, 
-            #2D83A6 40px, 
-            #2D83A6 42px, 
-            transparent 42px, 
-            transparent 80px
-          );
-          background-size: 100px 100px;
-          animation: waveMove 20s linear infinite;
-        }
-        
-        @keyframes waveMove {
-          0% { background-position: 0 0; }
-          100% { background-position: 100px 100px; }
-        }
-      `,
-        }}
-      />
-
-      <div className="min-h-screen w-full bg-wave font-app flex flex-col items-center justify-center p-4 overflow-hidden selection:bg-parla-blue selection:text-white">
-        {/* Barra de progreso superior (Estilo juego) */}
-        <div className="top-8 w-full max-w-md px-4 flex items-center gap-4 animate-slide-in-top py-4">
-          <div className="w-12 h-12 bg-white rounded-full border-4 border-parla-dark shadow-[0_4px_0_0_#254159] flex items-center justify-center">
-            <span className="text-xl font-black text-parla-blue">1</span>
-          </div>
-          <div className="flex-1 h-6 bg-white rounded-full border-4 border-parla-dark shadow-[0_4px_0_0_#254159] p-1 overflow-hidden">
-            <div className="h-full bg-parla-red rounded-full w-1/3 animate-pulse animation-duration-[2000ms]"></div>
-          </div>
+    <div className="min-h-screen w-full bg-wave font-app flex flex-col items-center justify-center p-4 overflow-hidden selection:bg-parla-blue selection:text-white">
+      {/* Barra de progreso superior */}
+      <div className="absolute top-8 w-full max-w-md px-4 flex items-center gap-4 animate-slide-in-top">
+        <div className="w-12 h-12 bg-white rounded-full border-4 border-parla-dark shadow-[0_4px_0_0_var(--color-parla-dark)] flex items-center justify-center shrink-0">
+          <span className="text-xl font-black text-parla-blue">1</span>
         </div>
+        <div className="flex-1 h-6 bg-white rounded-full border-4 border-parla-dark shadow-[0_4px_0_0_var(--color-parla-dark)] p-1 overflow-hidden">
+          <div className="h-full bg-parla-red rounded-full w-1/2 animate-pulse"></div>
+        </div>
+      </div>
 
-        {/* CONTENEDOR PRINCIPAL */}
-        <div
-          className={`w-full max-w-md transition-all duration-500 ${isStarting ? "scale-110 opacity-0 blur-sm" : "scale-100 opacity-100"}`}
-        >
-          <div className="text-center mb-8 animate-slide-in-bottom animate-delay-100 bg-white/90 backdrop-blur-sm p-6 rounded-3xl border-4 border-parla-dark shadow-[0_8px_0_0_#254159]">
-            <div className="flex justify-center mb-2">
-              <Sparkles
-                className="text-parla-red animate-spin animation-duration-[3000ms]"
-                size={32}
-              />
+      {/* CONTENEDOR PRINCIPAL */}
+      <div
+        className={`w-full max-w-md transition-all duration-500 mt-16 ${
+          isStarting ? "scale-110 opacity-0 blur-sm" : "scale-100 opacity-100"
+        }`}
+      >
+        {/* Tarjeta del Formulario */}
+        <div className="bg-white rounded-4xl border-4 border-parla-dark shadow-[0_12px_0_0_var(--color-parla-dark)] p-8 animate-slide-in-bottom">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-3">
+              <div className="w-16 h-16 bg-parla-mist rounded-full border-4 border-parla-light flex items-center justify-center">
+                <Sparkles
+                  className="text-parla-red animate-spin animate-duration-3000ms"
+                  size={28}
+                />
+              </div>
             </div>
             <h1 className="text-3xl font-black text-parla-dark tracking-tight mb-2">
-              ¡Cuenta creada!
+              ¡Casi listos!
             </h1>
-            <p className="text-parla-blue font-extrabold text-lg">
-              ¿Qué idioma quieres aprender hoy?
+            <p className="text-parla-blue font-extrabold text-base">
+              Crea tu perfil para empezar a jugar.
             </p>
           </div>
 
-          {/* GRID DE IDIOMAS (Cartas 3D) */}
-          <div className="grid grid-cols-2 gap-4 mb-8 animate-slide-in-bottom  animate-delay-200">
-            {LANGUAGES.map((lang, index) => {
-              const isSelected = selectedLang === lang.id;
+          {/* FORMULARIO */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* 1. Username */}
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 font-black text-parla-dark text-base">
+                      <User size={18} className="text-parla-red" />
+                      Nombre de usuario
+                    </FormLabel>
+                    <FormControl>
+                      <input
+                        {...field}
+                        placeholder="ej: ninja_poliglota"
+                        className="w-full h-12 rounded-2xl border-4 border-parla-light bg-parla-mist px-4 text-parla-dark font-bold placeholder:text-parla-light focus:outline-none focus:border-parla-blue transition-colors"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-parla-red font-bold text-xs px-2" />
+                  </FormItem>
+                )}
+              />
 
-              return (
+              {/* 2. Native Language */}
+              <FormField
+                control={form.control}
+                name="native_language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 font-black text-parla-dark text-base">
+                      <Globe2 size={18} className="text-parla-blue" />
+                      ¿Qué idioma hablas?
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <select
+                          {...field}
+                          className="w-full h-12 rounded-2xl border-4 border-parla-light bg-parla-mist px-4 pr-10 text-parla-dark font-bold appearance-none focus:outline-none focus:border-parla-blue transition-colors cursor-pointer"
+                        >
+                          <option value="" disabled>
+                            Selecciona tu idioma...
+                          </option>
+                          {LANGUAGES.map((lang) => (
+                            <option key={lang.id} value={lang.id}>
+                              {lang.emoji} {lang.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-parla-blue font-black">
+                          ▼
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-parla-red font-bold text-xs px-2" />
+                  </FormItem>
+                )}
+              />
+
+              {/* 3. Learning Language */}
+              <FormField
+                control={form.control}
+                name="learning_language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 font-black text-parla-dark text-base">
+                      <BookOpen size={18} className="text-orange-500" />
+                      ¿Qué idioma quieres aprender?
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <select
+                          {...field}
+                          className="w-full h-12 rounded-2xl border-4 border-parla-light bg-parla-mist px-4 pr-10 text-parla-dark font-bold appearance-none focus:outline-none focus:border-parla-blue transition-colors cursor-pointer"
+                        >
+                          <option value="" disabled>
+                            Quiero aprender...
+                          </option>
+                          {LANGUAGES.map((lang) => (
+                            <option key={lang.id} value={lang.id}>
+                              {lang.emoji} {lang.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-parla-blue font-black">
+                          ▼
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-parla-red font-bold text-xs px-2" />
+                  </FormItem>
+                )}
+              />
+
+              {/* BOTÓN CONTINUAR */}
+              <div className="pt-4">
                 <button
-                  key={lang.id}
-                  onClick={() => setSelectedLang(lang.id)}
-                  className={`
-                    relative group flex flex-col items-center justify-center p-6 rounded-4xl border-4 transition-all duration-200
-                    ${
-                      isSelected
-                        ? "bg-parla-light border-parla-blue translate-y-2 shadow-[0_0px_0_0_#2D83A6]" // Estado Presionado
-                        : "bg-white border-parla-dark hover:bg-[#F8FAFC] shadow-[0_8px_0_0_#254159] hover:translate-y-1 hover:shadow-[0_4px_0_0_#254159]" // Estado Normal
-                    }
-                  `}
-                  // Añadimos un pequeño retraso dinámico a cada carta para que entren en cascada
-                  style={{ animationDelay: `${200 + index * 100}ms` }}
+                  type="submit"
+                  disabled={isStarting}
+                  className="w-full bg-parla-red text-white font-black text-xl py-4 rounded-2xl border-b-8 border-[#8C0327] hover:bg-[#a6032f] active:border-b-0 active:translate-y-2 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {isSelected && (
-                    <div className="absolute -top-3 -right-3 w-8 h-8 bg-parla-red rounded-full border-4 border-parla-dark flex items-center justify-center animate-zoom-in">
-                      <span className="text-white text-sm font-black">✓</span>
-                    </div>
+                  {isStarting ? "Guardando perfil..." : "¡Empezar aventura!"}
+                  {!isStarting && (
+                    <ArrowRight strokeWidth={4} className="h-6 w-6" />
                   )}
-                  <span className="text-5xl mb-3 drop-shadow-md group-hover:scale-110 transition-transform">
-                    {lang.emoji}
-                  </span>
-                  <span
-                    className={`font-black text-lg ${isSelected ? "text-parla-blue" : "text-parla-dark"}`}
-                  >
-                    {lang.name}
-                  </span>
                 </button>
-              );
-            })}
-          </div>
-
-          {/* BOTÓN CONTINUAR */}
-          <div className="animate-slide-in-bottom animate-delay-300">
-            <Button
-              variant="active_button"
-              onClick={handleStart}
-              disabled={!selectedLang || isStarting}
-              size="lg"
-            >
-              {isStarting ? "Cargando aventura..." : "¡Continuar!"}
-              {!isStarting && <ArrowRight strokeWidth={4} />}
-            </Button>
-          </div>
+              </div>
+            </form>
+          </Form>
         </div>
       </div>
-    </>
+    </div>
   );
 }
