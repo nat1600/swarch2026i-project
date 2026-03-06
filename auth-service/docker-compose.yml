@@ -14,5 +14,17 @@ services:
       retries: 10
       start_period: 10s
 
+  migration:
+    container_name: auth_migration
+    build: .
+    command: bash scripts/migrate.sh
+    env_file: .env
+    environment:
+      POSTGRES_HOST: auth_database
+      POSTGRES_PORT: 5432
+    depends_on:
+      auth_database:
+        condition: service_healthy
+
 volumes:
   auth_service_database:

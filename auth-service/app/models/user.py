@@ -13,10 +13,10 @@ class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    native_language: Mapped[int] = mapped_column(
+    native_language_id: Mapped[int] = mapped_column(
         ForeignKey('languages.id'), comment="Language the user already speaks natively"
     )
-    learning_language: Mapped[int] = mapped_column(
+    learning_language_id: Mapped[int] = mapped_column(
         ForeignKey('languages.id'), comment="Language the user is currently learning"
     )
     active: Mapped[bool] = mapped_column(
