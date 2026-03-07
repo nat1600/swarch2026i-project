@@ -10,7 +10,7 @@ The core service exposes a REST API built with **FastAPI** and persists data in 
 
 | Layer       | Technology                        |
 |-------------|-----------------------------------|
-| Language    | Python 3.14                       |
+| Language    | Python 3.13                       |
 | Framework   | FastAPI                           |
 | ORM         | SQLAlchemy 2.x                    |
 | Database    | PostgreSQL 16                     |
@@ -84,6 +84,7 @@ Holds the SM-2 algorithm state for each phrase.
 | Method | Path       | Description              |
 |--------|------------|--------------------------|
 | `GET`  | `/phrases` | List all phrases         |
+
 
 Interactive docs are available at `/docs` when `DEBUG=true`.
 

@@ -10,6 +10,13 @@ class PhraseService:
     def get_all_phrases(self) -> list[Phrase]:
         return self.db.query(Phrase).all()
     
+    def get_phrase(self, phrase_id: int) -> Phrase | None:
+        return self.db.query(Phrase).filter(
+            Phrase.id == phrase_id,
+            Phrase.active == True
+        ).first()
+
+    
     def create_phrase(self, data: PhraseCreate) -> Phrase:
         try:
             phrase = Phrase(
@@ -33,3 +40,9 @@ class PhraseService:
         except Exception:
             self.db.rollback()
             raise
+
+    def delete_phrase(self, phrase_id: int) -> None:
+        phrase = self.get_phrase(phrase_id)
+        if phrase:
+            phrase.active = False
+            self.db.commit()
