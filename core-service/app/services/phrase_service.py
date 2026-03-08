@@ -83,4 +83,6 @@ class PhraseService:
 
         self.db.commit()
         self.db.refresh(review)
+        self.db.refresh(phrase)
         return review
+      

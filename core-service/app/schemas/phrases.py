@@ -61,4 +61,3 @@ class ReviewResponse(BaseModel):
     repetition_number: int
     easiness_factor: float
     inner_repetition_interval: int
-    next_review_date: date
