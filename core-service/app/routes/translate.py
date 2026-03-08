@@ -7,6 +7,18 @@ router = APIRouter(prefix='/translate', tags=['translate'])
 @router.post('/', response_model=TranslateResponse)
 def translate(body: TranslateRequest):
 
+    """
+    Endpoint that translates a text from one language to another.
+
+    Request body:
+        text: text to translate
+        source_lang: source language code
+        target_lang: target language code
+
+    Returns:
+        translated text 
+    """
+
     service = TranslationService()
 
     try:

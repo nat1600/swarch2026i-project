@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
+from datetime import date
 
 
 class LanguageNested(BaseModel):
@@ -50,3 +51,14 @@ class TranslateResponse(BaseModel):
     source_lang: str
     target_lang: str
     provider: str
+
+class ReviewRequest(BaseModel):
+    quality: int  # 0-5
+
+class ReviewResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    phrase_id: int
+    repetition_number: int
+    easiness_factor: float
+    inner_repetition_interval: int
+    next_review_date: date
