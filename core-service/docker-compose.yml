@@ -1,5 +1,4 @@
 services:
-
   core_database:
     container_name: core_database
     image: postgres:16
@@ -10,6 +9,20 @@ services:
       - core_service_database:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  core_mongo:
+    container_name: core_mongo
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    volumes:
+      - core_mongo_database:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -33,11 +46,15 @@ services:
     env_file: .env
     environment:
       POSTGRES_HOST: core_database
+      MONGO_URL: mongodb://core_mongo:27017
     ports:
       - "8000:8000"
     depends_on:
       core_database:
         condition: service_healthy
+      core_mongo:
+        condition: service_healthy
 
 volumes:
   core_service_database:
+  core_mongo_database:
