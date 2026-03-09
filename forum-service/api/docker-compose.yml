@@ -6,8 +6,8 @@ services:
     env_file:
       - .env
     environment:
-      MONGO_URI: mongodb://mongo:27017
-      DB_NAME: forum_db
+      MONGO_URI: ${MONGO_URI}
+      DB_NAME: ${DB_NAME}
     
     container_name: forum
 
