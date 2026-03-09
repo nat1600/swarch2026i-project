@@ -69,13 +69,13 @@ function detectPageType() {
   console.log('📄 Page type:', pageType);
 
   if (pageType.isYouTube) {
-    console.log('🎥 Initializing YouTube module...');
+    console.log(' Initializing YouTube module...');
     ParlaYouTube.setup();
   } else if (pageType.isNetflix) {
-    console.log('🎬 Initializing Netflix module...');
+    console.log('itializing Netflix module...');
     ParlaNetflix.setup();
   } else if (pageType.isPDF) {
-    console.log('📄 Initializing PDF module...');
+    console.log(' Initializing PDF module...');
     ParlaPDF.setup();
   }
 }

@@ -11,7 +11,7 @@ const ParlaHelpers = {
   
     // Show notification on screen
     showNotification(message) {
-      console.log('🔔 Showing notification:', message);
+      console.log(' Showing notification:', message);
       
       const notification = document.createElement('div');
       notification.className = 'parla-notification';

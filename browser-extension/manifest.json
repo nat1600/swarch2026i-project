@@ -12,7 +12,7 @@
     },
   
     "action": {
-      "default_popup": "popup/popup.html",
+      "default_popup": "popup-extension/popup.html",
       "default_icon": {
         "16": "assets/icons/icon16.png",
         "48": "assets/icons/icon48.png",
@@ -37,12 +37,15 @@
       "http://localhost:8000/*"
     ],
   
-    "web_accessible_resources": [
-      {
-        "resources": ["content/ui/floating-popup.html"],
-        "matches": ["<all_urls>"]
-      }
+   "web_accessible_resources": [
+  {
+    "resources": [
+      "content/ui/floating-popup.html",
+      "assets/icons/*"
     ],
+    "matches": ["<all_urls>"]
+  }
+] ,
   
     "content_scripts": [
       {
@@ -53,7 +56,7 @@
           "utils/settings.js",
           "utils/translation.js",
           "content/actions/actions.js",
-          "content/ui/popup.js",
+          "content/ui/floating-popup.js",
           "content/platforms/youtube.js",
           "content/platforms/netflix.js",
           "content/platforms/pdf.js",

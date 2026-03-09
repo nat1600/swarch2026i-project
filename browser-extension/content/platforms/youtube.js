@@ -29,7 +29,7 @@ const ParlaYouTube = {
      * Injects CSS and waits for the video player to be ready.
      */
     setup() {
-      console.log('🎥 YouTube: Setting up...');
+      console.log(' YouTube: Setting up...');
       this.injectCSS();
       this.subtitleContainer = this.createSubtitleContainer();
   
