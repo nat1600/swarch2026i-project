@@ -7,7 +7,7 @@ import { Search, Brain, Flame, BatteryWarning } from "lucide-react";
 import Flashcard from "@/components/vocabulary/VocabFlashCard";
 import { useUser } from "@auth0/nextjs-auth0";
 import HomeNavBar from "@/components/core/HomeNavBar";
-import { getInitials } from "../home/page";
+import { getInitials } from "@/lib/user-utils";
 
 // --- DATOS FALSOS PARA EL DISEÑO ---
 // Luego los reemplazaremos con tu llamada a PostgreSQL / Apollo
@@ -54,7 +54,7 @@ const FILTERS = ["Todos", "Débiles", "Verbos", "Sustantivos", "Adjetivos"];
 
 // --- PÁGINA PRINCIPAL ---
 export default function VocabularioPage() {
-    const router = useRouter();
+  const router = useRouter();
   const { user, isLoading } = useUser();
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
@@ -162,11 +162,10 @@ export default function VocabularioPage() {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`shrink-0 px-5 py-2 rounded-xl border-2 font-black text-sm transition-all ${
-                  activeFilter === filter
+                className={`shrink-0 px-5 py-2 rounded-xl border-2 font-black text-sm transition-all ${activeFilter === filter
                     ? "bg-parla-blue border-parla-dark text-white shadow-[0_3px_0_0_var(--color-parla-dark)] translate-y-0.5"
                     : "bg-white border-parla-light text-parla-blue hover:border-parla-blue hover:bg-parla-mist"
-                }`}
+                  }`}
               >
                 {filter}
               </button>

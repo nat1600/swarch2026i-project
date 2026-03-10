@@ -1,16 +1,7 @@
 import { Auth0Client } from "@auth0/nextjs-auth0/server";
 import { redirect } from "next/navigation";
 import { HomeContent } from "@/components/home/HomeContent";
-
-
-export const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((w: string) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-};
+import { getDisplayName, getInitials } from "@/lib/user-utils";
 
 export default async function HomePage() {
   const auth0 = new Auth0Client();
@@ -21,15 +12,14 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  const displayName =
-    user.given_name || user.nickname || user.name || user.email || "usuario";
+  const displayName = getDisplayName(user);
 
   return (
     <HomeContent
       user={{
         picture: user.picture as string,
-        displayName: displayName as string,
-        initials: getInitials(displayName) as string,
+        displayName: displayName,
+        initials: getInitials(displayName),
       }}
     />
   );
