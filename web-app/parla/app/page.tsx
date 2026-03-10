@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ScrollReveal } from "@/components/core/scroll-reveal";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
 
 const FEATURES = [
   {

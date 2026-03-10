@@ -6,7 +6,7 @@ import { getThreads } from "@/lib/forum/api";
 import type { Thread } from "@/lib/forum/types";
 import { ThreadCard } from "@/components/forum/ThreadCard";
 import { NavBar } from "@/components/forum/NavBar";
-import { ScrollReveal } from "@/components/core/scroll-reveal";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
 import { User, MessageSquare } from "lucide-react";
 
 export default function MyPostsPage() {

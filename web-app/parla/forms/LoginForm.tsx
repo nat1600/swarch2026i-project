@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Globe2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import {
   Form,
@@ -20,6 +21,7 @@ const emailSchema = z.object({
 });
 
 export default function ParlaLogin() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof emailSchema>>({
@@ -44,8 +46,8 @@ export default function ParlaLogin() {
 
       // Pausa breve para que el toast sea visible antes del redirect
       await new Promise((resolve) => setTimeout(resolve, 600));
-
       window.location.href = `/api/auth/login?connection=email&login_hint=${encodeURIComponent(values.email)}&returnTo=/onboarding`;
+//      router.push(`/api/auth/login?connection=email&login_hint=${encodeURIComponent(values.email)}&returnTo=/onboarding`);
     } catch {
       setIsLoading(false);
       toast.error("No pudimos conectar con el servidor", {
@@ -59,31 +61,31 @@ export default function ParlaLogin() {
      * bg-polka, font-app: utilities definidas en globals.css.
      * Ningún <style> inline — todo el CSS vive en globals.css o en clases Tailwind.
      */
-    <div className="font-app min-h-screen w-full bg-polka flex items-center justify-center p-4 overflow-hidden relative selection:bg-[#2D83A6] selection:text-white">
+    <div className="font-app min-h-screen w-full bg-polka flex items-center justify-center p-4 overflow-hidden relative selection:bg-parla-blue selection:text-white">
 
       {/* Elementos flotantes decorativos — tailwind-animations loops */}
-      <div className="absolute top-10 left-10 text-[#254159] opacity-20 animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms]">
+      <div className="absolute top-10 left-10 text-parla-dark opacity-20 animate-pulsing animate-iteration-count-infinite animate-duration-3000">
         <MessageCircle size={80} fill="currentColor" />
       </div>
-      <div className="absolute bottom-10 right-10 text-[#BF0436] opacity-20 animate-bouncing animate-iteration-count-infinite animate-duration-[4000ms]">
+      <div className="absolute bottom-10 right-10 text-parla-red opacity-20 animate-bouncing animate-iteration-count-infinite animate-duration-4000">
         <Globe2 size={100} />
       </div>
 
       {/* TARJETA CENTRAL */}
-      <div className="w-full max-w-md bg-white rounded-4xl p-8 shadow-[0_12px_0_0_#2D83A6] border-4 border-[#254159] relative z-10 animate-zoom-in">
+      <div className="w-full max-w-md bg-white rounded-4xl p-8 shadow-[0_12px_0_0_#2D83A6] border-4 border-parla-dark relative z-10 animate-zoom-in">
 
         {/* Logo */}
         <div className="text-center mb-8 flex flex-col items-center">
-          <div className="w-20 h-20 bg-[#2D83A6] rounded-full flex items-center justify-center mb-4 border-4 border-[#254159] shadow-[0_6px_0_0_#254159] animate-jiggle animate-delay-300 animate-iteration-count-once">
+          <div className="w-20 h-20 bg-parla-blue rounded-full flex items-center justify-center mb-4 border-4 border-parla-dark shadow-[0_6px_0_0_#254159] animate-jiggle animate-delay-300 animate-iteration-count-once">
             <span className="font-brand text-4xl text-white font-black">P</span>
           </div>
-          <h1 className="font-brand text-4xl text-[#254159] tracking-tight">Parla</h1>
+          <h1 className="font-brand text-4xl text-parla-dark tracking-tight">Parla</h1>
         </div>
 
         <div className="space-y-6 animate-slide-in-bottom">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-extrabold text-[#254159] mb-2">¡Hola de nuevo! 👋</h2>
-            <p className="text-[#2D83A6] font-bold">Ingresa tu correo para jugar y aprender.</p>
+            <h2 className="text-2xl font-extrabold text-parla-dark mb-2">¡Hola de nuevo! 👋</h2>
+            <p className="text-parla-blue font-bold">Ingresa tu correo para jugar y aprender.</p>
           </div>
 
           <Form {...form}>
@@ -97,11 +99,11 @@ export default function ParlaLogin() {
                       <input
                         type="email"
                         placeholder="tu@correo.com"
-                        className="w-full bg-[#F8FAFC] border-4 border-[#A9CBD9] text-xl font-bold text-[#254159] placeholder:text-[#A9CBD9] rounded-2xl px-6 py-4 focus:outline-none focus:border-[#2D83A6] transition-colors"
+                        className="w-full bg-[#F8FAFC] border-4 border-parla-light text-xl font-bold text-parla-dark placeholder:text-parla-light rounded-2xl px-6 py-4 focus:outline-none focus:border-parla-blue transition-colors"
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage className="text-[#BF0436] font-bold ml-2" />
+                    <FormMessage className="text-parla-red font-bold ml-2" />
                   </FormItem>
                 )}
               />
@@ -109,7 +111,7 @@ export default function ParlaLogin() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#BF0436] text-white font-extrabold text-xl py-5 rounded-2xl border-b-8 border-[#8C0327] hover:bg-[#8C0327] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-2 mt-4"
+                className="w-full bg-parla-red text-white font-extrabold text-xl py-5 rounded-2xl border-b-8 border-[#8C0327] hover:bg-[#8C0327] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-2 mt-4"
               >
                 {isLoading ? "Enviando..." : "Comenzar a aprender"}
               </button>
@@ -117,9 +119,9 @@ export default function ParlaLogin() {
           </Form>
 
           <div className="flex items-center gap-4 py-2">
-            <div className="h-1 flex-1 bg-[#A9CBD9] rounded-full"></div>
-            <span className="text-[#2D83A6] font-extrabold text-sm">O TAMBIÉN</span>
-            <div className="h-1 flex-1 bg-[#A9CBD9] rounded-full"></div>
+            <div className="h-1 flex-1 bg-parla-light rounded-full"></div>
+            <span className="text-parla-blue font-extrabold text-sm">O TAMBIÉN</span>
+            <div className="h-1 flex-1 bg-parla-light rounded-full"></div>
           </div>
 
           {/* Botón de Google — Auth0 Social Connection */}
@@ -128,7 +130,7 @@ export default function ParlaLogin() {
             onClick={() => {
               window.location.href = "/api/auth/login?connection=google-oauth2&returnTo=/onboarding";
             }}
-            className="w-full bg-white text-[#254159] font-extrabold text-xl py-5 rounded-2xl border-4 border-[#A9CBD9] border-b-8 hover:bg-[#F8FAFC] hover:border-[#2D83A6] active:border-b-4 active:translate-y-1 transition-all flex items-center justify-center"
+            className="w-full bg-white text-parla-dark font-extrabold text-xl py-5 rounded-2xl border-4 border-parla-light border-b-8 hover:bg-[#F8FAFC] hover:border-parla-blue active:border-b-4 active:translate-y-1 transition-all flex items-center justify-center"
           >
             <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

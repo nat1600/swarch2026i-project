@@ -6,7 +6,7 @@ import { searchThreads } from "@/lib/forum/api";
 import type { Thread } from "@/lib/forum/types";
 import { ThreadCard } from "@/components/forum/ThreadCard";
 import { NavBar } from "@/components/forum/NavBar";
-import { ScrollReveal } from "@/components/core/scroll-reveal";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
 import { Search } from "lucide-react";
 
 function SearchResults() {

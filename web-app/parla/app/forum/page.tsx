@@ -7,7 +7,7 @@ import { CategoryCard } from "@/components/forum/CategoryCard";
 import { ThreadComposer } from "@/components/forum/ThreadComposer";
 import { ThreadCard } from "@/components/forum/ThreadCard";
 import { NavBar } from "@/components/forum/NavBar" // Tu Navbar actualizado
-import { ScrollReveal } from "@/components/core/scroll-reveal";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
 
 export default function ForoPage() {
   const [categories, setCategories] = useState<Category[]>([]);

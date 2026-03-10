@@ -19,7 +19,7 @@ import { TagBadge } from "@/components/forum/TagBadge";
 import { ReplyCard } from "@/components/forum/ReplyCard";
 import { ReplyForm } from "@/components/forum/ReplyForm";
 import { NavBar } from "@/components/forum/NavBar";
-import { ScrollReveal } from "@/components/core/scroll-reveal";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
 import {
   Dialog,
   DialogContent,

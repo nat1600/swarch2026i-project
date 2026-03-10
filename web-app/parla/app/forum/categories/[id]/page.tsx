@@ -7,7 +7,7 @@ import type { Category, Thread } from "@/lib/forum/types";
 import { ThreadCard } from "@/components/forum/ThreadCard";
 import { TagBadge } from "@/components/forum/TagBadge";
 import { NavBar } from "@/components/forum/NavBar";
-import { ScrollReveal } from "@/components/core/scroll-reveal";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
 import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 
