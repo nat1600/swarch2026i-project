@@ -256,14 +256,24 @@ const ParlaYouTube = {
      * then starts observing subtitle changes.
      */
     waitForPlayer() {
-      const interval = setInterval(() => {
+      let attempts = 0;
+      const maxAttempts = 30; 
+    
+      const tryFind = () => {
         this.videoElement = document.querySelector('video');
         if (this.videoElement) {
-          clearInterval(interval);
-          console.log('🎥 YouTube: Player found — starting subtitle observer');
+          console.log('YouTube: Player found');
+         
+          this.subtitleContainer = this.createSubtitleContainer();
           this.startSubtitleObserver();
+          return;
         }
-      }, 500);
+        attempts++;
+        if (attempts < maxAttempts) setTimeout(tryFind, 500);
+        else console.warn('YouTube: Player not found after 15s');
+      };
+    
+      tryFind();
     },
   
     /**

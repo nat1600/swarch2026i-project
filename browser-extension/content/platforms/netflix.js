@@ -312,16 +312,25 @@ const ParlaNetflix = {
    * then starts observing subtitle changes.
    */
   waitForPlayer() {
-    const interval = setInterval(() => {
+    let attempts = 0;
+    const maxAttempts = 30;
+  
+    const tryFind = () => {
       this.videoElement = document.querySelector('video');
       if (this.videoElement) {
-        clearInterval(interval);
-        console.log('🎬 Netflix: Player found — starting subtitle observer');
+        console.log('Netflix: Player found');
+       
+        this.subtitleContainer = this.createSubtitleContainer();
         this.startSubtitleObserver();
+        return;
       }
-    }, 400);
+      attempts++;
+      if (attempts < maxAttempts) setTimeout(tryFind, 400);
+      else console.warn(' Netflix: Player not found after 12s');
+    };
+  
+    tryFind();
   },
-
   /**
    * Observes the DOM for Netflix subtitle changes.
    * When subtitles change, mirrors them to our custom container.
