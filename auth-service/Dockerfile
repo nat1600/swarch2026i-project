@@ -1,4 +1,4 @@
-FROM python:3.13-alpine
+FROM python:3.13-slim
 
 WORKDIR /app
 
@@ -10,3 +10,5 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY . .
+
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
