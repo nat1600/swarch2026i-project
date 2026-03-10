@@ -44,7 +44,7 @@ const ParlaPopup = (() => {
         <!-- Divider -->
         <div class="parla-divider">
           <div class="parla-divider-line"></div>
-          <span class="parla-divider-icon"> ↓ </span>
+          <span class="parla-divider-icon">↓</span>
           <div class="parla-divider-line"></div>
         </div>
 

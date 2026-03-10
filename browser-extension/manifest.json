@@ -1,69 +1,70 @@
 {
-    "manifest_version": 3,
-    "name": "Parla - Aprende idiomas mientras navegas",
-    "version": "1.0.0",
-    "description": "Traduce y guarda frases de YouTube, Netflix, PDFs y páginas web.",
-  
-    "icons": {
+  "manifest_version": 3,
+  "name": "Parla - Aprende idiomas mientras navegas",
+  "version": "1.0.0",
+  "description": "Traduce y guarda frases de YouTube, Netflix, PDFs y páginas web.",
+
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+
+  "action": {
+    "default_popup": "popup-extension/popup.html",
+    "default_icon": {
       "16": "assets/icons/icon16.png",
-      "32": "assets/icons/icon32.png",
       "48": "assets/icons/icon48.png",
       "128": "assets/icons/icon128.png"
     },
-  
-    "action": {
-      "default_popup": "popup-extension/popup.html",
-      "default_icon": {
-        "16": "assets/icons/icon16.png",
-        "48": "assets/icons/icon48.png",
-        "128": "assets/icons/icon128.png"
-      },
-      "default_title": "Parla"
-    },
-  
-    "background": {
-      "service_worker": "background/service-worker.js"
-    },
-  
-    "permissions": [
-      "storage",
-      "activeTab",
-      "scripting",
-      "tabs"
-    ],
-  
-    "host_permissions": [
-      "http://127.0.0.1:8000/*",
-      "http://localhost:8000/*"
-    ],
-  
-   "web_accessible_resources": [
-  {
-    "resources": [
-      "content/ui/floating-popup.html",
-      "assets/icons/*"
-    ],
-    "matches": ["<all_urls>"]
-  }
-] ,
-  
-    "content_scripts": [
-      {
-        "matches": ["<all_urls>"],
-        "js": [
-          "config/config.js",
-          "utils/helpers.js",
-          "utils/settings.js",
-          "utils/translation.js",
-          "content/actions/actions.js",
-          "content/ui/floating-popup.js",
-          "content/platforms/youtube.js",
-          "content/platforms/netflix.js",
-          "content/platforms/pdf.js",
-          "content/content.js"
-        ],
-        "css": ["content/content.css"],
-        "run_at": "document_end"
-      }
-    ]
-  }
+    "default_title": "Parla"
+  },
+
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/ui/floating-popup.html",
+        "assets/icons/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "config/config.js",
+        "utils/helpers.js",
+        "utils/settings.js",
+        "utils/translation.js",
+        "content/actions/actions.js",
+        "content/ui/selection-toolbar.js",
+        "content/ui/floating-popup.js",
+        "content/platforms/youtube.js",
+        "content/platforms/netflix.js",
+        "content/platforms/pdf.js",
+        "content/content.js"
+      ],
+      "css": ["content/content.css"],
+      "run_at": "document_end"
+    }
+  ]
+}
