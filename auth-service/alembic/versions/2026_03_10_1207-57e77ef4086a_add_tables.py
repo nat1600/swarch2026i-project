@@ -1,8 +1,8 @@
-"""Create language, streak and user tables
+"""Add tables
 
-Revision ID: 61dd8e921998
+Revision ID: 57e77ef4086a
 Revises: 
-Create Date: 2026-03-05 19:18:35.787595
+Create Date: 2026-03-10 12:07:44.521979
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '61dd8e921998'
+revision: str = '57e77ef4086a'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,37 +25,41 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False, comment="ISO display name of the language (e.g. 'English', 'Japanese')"),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_languages')),
+    sa.UniqueConstraint('name', name=op.f('uq_languages_name'))
     )
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('native_language_id', sa.Integer(), nullable=False, comment='Language the user already speaks natively'),
-    sa.Column('learning_language_id', sa.Integer(), nullable=False, comment='Language the user is currently learning'),
+    sa.Column('auth0_id', sa.String(length=128), nullable=False),
+    sa.Column('native_language_id', sa.Integer(), nullable=True, comment='Language the user already speaks natively'),
+    sa.Column('learning_language_id', sa.Integer(), nullable=True, comment='Language the user is currently learning'),
     sa.Column('active', sa.Boolean(), server_default='true', nullable=False, comment='Soft-delete flag; false means the account is deactivated'),
     sa.Column('email', sa.String(), nullable=False),
+    sa.Column('email_verified', sa.Boolean(), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('timezone', sa.String(length=255), nullable=False, comment="IANA timezone identifier used to calculate daily streak boundaries (e.g. 'America/New_York')"),
     sa.Column('accumulated_points', sa.Integer(), server_default='0', nullable=False, comment='Total gamification points earned across all review sessions'),
+    sa.Column('last_login_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.CheckConstraint('accumulated_points >= 0', name='ck_users_accumulated_points'),
-    sa.ForeignKeyConstraint(['learning_language_id'], ['languages.id'], ),
-    sa.ForeignKeyConstraint(['native_language_id'], ['languages.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('username')
+    sa.CheckConstraint('accumulated_points >= 0', name=op.f('ck_users_ck_users_accumulated_points')),
+    sa.ForeignKeyConstraint(['learning_language_id'], ['languages.id'], name=op.f('fk_users_learning_language_id_languages')),
+    sa.ForeignKeyConstraint(['native_language_id'], ['languages.id'], name=op.f('fk_users_native_language_id_languages')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_users')),
+    sa.UniqueConstraint('email', name=op.f('uq_users_email')),
+    sa.UniqueConstraint('username', name=op.f('uq_users_username'))
     )
     op.create_index('idx_active_users', 'users', ['id'], unique=False, postgresql_where=sa.text('active = true'))
+    op.create_index(op.f('ix_users_auth0_id'), 'users', ['auth0_id'], unique=True)
     op.create_table('streaks',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False, comment='User this streak record belongs to'),
     sa.Column('current_streak', sa.SmallInteger(), server_default='0', nullable=False, comment='Number of consecutive days the user has completed at least one review'),
     sa.Column('longest_streak', sa.SmallInteger(), server_default='0', nullable=False, comment='All-time longest consecutive-day streak the user has achieved'),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.CheckConstraint('current_streak >= 0', name='ck_users_current_streak'),
-    sa.CheckConstraint('longest_streak >= 0', name='ck_users_longest_streak'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.CheckConstraint('current_streak >= 0', name=op.f('ck_streaks_ck_users_current_streak')),
+    sa.CheckConstraint('longest_streak >= 0', name=op.f('ck_streaks_ck_users_longest_streak')),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_streaks_user_id_users')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_streaks'))
     )
     # ### end Alembic commands ###
 
@@ -64,6 +68,7 @@ def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('streaks')
+    op.drop_index(op.f('ix_users_auth0_id'), table_name='users')
     op.drop_index('idx_active_users', table_name='users', postgresql_where=sa.text('active = true'))
     op.drop_table('users')
     op.drop_table('languages')
