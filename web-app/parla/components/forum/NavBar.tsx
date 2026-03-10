@@ -58,16 +58,16 @@ export function NavBar() {
             </span>
           </div>
         )}
-
-        <a href="/api/auth/logout">
+        
+        <Link href="/api/auth/logout">
           <Button
             variant="ghost"
             size="icon"
-            className="text-parla-dark/50 hover:text-parla-red hover:bg-parla-red/10 rounded-xl"
+            className="text-parla-dark/50 hover:text-parla-red hover:bg-parla-red/10 rounded-xl cursor-pointer"
           >
             <LogOut className="w-5 h-5" />
           </Button>
-        </a>
+        </Link>
       </div>
     </header>
   );

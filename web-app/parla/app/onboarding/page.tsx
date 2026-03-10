@@ -4,10 +4,10 @@ import { useState } from "react";
 import { ArrowRight, Sparkles, User, Globe2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
 import {
   Form,
@@ -45,6 +45,7 @@ const LANGUAGES = [
 
 export default function OnboardingPage() {
   const { user, isLoading } = useUser();
+  const router = useRouter();
   const [isStarting, setIsStarting] = useState(false);
 
   // 2. Inicializamos React Hook Form
@@ -84,7 +85,8 @@ export default function OnboardingPage() {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Redirigimos al inicio
-      window.location.href = "/home";
+      router.push("/home");
+      setIsStarting(false);
     } catch (error) {
       setIsStarting(false);
       toast.error("Hubo un error al guardar tu perfil. Intenta de nuevo.");
@@ -103,7 +105,7 @@ export default function OnboardingPage() {
 
   // Protección de ruta
   if (!isLoading && !user) {
-    window.location.href = "/login";
+    router.push("/login");
     return null;
   }
 

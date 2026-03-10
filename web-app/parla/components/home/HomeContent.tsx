@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ScrollReveal } from "@/components/core/scroll-reveal";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { ScrollReveal } from "@/components/core/ScrollReveal";
+import HomeNavBar from "@/components/core/HomeNavBar";
 import {
-  LogOut,
   Sparkles,
-  Trophy,
   MessageSquare,
   BookOpen,
   BarChart3,
@@ -116,65 +113,10 @@ const STATS = [
 export function HomeContent({ user }: HomeContentProps) {
   return (
     <div className="font-app min-h-screen w-full bg-polka overflow-x-hidden selection:bg-parla-blue selection:text-white">
-      {/* ══════════════════════════════════════
-          NAVBAR
-      ══════════════════════════════════════ */}
-      <nav className="bg-white border-b-4 border-parla-dark px-4 py-3 sticky top-0 z-50 animate-fade-in-down">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/home" className="flex items-center gap-2 group">
-            <div className="w-11 h-11 bg-parla-blue rounded-full flex items-center justify-center border-4 border-parla-dark shadow-[0_4px_0_0_#254159] group-hover:shadow-[0_2px_0_0_#254159] group-hover:translate-y-0.5 transition-all">
-              <span className="font-brand text-xl text-white leading-none">
-                P
-              </span>
-            </div>
-            <span className="font-brand text-2xl text-parla-dark tracking-tight">
-              Parla
-            </span>
-          </Link>
 
-          {/* Right side */}
-          <div className="flex items-center gap-3">
-            {/* XP pill */}
-            <div className="hidden sm:flex items-center gap-1.5 bg-parla-mist px-3.5 py-1.5 rounded-full border-2 border-parla-blue/30 font-extrabold text-sm text-parla-blue">
-              <Trophy className="w-4 h-4 text-yellow-500" />
-              <span>120 XP</span>
-            </div>
+      <HomeNavBar userPicture={user.picture || ""} initials={user.initials} />
 
-            {/* Forum link pill */}
-            <Link
-              href="/forum"
-              className="hidden md:flex items-center gap-1.5 bg-parla-red/10 px-3.5 py-1.5 rounded-full border-2 border-parla-red/30 font-extrabold text-sm text-parla-red hover:bg-parla-red/20 transition-colors"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Foro</span>
-            </Link>
-
-            {/* Avatar */}
-            <Avatar className="w-9 h-9 border-2 border-parla-dark shadow-[0_2px_0_0_#254159]">
-              <AvatarImage src={user.picture} />
-              <AvatarFallback className="font-extrabold text-parla-dark bg-parla-mist text-sm">
-                {user.initials}
-              </AvatarFallback>
-            </Avatar>
-
-            {/* Logout */}
-            <a href="/api/auth/logout">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-parla-dark/50 hover:text-parla-red hover:bg-parla-red/10 rounded-xl"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </a>
-          </div>
-        </div>
-      </nav>
-
-      {/* ══════════════════════════════════════
-          MAIN
-      ══════════════════════════════════════ */}
+      {/* MAIN */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
         {/* ---------- WELCOME CARD ---------- */}
         <ScrollReveal animation="animate-bounce-fade-in">
@@ -199,10 +141,7 @@ export function HomeContent({ user }: HomeContentProps) {
               <div className="text-center md:text-left space-y-2 flex-1">
                 <h1 className="font-brand text-[clamp(2.2rem,6vw,3.5rem)] text-parla-dark leading-tight">
                   ¡Hola,{" "}
-                  <span className="text-parla-blue">
-                    {user.displayName}
-                  </span>
-                  !
+                  <span className="text-parla-blue">{user.displayName}</span>!
                 </h1>
                 <p className="text-lg font-bold text-parla-blue/80 max-w-md">
                   Qué bueno verte de nuevo. ¿Listo para practicar hoy?
@@ -240,7 +179,10 @@ export function HomeContent({ user }: HomeContentProps) {
                   }}
                 >
                   {/* Hover lift effect */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ backgroundColor: action.bgTint }} />
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{ backgroundColor: action.bgTint }}
+                  />
 
                   <div className="relative z-10">
                     {/* Icon circle */}
@@ -251,7 +193,10 @@ export function HomeContent({ user }: HomeContentProps) {
                         borderColor: action.borderHex,
                       }}
                     >
-                      <Icon className="w-6 h-6" style={{ color: action.accentHex }} />
+                      <Icon
+                        className="w-6 h-6"
+                        style={{ color: action.accentHex }}
+                      />
                     </div>
 
                     <h3 className="font-brand text-xl text-parla-dark mb-1 flex items-center gap-2">
@@ -267,7 +212,10 @@ export function HomeContent({ user }: HomeContentProps) {
                     </p>
 
                     {action.enabled && (
-                      <div className="mt-4 flex items-center gap-1 font-extrabold text-sm" style={{ color: action.accentHex }}>
+                      <div
+                        className="mt-4 flex items-center gap-1 font-extrabold text-sm"
+                        style={{ color: action.accentHex }}
+                      >
                         <span>Entrar</span>
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -283,7 +231,10 @@ export function HomeContent({ user }: HomeContentProps) {
                   delay={`${i * 120}ms`}
                 >
                   {action.enabled ? (
-                    <Link href={action.href} className="block h-full group-hover:-translate-y-1">
+                    <Link
+                      href={action.href}
+                      className="block h-full group-hover:-translate-y-1"
+                    >
                       {inner}
                     </Link>
                   ) : (
@@ -329,7 +280,10 @@ export function HomeContent({ user }: HomeContentProps) {
                         borderColor: stat.borderHex,
                       }}
                     >
-                      <Icon className="w-7 h-7" style={{ color: stat.accentHex }} />
+                      <Icon
+                        className="w-7 h-7"
+                        style={{ color: stat.accentHex }}
+                      />
                     </div>
 
                     {/* Text */}
@@ -350,7 +304,10 @@ export function HomeContent({ user }: HomeContentProps) {
                       <p className="font-extrabold text-parla-dark text-sm mt-0.5">
                         {stat.label}
                       </p>
-                      <p className="font-bold text-xs" style={{ color: stat.accentHex }}>
+                      <p
+                        className="font-bold text-xs"
+                        style={{ color: stat.accentHex }}
+                      >
                         {stat.sub}
                       </p>
                     </div>
@@ -388,7 +345,9 @@ export function HomeContent({ user }: HomeContentProps) {
       <footer className="relative z-10 border-t-4 border-parla-dark/20 py-6 px-6 text-center mt-4">
         <div className="flex items-center justify-center gap-2 mb-1">
           <div className="w-7 h-7 bg-parla-blue rounded-full flex items-center justify-center border-2 border-parla-dark">
-            <span className="font-brand text-sm text-white leading-none">P</span>
+            <span className="font-brand text-sm text-white leading-none">
+              P
+            </span>
           </div>
           <span className="font-brand text-lg text-parla-dark">Parla</span>
         </div>
