@@ -1,0 +1,12 @@
+# Ignore .venvs in each microservice
+**/.venv/
+**/__pycache__/
+
+# Ignore pycharm files
+.idea
+
+# Env variables
+.env
+
+# Testing (development) files
+tests/
