@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import TIMESTAMP, func, MetaData
+from sqlalchemy import DateTime, func, MetaData
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -16,5 +16,5 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=convention)
 
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now()
     )
