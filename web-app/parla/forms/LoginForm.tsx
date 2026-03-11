@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Globe2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 import {
   Form,
@@ -21,7 +20,7 @@ const emailSchema = z.object({
 });
 
 export default function ParlaLogin() {
-  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof emailSchema>>({
@@ -46,7 +45,7 @@ export default function ParlaLogin() {
 
       // Pausa breve para que el toast sea visible antes del redirect
       await new Promise((resolve) => setTimeout(resolve, 600));
-      window.location.href = `/api/auth/login?connection=email&login_hint=${encodeURIComponent(values.email)}&returnTo=/onboarding`;
+      window.location.href = `/api/auth/login?connection=email&login_hint=${encodeURIComponent(values.email)}&returnTo=/home`;
 //      router.push(`/api/auth/login?connection=email&login_hint=${encodeURIComponent(values.email)}&returnTo=/onboarding`);
     } catch {
       setIsLoading(false);
@@ -128,7 +127,7 @@ export default function ParlaLogin() {
           <button
             type="button"
             onClick={() => {
-              window.location.href = "/api/auth/login?connection=google-oauth2&returnTo=/onboarding";
+              window.location.href = "/api/auth/login?connection=google-oauth2&returnTo=/home";
             }}
             className="w-full bg-white text-parla-dark font-extrabold text-xl py-5 rounded-2xl border-4 border-parla-light border-b-8 hover:bg-[#F8FAFC] hover:border-parla-blue active:border-b-4 active:translate-y-1 transition-all flex items-center justify-center"
           >

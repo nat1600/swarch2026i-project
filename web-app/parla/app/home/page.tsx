@@ -1,23 +1,29 @@
-import { Auth0Client } from "@auth0/nextjs-auth0/server";
+import { auth0 } from "@/lib/auth0";
 import { redirect } from "next/navigation";
 import { HomeContent } from "@/components/home/HomeContent";
 import { getDisplayName, getInitials } from "@/lib/user-utils";
+import { checkUserExistsAction } from "@/actions/auth/authActions";
 
 export default async function HomePage() {
-  const auth0 = new Auth0Client();
-  const session = await auth0.getSession();
-  const user = session?.user;
 
-  if (!user) {
+  const session = await auth0.getSession();
+  if (!session?.user) {
     redirect("/login");
   }
+  const { exists } = await checkUserExistsAction();
 
-  const displayName = getDisplayName(user);
+
+  if (!exists) {
+    redirect("/onboarding");
+  }
+
+  
+  const displayName = getDisplayName(session?.user);
 
   return (
     <HomeContent
       user={{
-        picture: user.picture as string,
+        picture: session?.user.picture as string,
         displayName: displayName,
         initials: getInitials(displayName),
       }}
