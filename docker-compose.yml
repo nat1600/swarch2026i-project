@@ -1,0 +1,87 @@
+services:
+
+  # ── Auth DB ───────────────────────────────────────────────────────────────────
+  auth_database:
+    container_name: auth_database
+    image: postgres:16
+    env_file: auth-service/.env
+    shm_size: 128mb
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=32MB
+      -c effective_cache_size=128MB
+      -c max_connections=20
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth_service_database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ── Auth Migrations ───────────────────────────────────────────────────────────
+  auth_migration:
+    container_name: auth_migration
+    build: auth-service/
+    command: bash scripts/migrate.sh
+    env_file: auth-service/.env
+    environment:
+      POSTGRES_HOST: auth_database
+      POSTGRES_PORT: 5432
+    depends_on:
+      auth_database:
+        condition: service_healthy
+
+  # ── Auth Service ──────────────────────────────────────────────────────────────
+  auth_service:
+    container_name: auth_service
+    build: auth-service/
+    env_file: auth-service/.env
+    environment:
+      POSTGRES_HOST: auth_database
+      POSTGRES_PORT: 5432
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./auth-service/app:/app/app
+    networks:
+      default:
+        aliases:
+          - auth-service
+    depends_on:
+      auth_migration:
+        condition: service_completed_successfully
+
+  # ── API Gateway ───────────────────────────────────────────────────────────────
+  api_gateway:
+    container_name: api_gateway
+    build: api-gateway/
+    env_file: api-gateway/.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth_service
+
+  # ── Web App ───────────────────────────────────────────────────────────────────
+  web_app:
+    container_name: web_app
+    build: web-app/parla/
+    env_file: web-app/parla/.env
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://api_gateway:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api_gateway
+
+volumes:
+  auth_service_database:

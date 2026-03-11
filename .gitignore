@@ -11,3 +11,6 @@
 # Testing (development) files
 /tests/
 auth-service/tmp
+
+# vscode
+.vscode/
