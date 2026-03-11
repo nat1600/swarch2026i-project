@@ -50,7 +50,6 @@ let allPhrases = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadToggleState();
-  await loadPhrases();
   setupToggleListener();
   setupTabListeners();
   setupSearchListener();
@@ -61,10 +60,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 // QUICK ACTIONS
 // ===========================
 
-/**
- * Opens a URL in a new tab.
- * @param {string} url
- */
 function openTab(url) {
   chrome.tabs.create({ url });
 }
@@ -86,6 +81,7 @@ function setupQuickActions() {
 
 async function loadToggleState() {
   const result   = await chrome.storage.local.get(['parla_extension_active']);
+  // Si la clave no existe todavía → activa por defecto
   const isActive = result.parla_extension_active !== false;
   extensionToggle.checked = isActive;
   updateToggleStatus(isActive);
@@ -94,25 +90,21 @@ async function loadToggleState() {
 function setupToggleListener() {
   extensionToggle.addEventListener('change', async () => {
     const isActive = extensionToggle.checked;
+
+    // 1. Guardar en storage — esto solo dispara chrome.storage.onChanged
+    //    en el content script, que es la forma más confiable
     await chrome.storage.local.set({ parla_extension_active: isActive });
+
+    // 2. Actualizar UI del popup
     updateToggleStatus(isActive);
 
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    tabs.forEach(tab => {
-      chrome.tabs.sendMessage(tab.id, {
-        action: 'toggleExtension',
-        active: isActive
-      }).catch(() => {});
-    });
+    console.log('Parla popup: toggle →', isActive);
   });
 }
 
-/**
- * @param {boolean} isActive
- */
 function updateToggleStatus(isActive) {
-  toggleStatus.textContent = isActive ? 'Activa' : 'Inactiva';
-  toggleStatus.style.color = isActive
+  toggleStatus.textContent  = isActive ? 'Activa' : 'Inactiva';
+  toggleStatus.style.color  = isActive
     ? 'rgba(255,255,255,0.9)'
     : 'rgba(255,255,255,0.4)';
 }
@@ -122,6 +114,7 @@ function updateToggleStatus(isActive) {
 // ===========================
 
 async function loadPhrases() {
+  if (!phrasesContainer) return;
   try {
     phrasesContainer.innerHTML = `
       <div class="empty-state">
@@ -136,7 +129,7 @@ async function loadPhrases() {
     if (!response.ok) throw new Error('Failed to fetch phrases');
 
     allPhrases = await response.json();
-    savedCount.textContent = allPhrases.length;
+    if (savedCount) savedCount.textContent = allPhrases.length;
     renderPhrases(allPhrases);
 
   } catch (error) {
@@ -152,6 +145,7 @@ async function loadPhrases() {
 }
 
 function renderPhrases(phrases) {
+  if (!phrasesContainer) return;
   if (phrases.length === 0) {
     phrasesContainer.innerHTML = `
       <div class="empty-state">
@@ -163,9 +157,7 @@ function renderPhrases(phrases) {
     return;
   }
 
-  phrasesContainer.innerHTML = phrases
-    .map(phrase => buildPhraseCard(phrase))
-    .join('');
+  phrasesContainer.innerHTML = phrases.map(p => buildPhraseCard(p)).join('');
 
   phrasesContainer.querySelectorAll('.phrase-delete').forEach(btn => {
     btn.addEventListener('click', () => deletePhrase(Number(btn.dataset.id)));
@@ -193,13 +185,10 @@ async function deletePhrase(id) {
       { method: 'DELETE' }
     );
     if (!response.ok) throw new Error('Failed to delete phrase');
-
     allPhrases = allPhrases.filter(p => p.id !== id);
-    savedCount.textContent = allPhrases.length;
-
-    const query = searchInput.value.trim().toLowerCase();
+    if (savedCount) savedCount.textContent = allPhrases.length;
+    const query = searchInput?.value.trim().toLowerCase() || '';
     renderPhrases(query ? filterPhrases(query) : allPhrases);
-
   } catch (error) {
     console.error('Error deleting phrase:', error);
   }
@@ -233,14 +222,14 @@ function setupTabListeners() {
       const tabName  = trigger.dataset.tab;
       const collapse = document.getElementById(`${tabName}-collapse`);
       const arrow    = trigger.querySelector('.tab-arrow');
-      const isOpen   = collapse.classList.contains('open');
+      const isOpen   = collapse?.classList.contains('open');
 
       document.querySelectorAll('.tab-collapse').forEach(c => c.classList.remove('open'));
       document.querySelectorAll('.tab-arrow').forEach(a => a.classList.remove('open'));
 
-      if (!isOpen) {
+      if (!isOpen && collapse) {
         collapse.classList.add('open');
-        arrow.classList.add('open');
+        arrow?.classList.add('open');
         if (tabName === 'saved') loadPhrases();
       }
     });

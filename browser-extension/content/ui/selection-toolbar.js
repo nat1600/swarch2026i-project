@@ -1,9 +1,7 @@
 /**
  * selection-toolbar.js
  */
-
 const ParlaToolbar = (() => {
-
   let toolbar        = null;
   let isShowing      = false;
   let pendingText    = '';
@@ -31,23 +29,18 @@ const ParlaToolbar = (() => {
     if (!toolbar) return;
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
-
     const range       = selection.getRangeAt(0);
     const rect        = range.getBoundingClientRect();
     const toolbarRect = toolbar.getBoundingClientRect();
-
     let left = rect.left + (rect.width / 2) - (toolbarRect.width / 2) + window.scrollX;
     let top  = rect.top  - toolbarRect.height - 10 + window.scrollY;
-
     left = Math.max(10, Math.min(left, window.innerWidth - toolbarRect.width - 10));
     if (top < window.scrollY + 10) top = rect.bottom + 10 + window.scrollY;
-
     toolbar.style.left = `${left}px`;
     toolbar.style.top  = `${top}px`;
   }
 
   return {
-
     show(text, context, x, y) {
       if (isShowing) return;
       isShowing      = true;
@@ -69,8 +62,6 @@ const ParlaToolbar = (() => {
         toolbar?.classList.add('parla-toolbar-visible');
       });
 
-      // CRÍTICO: evita que el click burbujee al document
-      // y cierre el popup antes de que aparezca
       toolbar.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -89,9 +80,9 @@ const ParlaToolbar = (() => {
         ?.addEventListener('click', async (e) => {
           e.stopPropagation();
           this.hide();
+          // Guardar en storage — el listener en settings.js lo captura automáticamente
           await chrome.storage.local.set({ parla_extension_active: false });
-          ParlaSettings.isExtensionActive = false;
-          showNotification('Parla desactivada');
+          ParlaHelpers.showNotification('Parla desactivada');
         });
 
       setTimeout(() => { isShowing = false; }, 200);
@@ -108,7 +99,6 @@ const ParlaToolbar = (() => {
 
     get element() { return toolbar; }
   };
-
 })();
 
 window.ParlaToolbar = ParlaToolbar;

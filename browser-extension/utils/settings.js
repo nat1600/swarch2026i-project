@@ -1,4 +1,3 @@
-
 /**
  * settings.js
  *
@@ -23,16 +22,17 @@ const ParlaSettings = {
    * Reads the saved state from chrome.storage.local.
    * Called once on content script initialization.
    */
+
   async load() {
     try {
       const result = await chrome.storage.local.get(['parla_extension_active']);
-
+     
       // If the key doesn't exist yet, default to true
       this.isExtensionActive = result.parla_extension_active !== false;
-
-      console.log('Settings loaded — active:', this.isExtensionActive);
+    
+      console.log('Parla Settings loaded — active:', this.isExtensionActive);
     } catch (error) {
-      console.error(' Error loading settings:', error);
+      console.error('Error loading settings:', error);
       this.isExtensionActive = true;
     }
   },
@@ -47,28 +47,38 @@ const ParlaSettings = {
    * the local state and notifies platform modules (YouTube, Netflix).
    */
   setupMessageListener() {
+    // Escucha cambios en storage — funciona siempre, sin depender de mensajes
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local' || !('parla_extension_active' in changes)) return;
+      const isActive = changes.parla_extension_active.newValue !== false;
+      console.log('Parla: storage cambió → active:', isActive);
+      this._applyToggle(isActive);
+    });
+
+    // Fallback: mensajes directos
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       // User toggled the extension on/off from the popup
       if (request.action === 'toggleExtension') {
-        this.isExtensionActive = request.active;
-        console.log(' Extension toggled:', this.isExtensionActive);
-
+        console.log('Parla: mensaje toggleExtension recibido → active:', request.active);
+        
         // Notify platform modules so they can show/hide subtitles
-        window.ParlaYouTube?.updateExtensionState(this.isExtensionActive);
-        window.ParlaNetflix?.updateExtensionState(this.isExtensionActive);
-
-        // Hide floating popup if extension was just disabled
-        if (!this.isExtensionActive) {
-          window.ParlaPopup?.hide();
-        }
+        this._applyToggle(request.active);
+        sendResponse({ success: true });
       }
-
-      sendResponse({ success: true });
       return true;
     });
-  }
+  },
 
+  _applyToggle(isActive) {
+    this.isExtensionActive = isActive;
+    window.ParlaYouTube?.updateExtensionState(isActive);
+    window.ParlaNetflix?.updateExtensionState(isActive);
+    if (!isActive) {
+      window.ParlaToolbar?.hide();
+      window.ParlaPopup?.hide();
+    }
+  }
 };
 
 window.ParlaSettings = ParlaSettings;

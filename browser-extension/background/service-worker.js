@@ -56,6 +56,23 @@ async function callApi(endpoint, method = 'GET', body = null) {
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
+  // --- Toggle extension on/off: broadcast to ALL tabs ---
+  if (request.action === 'toggleExtension') {
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        // Only send to real http/https tabs (not chrome:// etc.)
+        if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'toggleExtension',
+            active: request.active
+          }).catch(() => {}); // ignore tabs where content script isn't loaded
+        }
+      });
+    });
+    sendResponse({ success: true });
+    return true;
+  }
+
   // --- Translate text ---
   if (request.action === 'translate') {
     callApi('/translate', 'POST', {
