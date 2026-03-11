@@ -1,0 +1,49 @@
+---
+title: "core_db — Core Service (PostgreSQL)"
+---
+erDiagram
+    PHRASE }o--|| LANGUAGE : "has source/target language"
+    PHRASE ||--|| REVIEW_DATA : "has"
+    REVIEW_SESSION }|--|{ REVIEW_SESSION_PHRASE : "contains"
+    PHRASE }|--o{ REVIEW_SESSION_PHRASE : "reviewed in"
+
+    LANGUAGE {
+        int id PK
+        string name
+    }
+
+    PHRASE {
+        int id PK
+        bool active
+        int source_language_id FK
+        int target_language_id FK
+        int user_id "soft ref → auth_db.USER"
+        string original_text
+        string translated_text
+        string pronunciation
+        date last_reviewed_date
+        date next_review_date
+    }
+
+    REVIEW_SESSION {
+        int id PK
+        int user_id "soft ref → auth_db.USER"
+        date date
+    }
+
+    REVIEW_SESSION_PHRASE {
+        int id PK
+        int review_session_id FK
+        int phrase_id FK
+        int try_number
+        int response_time
+        int recall_rating
+    }
+
+    REVIEW_DATA {
+        int id PK
+        int phrase_id FK
+        int repetition_number
+        float easiness_factor
+        int inner_repetition_interval
+    }
