@@ -1,9 +1,10 @@
-"use client";
+import { Book } from "lucide-react";
+import "use client";
 
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, MessageSquare, BookOpen, Book, LogOut } from "lucide-react";
+import { Trophy, MessageSquare, BookOpen, LogOut, Gamepad2, Medal } from "lucide-react";
 
 interface HomeNavBarProps {
   userPicture: string;
@@ -32,10 +33,31 @@ export default function HomeNavBar({
         {/* Right side */}
         <div className="flex items-center gap-3">
           {/* XP pill */}
-          <div className="hidden sm:flex items-center gap-1.5 bg-parla-mist px-3.5 py-1.5 rounded-full border-2 border-parla-blue/30 font-extrabold text-sm text-parla-blue">
+          <Link
+            href="/stats"
+            className="hidden sm:flex items-center gap-1.5 bg-parla-mist px-3.5 py-1.5 rounded-full border-2 border-parla-blue/30 font-extrabold text-sm text-parla-blue hover:bg-parla-blue/10 transition-colors"
+          >
             <Trophy className="w-4 h-4 text-yellow-500" />
             <span>120 XP</span>
-          </div>
+          </Link>
+
+          {/* Leaderboard link */}
+          <Link
+            href="/leaderboard"
+            className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 border-yellow-500/30 font-extrabold text-sm text-yellow-600 hover:bg-yellow-500/10 transition-colors"
+          >
+            <Medal className="w-4 h-4" />
+            <span>Clasificación</span>
+          </Link>
+
+          {/* Games link */}
+          <Link
+            href="/games"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 border-parla-blue/30 font-extrabold text-sm text-parla-blue hover:bg-parla-blue/10 transition-colors"
+          >
+            <Gamepad2 className="w-4 h-4" />
+            <span>Juegos</span>
+          </Link>
 
           {/* Forum link pill */}
           <Link
@@ -71,7 +93,7 @@ export default function HomeNavBar({
           </Avatar>
 
           {/* Logout */}
-          <a href="/api/auth/logout">
+          <Link href="/api/auth/logout">
             <Button
               variant="ghost"
               size="icon"
@@ -79,7 +101,7 @@ export default function HomeNavBar({
             >
               <LogOut className="w-5 h-5" />
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </nav>

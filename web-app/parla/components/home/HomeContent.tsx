@@ -6,11 +6,11 @@ import HomeNavBar from "@/components/core/HomeNavBar";
 import {
   Sparkles,
   MessageSquare,
-  BookOpen,
-  BarChart3,
   Flame,
   Zap,
   ArrowRight,
+  Gamepad2,
+  Trophy,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -45,28 +45,28 @@ const QUICK_ACTIONS = [
     enabled: true,
   },
   {
-    href: "#",
-    icon: BookOpen,
-    title: "Empezar lección",
-    desc: "Sesiones de 5 minutos que se adaptan a tu nivel y ritmo.",
+    href: "/games",
+    icon: Gamepad2,
+    title: "Juegos Arcade",
+    desc: "Practica tu vocabulario con divertidos mini-juegos interactivos.",
     accent: "parla-blue" as const,
     accentHex: "#2D83A6",
     bgTint: "#E6F0F4",
     borderHex: "#2D83A6",
     shadowHex: "#1f6d8e",
-    enabled: false,
+    enabled: true,
   },
   {
-    href: "#",
-    icon: BarChart3,
-    title: "Ver progreso",
-    desc: "Estadísticas detalladas de tu aprendizaje y racha diaria.",
+    href: "/leaderboard",
+    icon: Trophy,
+    title: "Clasificación",
+    desc: "Mira cómo vas comparado con otros estudiantes de Parla.",
     accent: "parla-dark" as const,
     accentHex: "#254159",
-    bgTint: "#E8EDF1",
+    bgTint: "#F6F8FA",
     borderHex: "#254159",
     shadowHex: "#1a2f40",
-    enabled: false,
+    enabled: true,
   },
 ];
 
@@ -265,53 +265,55 @@ export function HomeContent({ user }: HomeContentProps) {
                   animation="animate-fade-in-up"
                   delay={`${i * 120}ms`}
                 >
-                  <div
-                    className="bg-white border-4 rounded-3xl p-6 flex items-center gap-4"
-                    style={{
-                      borderColor: stat.borderHex,
-                      boxShadow: `0 6px 0 0 ${stat.shadowHex}`,
-                    }}
-                  >
-                    {/* Icon */}
+                  <Link href="/stats" className="block h-full group">
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2"
+                      className="bg-white border-4 rounded-3xl p-6 flex items-center gap-4 group-hover:-translate-y-1 transition-all h-full"
                       style={{
-                        backgroundColor: stat.bgTint,
                         borderColor: stat.borderHex,
+                        boxShadow: `0 6px 0 0 ${stat.shadowHex}`,
                       }}
                     >
-                      <Icon
-                        className="w-7 h-7"
-                        style={{ color: stat.accentHex }}
-                      />
-                    </div>
+                      {/* Icon */}
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-transform group-hover:scale-110"
+                        style={{
+                          backgroundColor: stat.bgTint,
+                          borderColor: stat.borderHex,
+                        }}
+                      >
+                        <Icon
+                          className="w-7 h-7"
+                          style={{ color: stat.accentHex }}
+                        />
+                      </div>
 
-                    {/* Text */}
-                    <div>
-                      <div className="flex items-baseline gap-1">
-                        <span
-                          className="font-brand text-3xl leading-none"
+                      {/* Text */}
+                      <div>
+                        <div className="flex items-baseline gap-1">
+                          <span
+                            className="font-brand text-3xl leading-none"
+                            style={{ color: stat.accentHex }}
+                          >
+                            {stat.value}
+                          </span>
+                          {stat.unit && (
+                            <span className="font-extrabold text-sm text-parla-dark/60">
+                              {stat.unit}
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-extrabold text-parla-dark text-sm mt-0.5">
+                          {stat.label}
+                        </p>
+                        <p
+                          className="font-bold text-xs"
                           style={{ color: stat.accentHex }}
                         >
-                          {stat.value}
-                        </span>
-                        {stat.unit && (
-                          <span className="font-extrabold text-sm text-parla-dark/60">
-                            {stat.unit}
-                          </span>
-                        )}
+                          {stat.sub}
+                        </p>
                       </div>
-                      <p className="font-extrabold text-parla-dark text-sm mt-0.5">
-                        {stat.label}
-                      </p>
-                      <p
-                        className="font-bold text-xs"
-                        style={{ color: stat.accentHex }}
-                      >
-                        {stat.sub}
-                      </p>
                     </div>
-                  </div>
+                  </Link>
                 </ScrollReveal>
               );
             })}

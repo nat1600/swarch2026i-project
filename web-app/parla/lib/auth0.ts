@@ -34,4 +34,13 @@ export const auth0 = new Auth0Client({
     logout: "/api/auth/logout",
     callback: "/api/auth/callback",
   },
+  authorizationParameters: {
+    audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE, // Necesario para obtener un access token válido para el backend
+    scope: "openid profile email offline_access", // Scopes básicos para obtener el perfil del usuario
+  },
+  clientId: process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  domain: process.env.NEXT_PUBLIC_AUTH0_DOMAIN,
+  secret: process.env.AUTH0_SECRET,
+  appBaseUrl: process.env.NEXT_PUBLIC_APP_BASE_URL,
 });
