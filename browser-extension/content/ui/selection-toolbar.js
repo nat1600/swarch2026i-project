@@ -80,7 +80,7 @@ const ParlaToolbar = (() => {
         ?.addEventListener('click', async (e) => {
           e.stopPropagation();
           this.hide();
-          // Guardar en storage — el listener en settings.js lo captura automáticamente
+    
           await chrome.storage.local.set({ parla_extension_active: false });
           ParlaHelpers.showNotification('Parla desactivada');
         });

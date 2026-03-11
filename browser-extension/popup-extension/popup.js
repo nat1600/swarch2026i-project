@@ -81,7 +81,7 @@ function setupQuickActions() {
 
 async function loadToggleState() {
   const result   = await chrome.storage.local.get(['parla_extension_active']);
-  // Si la clave no existe todavía → activa por defecto
+
   const isActive = result.parla_extension_active !== false;
   extensionToggle.checked = isActive;
   updateToggleStatus(isActive);
@@ -91,11 +91,10 @@ function setupToggleListener() {
   extensionToggle.addEventListener('change', async () => {
     const isActive = extensionToggle.checked;
 
-    // 1. Guardar en storage — esto solo dispara chrome.storage.onChanged
-    //    en el content script, que es la forma más confiable
+
     await chrome.storage.local.set({ parla_extension_active: isActive });
 
-    // 2. Actualizar UI del popup
+
     updateToggleStatus(isActive);
 
     console.log('Parla popup: toggle →', isActive);
