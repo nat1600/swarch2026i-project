@@ -6,7 +6,7 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
 import { Search, Book, Plus, Loader2 } from "lucide-react";
 import HomeNavBar from "@/components/core/HomeNavBar";
-import { getInitials } from "../home/page";
+import { getInitials } from "@/lib/user-utils";
 import { useDictionary } from "@/contexts/DictionaryContext";
 import { DictionaryCard } from "@/components/dictionary/DictionaryCard";
 import { DictionaryStatsCards } from "@/components/dictionary/DictionaryStats";

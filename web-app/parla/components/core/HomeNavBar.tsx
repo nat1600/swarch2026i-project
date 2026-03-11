@@ -1,10 +1,9 @@
-import { Book } from "lucide-react";
-import "use client";
+"use client";
 
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, MessageSquare, BookOpen, LogOut, Gamepad2, Medal } from "lucide-react";
+import { Trophy, MessageSquare, BookOpen, Book, LogOut, Gamepad2, Medal } from "lucide-react";
 
 interface HomeNavBarProps {
   userPicture: string;
