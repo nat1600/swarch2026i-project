@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, MessageSquare, BookOpen, LogOut } from "lucide-react";
+import { Trophy, MessageSquare, BookOpen, Book, LogOut } from "lucide-react";
 
 interface HomeNavBarProps {
   userPicture: string;
@@ -52,6 +52,14 @@ export default function HomeNavBar({
           >
             <BookOpen className="h-5 w-5" strokeWidth={2.5} />
             Mi Bóveda
+          </Link>
+
+          <Link
+            href="/dictionary"
+            className="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black text-parla-dark hover:text-white hover:bg-parla-blue transition-colors border-2 border-parla-blue/30 hover:border-parla-blue"
+          >
+            <Book className="h-5 w-5" strokeWidth={2.5} />
+            Diccionario
           </Link>
 
           {/* Avatar */}
