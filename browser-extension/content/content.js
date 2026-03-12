@@ -2,7 +2,7 @@
  * content.js — Main Orchestrator
  */
 
-console.log(' Parla: Initializing...');
+console.log(' Parla: ... initializatinggggg...');
 
 let pageType = { isYouTube: false, isNetflix: false, isPDF: false };
 let lastURL  = window.location.href;
@@ -27,14 +27,19 @@ function detectPageType() {
   pageType = {
     isYouTube: url.includes('youtube.com/watch'),
     isNetflix: url.includes('netflix.com/watch'),
-    isPDF:     url.includes('.pdf') || document.contentType === 'application/pdf'
+    isPDF: url.includes('.pdf') || document.contentType === 'application/pdf',
   };
 
-  console.log('📄 Page type:', pageType);
+  console.log(' Page type:', pageType);
 
-  if      (pageType.isYouTube) ParlaYouTube.setup();
-  else if (pageType.isNetflix) ParlaNetflix.setup();
-  else if (pageType.isPDF)     ParlaPDF.setup();
+  if (pageType.isYouTube) {
+    ParlaYouTube.setup();
+  } else if (pageType.isNetflix) {
+    ParlaNetflix.setup();
+  } else if (pageType.isPDF) {
+    ParlaPDF.setup();
+  }
+
 }
 
 function watchURLChanges() {

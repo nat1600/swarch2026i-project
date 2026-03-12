@@ -19,7 +19,7 @@ const ParlaTranslation = {
      * @param {HTMLElement} container - DOM element where the result will be rendered
      */
     async translate(text, container) {
-      console.log('🔤 Translating:', text);
+      console.log('que estoy traduciendooo AHHHHHHH', text);
   
       // Show loading spinner while waiting for response
       container.innerHTML = `
@@ -43,22 +43,26 @@ const ParlaTranslation = {
             target_lang: targetLanguage
           },
           (response) => {
+            console.log('Translation response:', response); // log temporal
+            
+            if (chrome.runtime.lastError) {
+              console.error(' Runtime error:', chrome.runtime.lastError);
+              container.innerHTML = `<div class="parla-error">Error de conexión</div>`;
+              return;
+            }
+          
             if (response?.success) {
-              // Render translated text
               container.innerHTML = `
                 <div class="parla-translation-result">
-                  <span class="parla-translation-label">Traducción</span>
-                  <p class="parla-translation-text" id="parla-translation-text">
+                  <span class="parla-translation-label"></span>
+                  <p class="parla-translation-text">
                     ${_escapeHtml(response.translation)}
                   </p>
                 </div>
               `;
             } else {
-              // Render error message
-              container.innerHTML = `
-                <div class="parla-error">Error al traducir</div>
-              `;
-              console.error('Translation error:', response?.error);
+              container.innerHTML = `<div class="parla-error">Error al traducir</div>`;
+              console.error(' Translation error:', response?.error);
             }
           }
         );

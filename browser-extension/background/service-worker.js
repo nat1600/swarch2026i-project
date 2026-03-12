@@ -11,7 +11,7 @@
  *   - 'savePhrase'  → POST /phrases/
  */
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://127.0.0.1:8000';
 
 // ===========================
 // API HELPER
@@ -56,7 +56,6 @@ async function callApi(endpoint, method = 'GET', body = null) {
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
-  // --- Toggle extension on/off: broadcast to ALL tabs ---
   if (request.action === 'toggleExtension') {
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach(tab => {
@@ -73,20 +72,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  // --- Translate text ---
+  // translate
   if (request.action === 'translate') {
-    callApi('/translate', 'POST', {
+    callApi('/translate/', 'POST', {
       text:        request.text,
       source_lang: request.source_lang,
       target_lang: request.target_lang
     })
-      .then(data  => sendResponse({ success: true,  translation: data.translation }))
+      .then(data  => {
+        console.log(' Translation data:', data);
+        sendResponse({ success: true, translation: data.translated_text });
+      })
       .catch(error => sendResponse({ success: false, error: error.message }));
-
-    return true; // Keep message channel open for async response
+  
+    return true;
   }
 
-  // --- Save phrase to backend ---
+// save
   if (request.action === 'savePhrase') {
     callApi('/phrases/', 'POST', request.phrase)
       .then(data  => sendResponse({ success: true,  savedPhrase: data }))
@@ -96,3 +98,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
 });
+
+
+chrome.runtime.onConnect.addListener((port) => {
+  port.onDisconnect.addListener(() => {});
+});
+
+
+setInterval(() => {
+  chrome.runtime.getPlatformInfo(() => {});
+}, 20000);

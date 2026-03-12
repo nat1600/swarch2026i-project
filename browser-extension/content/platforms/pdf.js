@@ -3,14 +3,7 @@
  *
  * Handles text selection and translation on PDF pages.
  *
- * PDFs in Chrome are rendered inside a special viewer
- * (chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai).
- * Text selection works normally, so we just need to ensure
- * the floating popup appears correctly over the PDF viewer.
- *
- * NOTE: This is a stub for the prototype. Full PDF support
- * (page-by-page extraction, annotation saving) is out of scope
- * for prototype_1 and will be implemented in a future iteration.
+  it not works ;C
  */
 
 const ParlaPDF = {

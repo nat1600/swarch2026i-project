@@ -210,19 +210,19 @@ const ParlaYouTube = {
      */
     handleWordClick(e) {
       if (!ParlaSettings?.isExtensionActive) return;
-  
-      // Prefer manual selection (user dragged across multiple words)
-      const selected = window.getSelection().toString().trim();
+    
+      const selected = window.getSelection().toString()
+        .replace(/\n+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
       if (selected.length > 1) {
         ParlaPopup?.show(e.clientX, e.clientY, selected, 'YouTube');
         return;
       }
-  
-      // Single word click
+    
       const word = e.target.textContent.trim();
-      if (word) {
-        ParlaPopup?.show(e.clientX, e.clientY, word, 'YouTube');
-      }
+      if (word) ParlaPopup?.show(e.clientX, e.clientY, word, 'YouTube');
     },
   
     // ===========================
@@ -290,7 +290,11 @@ const ParlaYouTube = {
         const nativeSubtitle = document.querySelector('.ytp-caption-segment');
   
         if (nativeSubtitle?.textContent.trim()) {
-          this.showSubtitle(nativeSubtitle.textContent.trim());
+          const clean = nativeSubtitle.textContent
+            .replace(/\n+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (clean) this.showSubtitle(clean);
         } else {
           this.hideSubtitle();
         }

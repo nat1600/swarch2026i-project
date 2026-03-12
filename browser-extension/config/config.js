@@ -6,10 +6,10 @@
 const CONFIG = {
 
     backend: {
-      url: 'http://localhost:8000',
+      url: 'http://127.0.0.1:8000/',
       endpoints: {
         translate: '/translate',   // POST — translate a text
-        phrases:   '/phrases/',    // GET / POST / DELETE — saved phrases
+        phrases:   '/phrases',    // GET / POST / DELETE — saved phrases
       }
     },
   

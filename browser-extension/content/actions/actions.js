@@ -26,14 +26,39 @@ const ParlaActions = {
      */
     async savePhrase(originalText, translatedText, sourceLangId = 1, targetLangId = 2) {
       console.log(' Saving phrase:', originalText);
+  // const { parla_user } = await chrome.storage.local.get(['parla_user']);
+/**
+  const { parla_user } = await chrome.storage.local.get(['parla_user']);
+
+  if (!parla_user) {
+    showNotification('Inicia sesión para guardar frases');
+    return;
+  }
+
+  const phrase = {
+    user_id:            parla_user.id,
+    source_language_id: parla_user.learning_language_id,  // francés
+    target_language_id: parla_user.native_language_id,    // español
+    original_text:      originalText,
+    translated_text:    translatedText,
+    pronunciation:      null
+  };
+ * 
+ * 
+ * 
+ */
+
+
+  // TODO: UNCOMMENT THIS WHEN WE HAVE ALREADY SINCRONIced
+
   
       const phrase = {
-        user_id:            1,              // TODO: replace with real user id once auth is in place
-        source_language_id: sourceLangId,
-        target_language_id: targetLangId,
+        user_id:            1,              // TODO: replace with auth user id
+        source_language_id: sourceLangId,   // TODO: user.learning_language_id
+        target_language_id: targetLangId,   // TODO: user.native_language_id
         original_text:      originalText,
         translated_text:    translatedText,
-        pronunciation:      null            // TODO: add pronunciation support
+        pronunciation:      null
       };
   
       // Send to background.js → POST /phrases/

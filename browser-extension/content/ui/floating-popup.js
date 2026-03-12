@@ -173,7 +173,8 @@ const ParlaPopup = (() => {
           e.stopPropagation();
           const translationEl  = floatingPopup.querySelector('.parla-translation-text');
           const translatedText = translationEl?.textContent?.trim() || '';
-          await ParlaActions.savePhrase(selectedText, translatedText, context);
+          //const user = await getCurrentUser();   // TODO:  UNCOMENT WHEN WE HAVE USE// fetch  
+          await ParlaActions.savePhrase(selectedText, translatedText, 1, 2);
         });
 
       floatingPopup.querySelector('#parla-speak')
