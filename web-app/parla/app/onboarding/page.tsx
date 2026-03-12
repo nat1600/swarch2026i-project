@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, User, Globe2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@auth0/nextjs-auth0/client";
@@ -8,6 +8,10 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import {
+  registerUserAction,
+  checkUserExistsAction,
+} from "@/actions/auth/authActions";
 
 import {
   Form,
@@ -43,10 +47,12 @@ const LANGUAGES = [
   { id: "French", name: "Francés", emoji: "🇫🇷" },
 ];
 
+
 export default function OnboardingPage() {
   const { user, isLoading } = useUser();
   const router = useRouter();
   const [isStarting, setIsStarting] = useState(false);
+  const [isCheckingDB, setIsCheckingDB] = useState(true);
 
   // 2. Inicializamos React Hook Form
   const form = useForm<OnboardingFormValues>({
@@ -57,32 +63,77 @@ export default function OnboardingPage() {
     },
   });
 
+  // Protección de ruta
+  useEffect(() => {
+    // Si Auth0 está cargando, no hacemos nada aún
+    if (isLoading) return;
+
+    // Si Auth0 terminó y no hay usuario, lo pateamos al login
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    // Si hay usuario en Auth0, preguntamos a FastAPI si ya existe en la BD
+    const verifyDatabase = async () => {
+      try {
+        const res = await checkUserExistsAction();
+
+        if (res.exists) {
+          router.push("/home");
+        } else {
+          // Es un usuario nuevo legítimo. Apagamos el loader y mostramos el form
+          setIsCheckingDB(false);
+        }
+      } catch (error) {
+        console.error("Error al verificar BD:", error);
+        setIsCheckingDB(false);
+      }
+    };
+
+    verifyDatabase();
+  }, [isLoading, user, router]);
+
+  // Pantalla de carga mientras Auth0 verifica la sesión
+  if (isLoading || isCheckingDB) {
+    return (
+      <div className="min-h-screen w-full bg-parla-mist flex items-center justify-center font-app">
+        <Sparkles className="text-parla-red animate-spin" size={48} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   // 3. Manejador del Submit (Aquí entra Apollo Client)
   const onSubmit = async (values: OnboardingFormValues) => {
-    if (!user?.sub) return;
+    if (!user?.sub || !user?.email) return;
     setIsStarting(true);
 
     try {
-      toast.success("¡Perfil creado! 🎯", {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const payload = {
+        username: values.username,
+        email: user.email,
+        timezone: timeZone,
+        native_language: values.native_language,
+        learning_language: values.learning_language,
+      };
+
+      const result = await registerUserAction(payload);
+
+      if (!result.success) {
+        toast.error("Hubo un problema", { description: result.error });
+        setIsStarting(false);
+        return;
+      }
+
+      toast.success("¡Perfil creado!", {
         description: `Preparando tu aventura, ${values.username}...`,
       });
-
-      // ---------------------------------------------------------
-      // 🚀 AQUÍ VA TU MUTACIÓN DE APOLLO CLIENT
-      // ---------------------------------------------------------
-      /*
-      await createProfileMutation({
-        variables: {
-          auth0Id: user.sub,
-          username: values.username,
-          nativeLanguage: values.native_language,
-          learningLanguage: values.learning_language,
-        }
-      });
-      */
-
-      // Simulamos el tiempo de red
-      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Redirigimos al inicio
       router.push("/home");
@@ -93,21 +144,6 @@ export default function OnboardingPage() {
       console.error(error);
     }
   };
-
-  // Pantalla de carga mientras Auth0 verifica la sesión
-  if (isLoading) {
-    return (
-      <div className="min-h-screen w-full bg-parla-mist flex items-center justify-center font-app">
-        <Sparkles className="text-parla-red animate-spin" size={48} />
-      </div>
-    );
-  }
-
-  // Protección de ruta
-  if (!isLoading && !user) {
-    router.push("/login");
-    return null;
-  }
 
   return (
     <div className="min-h-screen w-full bg-wave font-app flex flex-col items-center justify-center p-4 overflow-hidden selection:bg-parla-blue selection:text-white">

@@ -3,6 +3,7 @@ import { Nunito, Boogaloo } from "next/font/google";
 import { Auth0Provider } from "@auth0/nextjs-auth0";
 import { Toaster } from "sonner";
 import { ApolloWrapper } from "@/lib/apollo-wrapper";
+import { DictionaryProvider } from "@/contexts/DictionaryContext";
 import "./globals.css";
 
 /*
@@ -45,12 +46,16 @@ export default function RootLayout({
          * ApolloWrapper: registra el ApolloClient para Client Components.
          * Permite usar useQuery(), useMutation(), useSuspenseQuery(), etc.
          *
+         * DictionaryProvider: contexto global del diccionario con localStorage.
+         *
          * Toaster: notificaciones globales de Sonner.
          */}
         <Auth0Provider>
           <ApolloWrapper>
-            {children}
-            <Toaster richColors position="top-center" />
+            <DictionaryProvider>
+              {children}
+              <Toaster richColors position="top-center" />
+            </DictionaryProvider>
           </ApolloWrapper>
         </Auth0Provider>
       </body>

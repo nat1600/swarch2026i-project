@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, MessageSquare, BookOpen, LogOut, Gamepad2, Medal } from "lucide-react";
+import { Trophy, MessageSquare, BookOpen, Book, LogOut, Gamepad2, Medal } from "lucide-react";
 
 interface HomeNavBarProps {
   userPicture: string;
@@ -75,6 +75,14 @@ export default function HomeNavBar({
             Mi Bóveda
           </Link>
 
+          <Link
+            href="/dictionary"
+            className="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black text-parla-dark hover:text-white hover:bg-parla-blue transition-colors border-2 border-parla-blue/30 hover:border-parla-blue"
+          >
+            <Book className="h-5 w-5" strokeWidth={2.5} />
+            Diccionario
+          </Link>
+
           {/* Avatar */}
           <Avatar className="w-9 h-9 border-2 border-parla-dark shadow-[0_2px_0_0_#254159]">
             <AvatarImage src={userPicture} />
@@ -84,7 +92,7 @@ export default function HomeNavBar({
           </Avatar>
 
           {/* Logout */}
-          <a href="/api/auth/logout">
+          <Link href="/api/auth/logout">
             <Button
               variant="ghost"
               size="icon"
@@ -92,7 +100,7 @@ export default function HomeNavBar({
             >
               <LogOut className="w-5 h-5" />
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
