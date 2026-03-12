@@ -1,5 +1,3 @@
-from typing import Any
-
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.models.user import User
 from app.models.language import Language
 from app.core.dependencies import get_db
-from app.core.validation import validate_token
+from app.core.validation import get_current_user_sub
 from app.schemas.users import UserResponse, CreateUser
 
 
@@ -20,10 +18,9 @@ router = APIRouter(prefix='/users', tags=['users'])
     response_model=UserResponse
 )
 async def exists(
-        token_payload: dict[str, Any] = Depends(validate_token),
+        auth0_id: str = Depends(get_current_user_sub),
         db: AsyncSession = Depends(get_db),
 ):
-    auth0_id: str = token_payload["sub"]
     user: User = await db.scalar(
         select(User)
         .where(User.auth0_id == auth0_id)
@@ -51,11 +48,9 @@ async def exists(
 )
 async def register(
     body: CreateUser,
-    token_payload: dict[str, Any] = Depends(validate_token),
+    auth0_id: str = Depends(get_current_user_sub),
     db: AsyncSession = Depends(get_db),
 ):
-    auth0_id = token_payload["sub"]
-
     # Check if already registered
     existing: User | None = await db.scalar(
         select(User)

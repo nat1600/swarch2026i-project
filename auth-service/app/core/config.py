@@ -20,10 +20,6 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_port: int
 
-    auth0_domain: str
-    auth0_api_audience: str
-    auth0_algorithms: str = "RS256"
-
     debug: bool = False
     cors_origins: list[str] | None
 
@@ -48,14 +44,6 @@ class Settings(BaseSettings):
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
-
-    @property
-    def issuer(self) -> str:
-        return f"https://{self.auth0_domain}/"
-
-    @property
-    def jwks_url(self) -> str:
-        return f"https://{self.auth0_domain}/.well-known/jwks.json"
 
     @property
     def allowed_origins(self) -> list[str]:

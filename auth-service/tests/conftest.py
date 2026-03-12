@@ -23,7 +23,7 @@ from sqlalchemy.pool import NullPool
 from app.main import app
 from app.models.base import Base
 from app.core.config import get_settings
-from app.core.validation import validate_token
+from app.core.validation import get_current_user_sub
 from app.core.dependencies import get_db
 
 
@@ -108,7 +108,7 @@ async def db(engine):
 # HTTP client fixture
 # ---------------------------------------------------------------------------
 
-FAKE_TOKEN_PAYLOAD = {"sub": "test|user-abc123"}
+FAKE_USER_SUB = "test|user-abc123"
 
 
 @pytest_asyncio.fixture
@@ -117,13 +117,13 @@ async def client(db):
     Async HTTP client wired to the FastAPI app.
 
     Overrides:
-    - validate_token → returns a static fake payload (no Auth0 needed)
-    - get_db         → yields the test session (rolls back after the test)
+    - get_current_user_sub → returns a static fake sub (no Auth0 needed)
+    - get_db               → yields the test session (rolls back after the test)
     """
     async def _get_db_override():
         yield db
 
-    app.dependency_overrides[validate_token] = lambda: FAKE_TOKEN_PAYLOAD
+    app.dependency_overrides[get_current_user_sub] = lambda: FAKE_USER_SUB
     app.dependency_overrides[get_db] = _get_db_override
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:

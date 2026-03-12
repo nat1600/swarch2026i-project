@@ -49,8 +49,6 @@ services:
     environment:
       POSTGRES_HOST: auth_database
       POSTGRES_PORT: 5432
-    ports:
-      - "8000:8000"
     volumes:
       - ./auth-service/app:/app/app
     networks:
@@ -76,8 +74,6 @@ services:
     container_name: web_app
     build: web-app/parla/
     env_file: web-app/parla/.env
-    environment:
-      NEXT_PUBLIC_BACKEND_URL: http://api_gateway:8080
     ports:
       - "3000:3000"
     depends_on:
