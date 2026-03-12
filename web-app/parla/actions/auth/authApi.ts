@@ -4,7 +4,7 @@ import { auth0 } from "@/lib/auth0";
 
 
 const authApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: process.env.NEXT_PUBLIC_AUTH_URL,
   headers: {
     "Content-Type": "application/json",
   },

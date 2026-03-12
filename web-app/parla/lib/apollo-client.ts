@@ -24,7 +24,7 @@ export const { getClient, query, PreloadQuery } = registerApolloClient(() => {
   return new ApolloClient({
     cache: new InMemoryCache(),
     link: new HttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:4000/graphql",
+      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://api_gateway:8080/api/core/graphql",
       // El fetch nativo de Node.js / Next.js se usa por defecto en el servidor.
       fetchOptions: { cache: "no-store" },
     }),
