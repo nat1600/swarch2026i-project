@@ -37,6 +37,21 @@
       </div>
     </div>
 
+    <!-- AUTH STATUS -->
+    <div class="auth-banner" id="auth-banner">
+      <div class="auth-status auth-loggedout" id="auth-loggedout">
+        <i class="bi bi-shield-lock"></i>
+        <span>Inicia sesión para sincronizar</span>
+        <button class="auth-btn auth-btn--login" id="btn-login">Entrar</button>
+      </div>
+      <div class="auth-status auth-loggedin" id="auth-loggedin" style="display:none">
+        <i class="bi bi-shield-check"></i>
+        <span>Sesión activa</span>
+        <button class="auth-btn auth-btn--logout" id="btn-logout">Salir</button>
+      </div>
+      <p class="auth-error" id="auth-error" style="display:none"></p>
+    </div>
+
     <!-- QUICK ACTIONS -->
     <div class="quick-actions-area">
       <p class="quick-actions-label">¿Qué quieres hacer?</p>

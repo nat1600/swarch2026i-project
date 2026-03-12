@@ -20,6 +20,13 @@ const savedCount       = document.getElementById('saved-count');
 const phrasesContainer = document.getElementById('phrases-container');
 const searchInput      = document.getElementById('search-input');
 
+// Auth elements
+const authLoggedOut = document.getElementById('auth-loggedout');
+const authLoggedIn  = document.getElementById('auth-loggedin');
+const btnLogin      = document.getElementById('btn-login');
+const btnLogout     = document.getElementById('btn-logout');
+const authError     = document.getElementById('auth-error');
+
 // Quick action buttons
 const btnPractice = document.getElementById('btn-practice');
 const btnStats    = document.getElementById('btn-stats');
@@ -50,11 +57,75 @@ let allPhrases = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadToggleState();
+  await loadAuthState();
   setupToggleListener();
+  setupAuthListeners();
   setupTabListeners();
   setupSearchListener();
   setupQuickActions();
 });
+
+// ===========================
+// AUTH
+// ===========================
+
+async function loadAuthState() {
+  chrome.runtime.sendMessage({ action: 'getAuthState' }, (res) => {
+    updateAuthUI(res?.isLoggedIn ?? false);
+  });
+}
+
+function updateAuthUI(isLoggedIn) {
+  if (authLoggedOut) authLoggedOut.style.display = isLoggedIn ? 'none' : 'flex';
+  if (authLoggedIn)  authLoggedIn.style.display  = isLoggedIn ? 'flex' : 'none';
+  showAuthError('');
+}
+
+function showAuthError(message) {
+  if (!authError) return;
+  authError.textContent = message;
+  authError.style.display = message ? 'block' : 'none';
+}
+
+function setupAuthListeners() {
+  btnLogin?.addEventListener('click', () => {
+    showAuthError('');
+    btnLogin.disabled = true;
+    btnLogin.textContent = '...';
+    chrome.runtime.sendMessage({ action: 'login' }, (res) => {
+      btnLogin.disabled = false;
+      btnLogin.textContent = 'Entrar';
+
+      if (chrome.runtime.lastError) {
+        const msg = `No response from background: ${chrome.runtime.lastError.message}`;
+        showAuthError(msg);
+        console.error(msg);
+        return;
+      }
+
+      if (res?.success) updateAuthUI(true);
+      else {
+        const msg = res?.error || 'No se pudo iniciar sesion';
+        showAuthError(msg);
+        console.error('Login failed:', msg);
+      }
+    });
+  });
+
+  btnLogout?.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'logout' }, (res) => {
+      if (res?.success) updateAuthUI(false);
+    });
+  });
+}
+
+/** Helper: fetch with Bearer token from session storage. */
+async function authenticatedFetch(url, options = {}) {
+  const data = await chrome.storage.session.get(['access_token']);
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (data.access_token) headers['Authorization'] = `Bearer ${data.access_token}`;
+  return fetch(url, { ...options, headers });
+}
 
 // ===========================
 // QUICK ACTIONS
@@ -124,7 +195,7 @@ async function loadPhrases() {
       </div>
     `;
 
-    const response = await fetch(`${CONFIG.backend.url}${CONFIG.backend.endpoints.phrases}`);
+    const response = await authenticatedFetch(`${CONFIG.backend.url}${CONFIG.backend.endpoints.phrases}`);
     if (!response.ok) throw new Error('Failed to fetch phrases');
 
     allPhrases = await response.json();
@@ -137,7 +208,7 @@ async function loadPhrases() {
       <div class="empty-state">
         <i class="bi bi-wifi-off"></i>
         <h3>No se pudo conectar</h3>
-        <p>Verifica que el backend esté corriendo en localhost:8000</p>
+        <p>Verifica tu conexión o inicia sesión</p>
       </div>
     `;
   }
@@ -179,7 +250,7 @@ function buildPhraseCard(phrase) {
 
 async function deletePhrase(id) {
   try {
-    const response = await fetch(
+    const response = await authenticatedFetch(
       `${CONFIG.backend.url}${CONFIG.backend.endpoints.phrases}${id}`,
       { method: 'DELETE' }
     );

@@ -1,35 +1,30 @@
 /**
- * background.js — Service Worker
+ * service-worker.js — Parla Extension Background
  *
  * Runs in the background, separate from any web page.
- * Its main job is to make HTTP requests to the core-service on behalf
- * of the content scripts, since content scripts can't call localhost
- * directly due to CORS restrictions.
- *
- * Listens for two messages:
- *   - 'translate'   → POST /translate
- *   - 'savePhrase'  → POST /phrases/
+ * Handles:
+ *   - Auth0 PKCE authentication (login, logout, silent SSO)
+ *   - HTTP requests to the API Gateway with Bearer token
+ *   - Message relay from content scripts
  */
 
-const BASE_URL = 'http://127.0.0.1:8000';
+importScripts('./auth.js');
+
+const BASE_URL = 'http://localhost:8080';
 
 // ===========================
 // API HELPER
 // ===========================
 
-/**
- * Makes a JSON request to the core-service.
- * Throws an error if the response is not OK.
- *
- * @param {string} endpoint - e.g. '/translate'
- * @param {string} method   - HTTP method (GET, POST, DELETE...)
- * @param {object} body     - Request body (only for non-GET requests)
- * @returns {Promise<object>} Parsed JSON response
- */
 async function callApi(endpoint, method = 'GET', body = null) {
+  const token = await getAccessToken();
+
   const options = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
   };
 
   if (body && method !== 'GET') {
@@ -37,6 +32,11 @@ async function callApi(endpoint, method = 'GET', body = null) {
   }
 
   const response = await fetch(BASE_URL + endpoint, options);
+
+  if (response.status === 401) {
+    await clearTokens();
+    throw { message: 'No autenticado', code: 401 };
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }));
@@ -50,21 +50,42 @@ async function callApi(endpoint, method = 'GET', body = null) {
 // MESSAGE LISTENER
 // ===========================
 
-/**
- * Single listener for all messages coming from content scripts.
- * Returns true to indicate the response will be sent asynchronously.
- */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
+  // ── Auth: login ──
+  if (request.action === 'login') {
+    login()
+      .then(() => getAuthState())
+      .then(state => sendResponse({ success: true, ...state }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  // ── Auth: logout ──
+  if (request.action === 'logout') {
+    logout()
+      .then(() => sendResponse({ success: true, isLoggedIn: false }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  // ── Auth: state ──
+  if (request.action === 'getAuthState') {
+    getAuthState()
+      .then(state => sendResponse({ success: true, ...state }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  // ── Toggle extension on/off ──
   if (request.action === 'toggleExtension') {
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach(tab => {
-        // Only send to real http/https tabs (not chrome:// etc.)
         if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
           chrome.tabs.sendMessage(tab.id, {
             action: 'toggleExtension',
             active: request.active
-          }).catch(() => {}); // ignore tabs where content script isn't loaded
+          }).catch(() => {});
         }
       });
     });
@@ -72,28 +93,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  // translate
+  // ── Translate ──
   if (request.action === 'translate') {
-    callApi('/translate/', 'POST', {
+    callApi('/api/core/translate/', 'POST', {
       text:        request.text,
       source_lang: request.source_lang,
       target_lang: request.target_lang
     })
       .then(data  => {
-        console.log(' Translation data:', data);
+        console.log('Translation data:', data);
         sendResponse({ success: true, translation: data.translated_text });
       })
       .catch(error => sendResponse({ success: false, error: error.message }));
-  
     return true;
   }
 
-// save
+  // ── Save phrase ──
   if (request.action === 'savePhrase') {
-    callApi('/phrases/', 'POST', request.phrase)
+    callApi('/api/core/phrases/', 'POST', request.phrase)
       .then(data  => sendResponse({ success: true,  savedPhrase: data }))
       .catch(error => sendResponse({ success: false, error: error.message || error }));
-
     return true;
   }
 

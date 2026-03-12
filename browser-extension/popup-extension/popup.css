@@ -254,8 +254,70 @@
   }
   
   /* ===========================
-     QUICK ACTIONS
-     =========================== */
+   AUTH BANNER
+   =========================== */
+
+.auth-banner {
+  padding:       8px 20px;
+  background:    var(--parla-white);
+  border-bottom: 1px solid var(--parla-accent);
+}
+
+.auth-status {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  font-size:   11px;
+  font-weight: 700;
+}
+
+.auth-loggedout       { color: var(--parla-text-muted); }
+.auth-loggedout i     { font-size: 15px; }
+.auth-loggedin        { color: #1a6b5a; }
+.auth-loggedin i      { font-size: 15px; }
+.auth-status span     { flex: 1; }
+
+.auth-btn {
+  border:        none;
+  border-radius: 8px;
+  padding:       5px 14px;
+  font-family:   inherit;
+  font-size:     11px;
+  font-weight:   800;
+  cursor:        pointer;
+  transition:    background var(--parla-transition);
+}
+
+.auth-btn--login {
+  background: var(--color-parla-blue);
+  color:      var(--parla-white);
+}
+.auth-btn--login:hover {
+  background: var(--color-parla-dark);
+}
+.auth-btn--login:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth-btn--logout {
+  background: var(--parla-bg);
+  color:      var(--parla-text-muted);
+}
+.auth-btn--logout:hover {
+  background: #d4e4ea;
+}
+
+.auth-error {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-parla-red);
+}
+
+/* ===========================
+   QUICK ACTIONS
+   =========================== */
   
   .quick-actions-area {
     padding: 18px 20px 12px;
