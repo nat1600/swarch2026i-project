@@ -1,6 +1,7 @@
 package com.carlos.gamificationservice.services;
 
 import com.carlos.gamificationservice.dtos.UserStreakMapper;
+import com.carlos.gamificationservice.dtos.dtosImpl.UserStreakDTO;
 import com.carlos.gamificationservice.models.UserStreak;
 import com.carlos.gamificationservice.repository.UserStreakRepository;
 import com.carlos.gamificationservice.services.servicesImpl.UserStreakServiceImplementation;
@@ -10,15 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.LocalDate;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // KEY TAKEAWAY
 // @ExtendWith(MockitoExtension.class) --> better for unit tests since it processes simple mocking annotations.
@@ -41,28 +37,54 @@ public class UserStreakServiceTest {
     // userStreakMapper.toUserStreakDTO(userStreakRepository.getUserStreakByUserName(userName));
 
     @Test
-    public void testRegisterUserActivity() throws Exception {
-
-        LocalDate testDate = LocalDate.of(2024, 3, 11);
-        UserStreak currentUserStreak = new UserStreak(1L,"Ninja_Poliglota", 12, 13, testDate);
-
-        when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota")).thenReturn(currentUserStreak);
-        when(userStreakRepository.save(currentUserStreak)).thenReturn(null);
-        when(userStreakMapper.toUserStreakDTO(currentUserStreak));
-
-        /*
+    public void testRegisterUserActivity1() throws Exception {
 
         LocalDate today = LocalDate.now();
+
+        UserStreak newUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 1, today);
+        UserStreakDTO userStreakDTO = new UserStreakDTO(1,1);
+
+        when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota"))
+                .thenReturn(null)
+                .thenReturn(newUserActivity);
+
+        when(userStreakMapper.toUserStreakDTO(newUserActivity)).thenReturn(userStreakDTO);
+
+        UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
+
+        assertEquals(1, result.getCurrentStreak());
+        assertEquals(1, result.getLongestStreak());
+
+    }
+
+    @Test
+    public void testRegisterUserActivity2() throws Exception {
+
+        LocalDate lastDayOfActivity = LocalDate.now().minusDays(1);
+
+        UserStreak currentUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 1, lastDayOfActivity);
+        UserStreakDTO userStreakDTO = new UserStreakDTO(1,2);
+
+        when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota"))
+                .thenReturn(currentUserActivity);
+        //.thenReturn(newUserActivity);
+
+        // when(userStreakMapper.toUserStreakDTO(newUserActivity)).thenReturn(userStreakDTO);
+
+        // Mockito handles this bi itself, hence we don't need to mock this kind of methods were nothing is returned.
+        //doNothing().when(userStreakRepository).save(newUserActivity);/**/
+
+        UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
+
+        assertEquals(1, result.getCurrentStreak());
+        assertEquals(1, result.getLongestStreak());
+
+        /*  LocalDate today = LocalDate.now();
 
         UserStreak currentUserStreak = userStreakRepository.getUserStreakByUserName(userName);
 
         if (currentUserStreak == null) {
-            UserStreak newUserActivity = new UserStreak();
-            newUserActivity.setUserName(userName);
-            newUserActivity.setCurrentStreak(1);
-            newUserActivity.setLastDateOfActivity(today);
-            newUserActivity.setLongestStreak(1);
-            userStreakRepository.save(newUserActivity);
+            // tested
         } else {
             long daysBetween = ChronoUnit.DAYS.between(currentUserStreak.getLastDateOfActivity(), today);
 
@@ -83,8 +105,7 @@ public class UserStreakServiceTest {
 
         return userStreakMapper.toUserStreakDTO(userStreakRepository.getUserStreakByUserName(userName));
 
-
-        * */
-
+        */
     }
+
 }
