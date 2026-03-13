@@ -1,4 +1,7 @@
+"use server";
+
 import axios from "axios";
+import { auth0 } from "../auth0";
 import type {
   Category,
   Thread,
@@ -14,10 +17,19 @@ const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8003",
 });
 
-/** Build Axios request config with the X-User-Id header when a userId is provided. */
-function authHeaders(userId?: string) {
-  return userId ? { headers: { "X-User-Id": userId } } : {};
-}
+api.interceptors.request.use(async (config) => {
+  try {
+    const { token } = await auth0.getAccessToken()
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (error) {
+    console.error("Error occurred while fetching session:", error);
+  }
+  return config;
+});
+
 
 // ── Categories ──────────────────────────────────────────────
 
@@ -33,13 +45,11 @@ export async function getCategory(id: string): Promise<Category> {
 
 export async function createCategory(
   name: string,
-  description: string,
-  userId?: string
+  description: string
 ): Promise<Category> {
   const { data } = await api.post<Category>(
     "/categories",
-    { name, description },
-    authHeaders(userId)
+    { name, description }
   );
   return data;
 }
@@ -77,33 +87,31 @@ export async function getThread(id: string): Promise<Thread> {
 }
 
 export async function createThread(
-  payload: ThreadCreatePayload,
-  userId?: string
+  payload: ThreadCreatePayload
 ): Promise<Thread> {
-  const { data } = await api.post<Thread>("/threads", payload, authHeaders(userId));
+  const { data } = await api.post<Thread>("/threads", payload);
   return data;
 }
 
 export async function updateThread(
   id: string,
-  payload: ThreadUpdatePayload,
-  userId?: string
+  payload: ThreadUpdatePayload
 ): Promise<Thread> {
-  const { data } = await api.patch<Thread>(`/threads/${id}`, payload, authHeaders(userId));
+  const { data } = await api.patch<Thread>(`/threads/${id}`, payload);
   return data;
 }
 
-export async function deleteThread(id: string, userId?: string): Promise<void> {
-  await api.delete(`/threads/${id}`, authHeaders(userId));
+export async function deleteThread(id: string): Promise<void> {
+  await api.delete(`/threads/${id}`);
 }
 
-export async function likeThread(id: string, userId?: string): Promise<Thread> {
-  const { data } = await api.post<Thread>(`/threads/${id}/like`, null, authHeaders(userId));
+export async function likeThread(id: string): Promise<Thread> {
+  const { data } = await api.post<Thread>(`/threads/${id}/like`, null);
   return data;
 }
 
-export async function unlikeThread(id: string, userId?: string): Promise<Thread> {
-  const { data } = await api.delete<Thread>(`/threads/${id}/like`, authHeaders(userId));
+export async function unlikeThread(id: string): Promise<Thread> {
+  const { data } = await api.delete<Thread>(`/threads/${id}/like`);
   return data;
 }
 
@@ -122,37 +130,34 @@ export async function getReplies(
 
 export async function createReply(
   threadId: string,
-  payload: ReplyCreatePayload,
-  userId?: string
+  payload: ReplyCreatePayload
 ): Promise<Reply> {
   const { data } = await api.post<Reply>(
     `/threads/${threadId}/replies`,
-    payload,
-    authHeaders(userId)
+    payload
   );
   return data;
 }
 
 export async function updateReply(
   id: string,
-  payload: ReplyUpdatePayload,
-  userId?: string
+  payload: ReplyUpdatePayload
 ): Promise<Reply> {
-  const { data } = await api.patch<Reply>(`/replies/${id}`, payload, authHeaders(userId));
+  const { data } = await api.patch<Reply>(`/replies/${id}`, payload);
   return data;
 }
 
-export async function deleteReply(id: string, userId?: string): Promise<void> {
-  await api.delete(`/replies/${id}`, authHeaders(userId));
+export async function deleteReply(id: string): Promise<void> {
+  await api.delete(`/replies/${id}`);
 }
 
-export async function likeReply(id: string, userId?: string): Promise<Reply> {
-  const { data } = await api.post<Reply>(`/replies/${id}/like`, null, authHeaders(userId));
+export async function likeReply(id: string): Promise<Reply> {
+  const { data } = await api.post<Reply>(`/replies/${id}/like`, null);
   return data;
 }
 
-export async function unlikeReply(id: string, userId?: string): Promise<Reply> {
-  const { data } = await api.delete<Reply>(`/replies/${id}/like`, authHeaders(userId));
+export async function unlikeReply(id: string): Promise<Reply> {
+  const { data } = await api.delete<Reply>(`/replies/${id}/like`);
   return data;
 }
 
