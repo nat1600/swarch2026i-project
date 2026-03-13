@@ -31,10 +31,6 @@ public class UserStreakServiceTest {
     @InjectMocks
     private UserStreakServiceImplementation userStreakServiceImplementation;
 
-    // userStreakRepository.getUserStreakByUserName(userName);
-    // userStreakRepository.save(newUserActivity);
-    // userStreakRepository.save(currentUserStreak);
-    // userStreakMapper.toUserStreakDTO(userStreakRepository.getUserStreakByUserName(userName));
 
     @Test
     public void testRegisterUserActivity1() throws Exception {
@@ -50,6 +46,9 @@ public class UserStreakServiceTest {
 
         when(userStreakMapper.toUserStreakDTO(newUserActivity)).thenReturn(userStreakDTO);
 
+        // Mockito handles this bi itself, hence we don't need to mock this kind of methods were nothing is returned.
+        //doNothing().when(userStreakRepository).save(newUserActivity);
+
         UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
 
         assertEquals(1, result.getCurrentStreak());
@@ -63,49 +62,67 @@ public class UserStreakServiceTest {
         LocalDate lastDayOfActivity = LocalDate.now().minusDays(1);
 
         UserStreak currentUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 1, lastDayOfActivity);
-        UserStreakDTO userStreakDTO = new UserStreakDTO(1,2);
+        UserStreak updatedUserActivity = new UserStreak(1L,"Ninja_Poliglota", 2, 2, lastDayOfActivity.plusDays(1));
+
+        UserStreakDTO userStreakDTO = new UserStreakDTO(2,2);
 
         when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota"))
-                .thenReturn(currentUserActivity);
-        //.thenReturn(newUserActivity);
+                .thenReturn(currentUserActivity)
+                .thenReturn(updatedUserActivity);
 
-        // when(userStreakMapper.toUserStreakDTO(newUserActivity)).thenReturn(userStreakDTO);
+        when(userStreakMapper.toUserStreakDTO(updatedUserActivity)).thenReturn(userStreakDTO);
 
-        // Mockito handles this bi itself, hence we don't need to mock this kind of methods were nothing is returned.
-        //doNothing().when(userStreakRepository).save(newUserActivity);/**/
+        UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
+
+        assertEquals(2, result.getCurrentStreak());
+        assertEquals(2, result.getLongestStreak());
+
+    }
+
+    @Test
+    public void testRegisterUserActivity3() throws Exception {
+
+        LocalDate lastDayOfActivity = LocalDate.now().minusDays(1);
+
+        UserStreak currentUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 15, lastDayOfActivity);
+        UserStreak updatedUserActivity = new UserStreak(1L,"Ninja_Poliglota", 2, 15, lastDayOfActivity.plusDays(1));
+
+        UserStreakDTO userStreakDTO = new UserStreakDTO(2,15);
+
+        when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota"))
+                .thenReturn(currentUserActivity)
+                .thenReturn(updatedUserActivity);
+
+        when(userStreakMapper.toUserStreakDTO(updatedUserActivity)).thenReturn(userStreakDTO);
+
+        UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
+
+        assertEquals(2, result.getCurrentStreak());
+        assertEquals(15, result.getLongestStreak());
+
+    }
+
+    @Test
+    public void testRegisterUserActivity4() throws Exception {
+
+        LocalDate lastDayOfActivity = LocalDate.now().minusDays(15);
+
+        UserStreak currentUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 15, lastDayOfActivity);
+        UserStreak updatedUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 15, lastDayOfActivity.plusDays(15));
+
+        UserStreakDTO userStreakDTO = new UserStreakDTO(1,15);
+
+        when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota"))
+                .thenReturn(currentUserActivity)
+                .thenReturn(updatedUserActivity);
+
+        when(userStreakMapper.toUserStreakDTO(updatedUserActivity)).thenReturn(userStreakDTO);
 
         UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
 
         assertEquals(1, result.getCurrentStreak());
-        assertEquals(1, result.getLongestStreak());
+        assertEquals(15, result.getLongestStreak());
 
-        /*  LocalDate today = LocalDate.now();
-
-        UserStreak currentUserStreak = userStreakRepository.getUserStreakByUserName(userName);
-
-        if (currentUserStreak == null) {
-            // tested
-        } else {
-            long daysBetween = ChronoUnit.DAYS.between(currentUserStreak.getLastDateOfActivity(), today);
-
-            if (daysBetween == 1) {
-                int currentStreak = currentUserStreak.getCurrentStreak();
-                currentUserStreak.setCurrentStreak(currentStreak + 1);
-                currentUserStreak.setLastDateOfActivity(today);
-                if ((currentStreak + 1) > currentUserStreak.getLongestStreak()) {
-                    currentUserStreak.setLongestStreak(currentStreak + 1);
-                }
-            } else if (daysBetween > 1) {
-                currentUserStreak.setCurrentStreak(1);
-                currentUserStreak.setLastDateOfActivity(today);
-            }
-
-            userStreakRepository.save(currentUserStreak);
-        }
-
-        return userStreakMapper.toUserStreakDTO(userStreakRepository.getUserStreakByUserName(userName));
-
-        */
     }
 
 }
