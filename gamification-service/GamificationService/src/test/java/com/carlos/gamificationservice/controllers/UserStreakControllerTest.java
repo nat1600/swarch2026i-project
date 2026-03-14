@@ -58,4 +58,20 @@ public class UserStreakControllerTest {
                         .andExpect(status().isInternalServerError());
     }
 
+    @Test
+    public void testGetUserActivity() throws Exception {
+
+        String userName = "Pedro_Sánchez_11";
+        UserStreakDTO userStreakDTO = new UserStreakDTO(12, 13);
+
+        when(userStreakService.getUserActivity(userName)).thenReturn(userStreakDTO);
+
+        mockMvc.perform(get(baseUrl + "/getUserStreakData")
+                        .param("userName", userName)
+                        .characterEncoding("UTF-8"))
+                .andExpect(jsonPath("$.currentStreak").value(12))
+                .andExpect(jsonPath("$.longestStreak").value(13))
+                .andExpect(status().isOk());
+    }
+
 }
