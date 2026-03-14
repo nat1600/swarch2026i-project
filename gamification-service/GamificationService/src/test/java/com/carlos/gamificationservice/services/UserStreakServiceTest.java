@@ -125,4 +125,22 @@ public class UserStreakServiceTest {
 
     }
 
+    @Test
+    public void getUserActivity() throws Exception {
+
+        UserStreak currentUserActivity = new UserStreak(1L,"Ninja_Poliglota", 1, 15, LocalDate.now());
+
+        UserStreakDTO userStreakDTO = new UserStreakDTO(1,15);
+
+        when(userStreakRepository.getUserStreakByUserName("Ninja_Poliglota"))
+                .thenReturn(currentUserActivity);
+
+        when(userStreakMapper.toUserStreakDTO(currentUserActivity)).thenReturn(userStreakDTO);
+
+        UserStreakDTO result = userStreakServiceImplementation.registerUserActivity("Ninja_Poliglota");
+
+        assertEquals(1, result.getCurrentStreak());
+        assertEquals(15, result.getLongestStreak());
+
+    }
 }
