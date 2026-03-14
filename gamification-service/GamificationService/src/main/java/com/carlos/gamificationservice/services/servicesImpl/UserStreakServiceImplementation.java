@@ -54,4 +54,9 @@ public class UserStreakServiceImplementation implements UserStreakService {
 
         return userStreakMapper.toUserStreakDTO(userStreakRepository.getUserStreakByUserName(userName));
     }
+
+    @Override
+    public UserStreakDTO getUserActivity(String userName) {
+        return userStreakMapper.toUserStreakDTO(userStreakRepository.getUserStreakByUserName(userName));
+    }
 }
