@@ -28,6 +28,7 @@ public class UserStreakServiceImplementation implements UserStreakService {
 
         if (currentUserStreak == null) {
             UserStreak newUserActivity = new UserStreak();
+            // This could be corrected with a dto
             newUserActivity.setUserName(userName);
             newUserActivity.setCurrentStreak(1);
             newUserActivity.setLastDateOfActivity(today);

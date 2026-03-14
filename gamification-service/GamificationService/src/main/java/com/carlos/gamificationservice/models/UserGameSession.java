@@ -12,20 +12,21 @@ import java.time.LocalDate;
 @Entity
 @Data
 @AllArgsConstructor
-public class UserStreak {
+public class UserGameSession {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long streakId;
+    private Long gameSessionRecordId;
 
-    private String userName; // Username. Useful for keeping the records associated to the user.
+    private String userName;
 
-    private Integer currentStreak;
-    private Integer longestStreak;
+    private String gamePlayed;
+    private Integer points;
 
-    private LocalDate lastDateOfActivity;
+    private LocalDate sessionDate;
 
-    public UserStreak() {
+    public UserGameSession() {
 
     }
 }
+
