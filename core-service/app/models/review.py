@@ -12,7 +12,7 @@ class ReviewSession(Base):
     __tablename__ = 'review_sessions'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(
+    user_id: Mapped[str] = mapped_column(
         index=True, comment="User who started this session; references auth-service"
     )
 

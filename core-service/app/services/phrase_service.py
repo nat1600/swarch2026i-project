@@ -1,28 +1,32 @@
+from decimal import Decimal
+from datetime import date, datetime, time, timezone
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.phrase import Phrase, ReviewData
-from app.schemas.phrases import PhraseCreate
-from datetime import date
 from app.services.sm2 import apply_sm2
+from app.schemas.phrases import PhraseCreate
+from app.models.phrase import Phrase, ReviewData
+
 
 class PhraseService:
     def __init__(self, db_session: Session):
         self.db = db_session
 
-    def get_all_phrases(self) -> list[Phrase]:
-        return self.db.query(Phrase).all()
+    def get_all_phrases(self, user_id: str) -> list[Phrase]:
+        stmt = select(Phrase).where(Phrase.user_id == user_id)
+        return list(self.db.execute(stmt).scalars().all())
     
     def get_phrase(self, phrase_id: int) -> Phrase | None:
         return self.db.query(Phrase).filter(
             Phrase.id == phrase_id,
             Phrase.active == True
         ).first()
-
     
-    def create_phrase(self, data: PhraseCreate) -> Phrase:
+    def create_phrase(self, data: PhraseCreate, user_id: str) -> Phrase:
         try:
             phrase = Phrase(
-                user_id=data.user_id,
+                user_id=user_id,
                 source_language_id=data.source_language_id,
                 target_language_id=data.target_language_id,
                 original_text=data.original_text,
@@ -50,23 +54,23 @@ class PhraseService:
             self.db.commit()
 
     ## THIS STARTS TO WORK WITH SM2
-    def get_due_phrases(self, user_id: int) -> list[Phrase]:
+    def get_due_phrases(self, user_id: str) -> list[Phrase]:
         today = date.today()
-        return self.db.query(Phrase).filter(
+        stmt = select(Phrase).where(
             Phrase.active == True,
             Phrase.user_id == user_id,
             Phrase.next_review_date <= today,
-        ).all()
+        )
+        return list(self.db.execute(stmt).scalars().all())
     
     def review_phrase(self, phrase_id: int, quality: int) -> ReviewData:
         phrase = self.get_phrase(phrase_id)
 
         if not phrase:
             raise ValueError("Phrase not found")
-        
-        review = self.db.query(ReviewData).filter(
-            ReviewData.phrase_id == phrase_id
-        ).first()
+
+        stmt = select(ReviewData).where(ReviewData.phrase_id == phrase_id)
+        review: ReviewData = self.db.execute(stmt).scalars().first()
 
         repetitions, easiness, interval, next_review = apply_sm2(
             quality=quality,
@@ -76,13 +80,14 @@ class PhraseService:
         )
 
         review.repetition_number = repetitions
-        review.easiness_factor = easiness
+        review.easiness_factor = Decimal(str(easiness))
         review.inner_repetition_interval = interval
-        phrase.next_review_date = next_review
-        phrase.last_reviewed_date = date.today()
+        phrase.next_review_date = datetime.combine(
+            next_review, time.min, tzinfo=timezone.utc
+        )
+        phrase.last_reviewed_date = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(review)
         self.db.refresh(phrase)
         return review
-      
