@@ -1,5 +1,6 @@
 package com.carlos.gamificationservice.services;
 
+import com.carlos.gamificationservice.dtos.dtosImpl.BooleanDTO;
 import com.carlos.gamificationservice.dtos.dtosImpl.UserGameSessionDTO;
 import com.carlos.gamificationservice.models.UserGameSession;
 
@@ -8,9 +9,9 @@ import java.util.List;
 
 public interface UserGameSessionService {
 
-    boolean saveUserGameSession(UserGameSessionDTO newUserGameSession);
-    boolean deleteAllUserGameSessions(String userName);
-    boolean deleteAllUserGameSessionsPerDate(String userName, LocalDate intendedDate);
+    UserGameSessionDTO saveUserGameSession(UserGameSessionDTO newUserGameSession);
+    BooleanDTO deleteAllUserGameSessions(String userName);
+    BooleanDTO deleteAllUserGameSessionsPerDate(String userName, LocalDate intendedDate);
 
     List<UserGameSession> getAllUserGameSessions(String userName);
     List<UserGameSession> getAllUserGameSessionsPerDate(String userName, LocalDate intendedDate);

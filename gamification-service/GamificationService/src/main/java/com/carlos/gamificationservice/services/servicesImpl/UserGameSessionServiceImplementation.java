@@ -1,6 +1,7 @@
 package com.carlos.gamificationservice.services.servicesImpl;
 
 import com.carlos.gamificationservice.dtos.UserGameSessionMapper;
+import com.carlos.gamificationservice.dtos.dtosImpl.BooleanDTO;
 import com.carlos.gamificationservice.dtos.dtosImpl.UserGameSessionDTO;
 import com.carlos.gamificationservice.models.UserGameSession;
 import com.carlos.gamificationservice.repository.UserGameSessionRepository;
@@ -20,17 +21,17 @@ public class UserGameSessionServiceImplementation implements UserGameSessionServ
     private final UserGameSessionMapper userGameSessionMapper;
 
     @Override
-    public boolean saveUserGameSession(UserGameSessionDTO newUserGameSession) {
+    public UserGameSessionDTO saveUserGameSession(UserGameSessionDTO newUserGameSession) {
 
-        boolean result;
+        UserGameSessionDTO result;
 
         try {
             UserGameSession userGameSession = userGameSessionMapper.toUserGameSession(newUserGameSession);
             userGameSessionRepository.save(userGameSession); // Saves new game session data into the database.
-            result = true;
+            result = newUserGameSession;
         } catch (Exception e) {
             e.printStackTrace();
-            result = false;
+            result = null;
         }
 
         return result;
@@ -38,15 +39,15 @@ public class UserGameSessionServiceImplementation implements UserGameSessionServ
 
     @Override
     @Transactional
-    public boolean deleteAllUserGameSessions(String userName) {
-        boolean result;
+    public BooleanDTO deleteAllUserGameSessions(String userName) {
+        BooleanDTO result = new BooleanDTO();
 
         try {
             userGameSessionRepository.deleteUserGameSessionsByUserName(userName);
-            result = true;
+            result.setStatus(true);
         } catch (Exception e) {
             e.printStackTrace();
-            result = false;
+            result.setStatus(false);
         }
 
         return result;
@@ -54,15 +55,15 @@ public class UserGameSessionServiceImplementation implements UserGameSessionServ
 
     @Override
     @Transactional
-    public boolean deleteAllUserGameSessionsPerDate(String userName, LocalDate intendedDate) {
-        boolean result;
+    public BooleanDTO deleteAllUserGameSessionsPerDate(String userName, LocalDate intendedDate) {
+        BooleanDTO result = new BooleanDTO();
 
         try {
             userGameSessionRepository.deleteByUserNameAndSessionDate(userName, intendedDate);
-            result = true;
+            result.setStatus(true);
         } catch (Exception e) {
             e.printStackTrace();
-            result = false;
+            result.setStatus(false);
         }
 
         return result;

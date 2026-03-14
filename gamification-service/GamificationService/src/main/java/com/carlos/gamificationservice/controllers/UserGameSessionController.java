@@ -1,5 +1,6 @@
 package com.carlos.gamificationservice.controllers;
 
+import com.carlos.gamificationservice.dtos.dtosImpl.BooleanDTO;
 import com.carlos.gamificationservice.dtos.dtosImpl.UserGameSessionDTO;
 import com.carlos.gamificationservice.models.UserGameSession;
 import com.carlos.gamificationservice.services.UserGameSessionService;
@@ -19,40 +20,40 @@ public class UserGameSessionController {
     private final UserGameSessionService userGameSessionService;
 
     @PostMapping("/saveGameSession")
-    public ResponseEntity<Boolean> postGameSessionData(@RequestBody UserGameSessionDTO newGameSessionData) {
+    public ResponseEntity<UserGameSessionDTO> postGameSessionData(@RequestBody UserGameSessionDTO newGameSessionData) {
 
-        boolean result = userGameSessionService.saveUserGameSession(newGameSessionData);
+        UserGameSessionDTO result = userGameSessionService.saveUserGameSession(newGameSessionData);
 
-        if (result) {
-            return new ResponseEntity<>(true, HttpStatus.CREATED);
+        if (result != null) {
+            return new ResponseEntity<>(result, HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @DeleteMapping("/deleteAllUserGameSessions")
-    public ResponseEntity<Boolean> deleteAllUserGameSessions(@RequestParam String userName) {
+    public ResponseEntity<BooleanDTO> deleteAllUserGameSessions(@RequestParam String userName) {
 
-        boolean result = userGameSessionService.deleteAllUserGameSessions(userName);
+        BooleanDTO result = userGameSessionService.deleteAllUserGameSessions(userName);
 
-        if (result) {
-            return new ResponseEntity<>(true, HttpStatus.OK);
+        if (result.isStatus()) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @DeleteMapping("/deleteAllUserGameSessionsPerDate")
-    public ResponseEntity<Boolean> deleteAllUserGameSessionsPerDate(@RequestParam String userName, @RequestParam LocalDate intendedDate) {
+    public ResponseEntity<BooleanDTO> deleteAllUserGameSessionsPerDate(@RequestParam String userName, @RequestParam LocalDate intendedDate) {
 
-        boolean result = userGameSessionService.deleteAllUserGameSessionsPerDate(userName, intendedDate);
+        BooleanDTO result = userGameSessionService.deleteAllUserGameSessionsPerDate(userName, intendedDate);
 
-        if (result) {
-            return new ResponseEntity<>(true, HttpStatus.OK);
+        if (result.isStatus()) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -95,8 +96,5 @@ public class UserGameSessionController {
         }
 
     }
-
-
-
 
 }
