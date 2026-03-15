@@ -48,8 +48,7 @@ export function ThreadComposer({ categories, onCreated }: ThreadComposerProps) {
           title: data.title,
           content: data.content,
           tags,
-        },
-        user.sub
+        }
       );
       onCreated(thread);
       reset();
