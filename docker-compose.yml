@@ -126,6 +126,38 @@ services:
       core_migration:
         condition: service_completed_successfully
 
+  # ── Forum Mongo ───────────────────────────────────────────────────────────────
+  mongo:
+    container_name: mongo
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - forum_mongo_database:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5m
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Forum Service ─────────────────────────────────────────────────────────────
+  forum_service:
+    container_name: forum
+    build: forum-service/api/
+    env_file: forum-service/api/.env
+    ports:
+      - "8003:8003"
+    networks:
+      default:
+        aliases:
+          - forum-service
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
   # ── API Gateway ───────────────────────────────────────────────────────────────
   api_gateway:
     container_name: api_gateway
@@ -136,6 +168,7 @@ services:
     depends_on:
       - auth_service
       - core_service
+      - forum_service
 
   # ── Web App ───────────────────────────────────────────────────────────────────
   web_app:
@@ -151,3 +184,4 @@ volumes:
   auth_service_database:
   core_service_database:
   core_mongo_database:
+  forum_mongo_database:
