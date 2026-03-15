@@ -14,7 +14,6 @@ Strategy
   no real Auth0 token or the app's lifespan engine is ever touched.
 """
 import asyncpg
-import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -23,8 +22,7 @@ from sqlalchemy.pool import NullPool
 from app.main import app
 from app.models.base import Base
 from app.core.config import get_settings
-from app.core.validation import get_current_user_sub
-from app.core.dependencies import get_db
+from app.core.dependencies import get_db, get_current_user_sub
 
 
 def _test_db_name() -> str:
