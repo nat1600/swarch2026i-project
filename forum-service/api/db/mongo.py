@@ -2,11 +2,12 @@ import os
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
+from settings.settings import settings
 
-load_dotenv()
 
-MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME: str = os.getenv("DB_NAME", "forum_db")
+
+MONGO_URI: str = settings.LOCAL_URI if settings.ENV == "local" else settings.get_mongo_uri
+DB_NAME: str = settings.DB_NAME
 
 client: AsyncIOMotorClient | None = None
 
