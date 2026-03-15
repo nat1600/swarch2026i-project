@@ -85,11 +85,11 @@ export function ThreadCard({ thread, onUpdated, onTagClick }: ThreadCardProps) {
                 likes={thread.likes}
                 likesCount={thread.likes_count}
                 onLike={async () => {
-                  const updated = await likeThread(thread._id, user?.sub ?? undefined);
+                  const updated = await likeThread(thread._id);
                   onUpdated?.(updated);
                 }}
                 onUnlike={async () => {
-                  const updated = await unlikeThread(thread._id, user?.sub ?? undefined);
+                  const updated = await unlikeThread(thread._id);
                   onUpdated?.(updated);
                 }}
               />
