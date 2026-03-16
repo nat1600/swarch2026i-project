@@ -92,7 +92,7 @@ export default function HomeNavBar({
           </Avatar>
 
           {/* Logout */}
-          <Link href="/api/auth/logout">
+          <Link href="/api/auth/logout" prefetch={false}>
             <Button
               variant="ghost"
               size="icon"

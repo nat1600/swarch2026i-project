@@ -59,7 +59,7 @@ export function NavBar() {
           </div>
         )}
         
-        <Link href="/api/auth/logout">
+        <Link href="/api/auth/logout" prefetch={false}>
           <Button
             variant="ghost"
             size="icon"

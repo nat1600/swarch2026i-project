@@ -23,10 +23,10 @@ def _threads():
 
 
 # ── Helper: extract user_id from gateway header ─────────────
-def _require_user(x_user_id: str | None) -> str:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="Missing X-User-Id header.")
-    return x_user_id
+def _require_user(x_user_sub: str | None) -> str:
+    if not x_user_sub:
+        raise HTTPException(status_code=401, detail="Missing X-User-Sub header.")
+    return x_user_sub
 
 
 # ── GET /threads/{thread_id}/replies ─────────────────────────
@@ -82,10 +82,10 @@ async def list_replies(
 async def create_reply(
     thread_id: str,
     body: ReplyCreate,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Create a reply to a thread (optionally nested under another reply)."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(thread_id):
         raise HTTPException(status_code=400, detail="Invalid thread id.")
@@ -127,14 +127,14 @@ async def create_reply(
 
 
 # ── PATCH /replies/{reply_id} ────────────────────────────────
-@router.patch("/{reply_id}", response_model=ReplyResponse)
+@router.patch("/replies/{reply_id}", response_model=ReplyResponse)
 async def update_reply(
     reply_id: str,
     body: ReplyUpdate,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Partially update a reply. Only the author can edit."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(reply_id):
         raise HTTPException(status_code=400, detail="Invalid reply id.")
@@ -159,13 +159,13 @@ async def update_reply(
 
 
 # ── DELETE /replies/{reply_id} ───────────────────────────────
-@router.delete("/{reply_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/replies/{reply_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_reply(
     reply_id: str,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Delete a reply. Only the author can delete."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(reply_id):
         raise HTTPException(status_code=400, detail="Invalid reply id.")
@@ -188,13 +188,13 @@ async def delete_reply(
 
 
 # ── POST /replies/{reply_id}/like ────────────────────────────
-@router.post("/{reply_id}/like", response_model=ReplyResponse)
+@router.post("/replies/{reply_id}/like", response_model=ReplyResponse)
 async def like_reply(
     reply_id: str,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Add a like to a reply."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(reply_id):
         raise HTTPException(status_code=400, detail="Invalid reply id.")
@@ -220,13 +220,13 @@ async def like_reply(
 
 
 # ── DELETE /replies/{reply_id}/like ──────────────────────────
-@router.delete("/{reply_id}/like", response_model=ReplyResponse)
+@router.delete("/replies/{reply_id}/like", response_model=ReplyResponse)
 async def unlike_reply(
     reply_id: str,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Remove a like from a reply."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(reply_id):
         raise HTTPException(status_code=400, detail="Invalid reply id.")

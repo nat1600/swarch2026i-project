@@ -142,6 +142,16 @@ services:
       retries: 5
       start_period: 10s
 
+  # ── Forum Seed (Mongo bootstrap) ─────────────────────────────────────────────
+  forum_seed:
+    container_name: forum_seed
+    build: forum-service/api/
+    command: python -m scripts.seed_categories
+    env_file: forum-service/api/.env
+    depends_on:
+      mongo:
+        condition: service_healthy
+
   # ── Forum Service ─────────────────────────────────────────────────────────────
   forum_service:
     container_name: forum
@@ -156,6 +166,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      forum_seed:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   # ── API Gateway ───────────────────────────────────────────────────────────────
