@@ -59,11 +59,9 @@ export async function checkUserExistsAction() {
 
     const responseData = response.data;
 
-
     if (!responseData || responseData.data === null) {
       return { exists: false, user: null };
     }
-
 
     return { exists: true, user: responseData.data };
   } catch (error: any) {
@@ -73,5 +71,15 @@ export async function checkUserExistsAction() {
     );
 
     return { exists: false, user: null };
+  }
+}
+
+export async function getClientToken() {
+  try {
+    const { token } = await auth0.getAccessToken();
+    return token;
+  } catch (error) {
+    console.error("Error occurred while fetching session:", error);
+    return null;
   }
 }

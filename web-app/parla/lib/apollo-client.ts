@@ -1,5 +1,5 @@
 import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
-import { registerApolloClient } from "@apollo/experimental-nextjs-app-support";
+import { registerApolloClient } from "@apollo/client-integration-nextjs";
 
 /**
  * Cliente Apollo para Server Components (RSC) y Route Handlers.
@@ -24,7 +24,7 @@ export const { getClient, query, PreloadQuery } = registerApolloClient(() => {
   return new ApolloClient({
     cache: new InMemoryCache(),
     link: new HttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:4000/graphql",
+      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8000/graphql",
       // El fetch nativo de Node.js / Next.js se usa por defecto en el servidor.
       fetchOptions: { cache: "no-store" },
     }),
