@@ -1,69 +1,168 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
-import { Search, Brain, Flame, BatteryWarning } from "lucide-react";
-import Flashcard from "@/components/vocabulary/VocabFlashCard";
-import { useUser } from "@auth0/nextjs-auth0";
+import { Search, Brain, Flame, BatteryWarning, Plus } from "lucide-react";
+import PhraseCard from "@/components/vocabulary/PhraseCard";
+import PhraseModal from "@/components/vocabulary/PhraseModal";
+import { useUser } from "@auth0/nextjs-auth0/client";
 import HomeNavBar from "@/components/core/HomeNavBar";
 import { getInitials } from "@/lib/user-utils";
+import { Phrase, PhraseCreate, PhraseUpdate } from "@/lib/types/phrases";
+import { toast } from "sonner";
 
-// --- DATOS FALSOS PARA EL DISEÑO ---
-// Luego los reemplazaremos con tu llamada a PostgreSQL / Apollo
-const MOCK_WORDS = [
-  {
-    id: 1,
-    word: "Developer",
-    translation: "Desarrollador",
-    strength: 5,
-    type: "Noun",
-  },
-  {
-    id: 2,
-    word: "To debug",
-    translation: "Depurar",
-    strength: 2,
-    type: "Verb",
-  },
-  {
-    id: 3,
-    word: "Awesome",
-    translation: "Increíble",
-    strength: 4,
-    type: "Adjective",
-  },
-  {
-    id: 4,
-    word: "Database",
-    translation: "Base de datos",
-    strength: 5,
-    type: "Noun",
-  },
-  {
-    id: 5,
-    word: "To deploy",
-    translation: "Desplegar",
-    strength: 1,
-    type: "Verb",
-  },
-  { id: 6, word: "Thread", translation: "Hilo", strength: 3, type: "Noun" },
-];
+const FILTERS = ["Todos", "Recientes", "Necesitan Repaso", "Dominadas"];
 
-const FILTERS = ["Todos", "Débiles", "Verbos", "Sustantivos", "Adjetivos"];
-
-// --- PÁGINA PRINCIPAL ---
 export default function VocabularioPage() {
   const router = useRouter();
   const { user, isLoading } = useUser();
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
+  const [phrases, setPhrases] = useState<Phrase[]>([]);
+  const [isLoadingPhrases, setIsLoadingPhrases] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPhrase, setEditingPhrase] = useState<Phrase | null>(null);
 
-  if (!user) {
-    router.push("/login");
-  }
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (user) {
+      fetchPhrases();
+    }
+  }, [user]);
+
+  const fetchPhrases = async () => {
+    try {
+      setIsLoadingPhrases(true);
+      const response = await fetch("/api/phrases");
+      if (!response.ok) throw new Error("Failed to fetch phrases");
+      const data = await response.json();
+      setPhrases(data);
+    } catch (error) {
+      console.error("Error fetching phrases:", error);
+      toast.error("Error al cargar las frases");
+    } finally {
+      setIsLoadingPhrases(false);
+    }
+  };
+
+  const handleCreatePhrase = async (data: PhraseCreate | PhraseUpdate) => {
+    try {
+      const response = await fetch("/api/phrases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create phrase");
+      toast.success("Frase creada exitosamente");
+      await fetchPhrases();
+    } catch (error) {
+      console.error("Error creating phrase:", error);
+      toast.error("Error al crear la frase");
+      throw error;
+    }
+  };
+
+  const handleUpdatePhrase = async (data: PhraseCreate | PhraseUpdate) => {
+    if (!editingPhrase) return;
+    try {
+      const response = await fetch(`/api/phrases/${editingPhrase.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update phrase");
+      toast.success("Frase actualizada exitosamente");
+      await fetchPhrases();
+    } catch (error) {
+      console.error("Error updating phrase:", error);
+      toast.error("Error al actualizar la frase");
+      throw error;
+    }
+  };
+
+  const handleDeletePhrase = async (phraseId: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar esta frase?")) return;
+    try {
+      const response = await fetch(`/api/phrases/${phraseId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete phrase");
+      toast.success("Frase eliminada exitosamente");
+      await fetchPhrases();
+    } catch (error) {
+      console.error("Error deleting phrase:", error);
+      toast.error("Error al eliminar la frase");
+    }
+  };
+
+  const handleEditPhrase = (phrase: Phrase) => {
+    setEditingPhrase(phrase);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingPhrase(null);
+  };
+
+  const filteredPhrases = useMemo(() => {
+    let filtered = phrases.filter((phrase) =>
+      phrase.original_text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      phrase.translated_text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (activeFilter === "Recientes") {
+      filtered = filtered.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ).slice(0, 20);
+    } else if (activeFilter === "Necesitan Repaso") {
+      filtered = filtered.filter((p) => {
+        if (!p.last_reviewed_date) return true;
+        const daysSince = Math.floor(
+          (Date.now() - new Date(p.last_reviewed_date).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return daysSince > 7;
+      });
+    } else if (activeFilter === "Dominadas") {
+      filtered = filtered.filter((p) => {
+        if (!p.last_reviewed_date) return false;
+        const daysSince = Math.floor(
+          (Date.now() - new Date(p.last_reviewed_date).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return daysSince <= 7;
+      });
+    }
+
+    return filtered;
+  }, [phrases, searchQuery, activeFilter]);
+
+  const stats = useMemo(() => {
+    const mastered = phrases.filter((p) => {
+      if (!p.last_reviewed_date) return false;
+      const daysSince = Math.floor(
+        (Date.now() - new Date(p.last_reviewed_date).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return daysSince <= 7;
+    }).length;
+
+    const needReview = phrases.filter((p) => {
+      if (!p.last_reviewed_date) return true;
+      const daysSince = Math.floor(
+        (Date.now() - new Date(p.last_reviewed_date).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return daysSince > 7;
+    }).length;
+
+    return { mastered, needReview, total: phrases.length };
+  }, [phrases]);
+
+  if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-parla-dark text-lg font-bold">Cargando...</p>
@@ -76,21 +175,33 @@ export default function VocabularioPage() {
       <HomeNavBar initials={getInitials(user?.given_name || "")} userPicture={user?.picture || ""} />
 
       <div className="max-w-5xl mx-auto px-6 mt-10 space-y-10">
-        {/* HEADER: Título y Botón Principal */}
+        {/* HEADER: Título y Botones */}
         <ScrollReveal className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
             <h1 className="font-brand text-[clamp(2.5rem,6vw,3.5rem)] text-parla-dark leading-tight flex items-center gap-3">
               <span>🧳</span> Mi Bóveda
             </h1>
             <p className="text-parla-blue font-extrabold text-lg">
-              Tienes 150 palabras en tu inventario.
+              Tienes {stats.total} {stats.total === 1 ? 'frase' : 'frases'} en tu inventario.
             </p>
           </div>
 
-          <button className="w-full md:w-auto bg-[#F5A623] text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#D08B1B] hover:bg-[#ffb53a] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]">
-            <Brain className="h-6 w-6" strokeWidth={3} />
-            Entrenar Cerebro
-          </button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button
+              onClick={() => {
+                setEditingPhrase(null);
+                setIsModalOpen(true);
+              }}
+              className="flex-1 md:flex-initial bg-parla-blue text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#1a5f8f] hover:bg-[#2a7ab8] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]"
+            >
+              <Plus className="h-6 w-6" strokeWidth={3} />
+              Nueva Frase
+            </button>
+            <button className="flex-1 md:flex-initial bg-[#F5A623] text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#D08B1B] hover:bg-[#ffb53a] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]">
+              <Brain className="h-6 w-6" strokeWidth={3} />
+              Entrenar
+            </button>
+          </div>
         </ScrollReveal>
 
         {/* ESTADÍSTICAS RÁPIDAS */}
@@ -107,7 +218,7 @@ export default function VocabularioPage() {
               <p className="text-parla-light font-black text-sm uppercase">
                 Dominadas
               </p>
-              <p className="text-2xl font-brand text-parla-dark">42</p>
+              <p className="text-2xl font-brand text-parla-dark">{stats.mastered}</p>
             </div>
           </div>
           <div className="bg-white border-4 border-parla-dark rounded-3xl p-5 shadow-[0_4px_0_0_var(--color-parla-dark)] flex items-center gap-4">
@@ -121,7 +232,7 @@ export default function VocabularioPage() {
               <p className="text-parla-light font-black text-sm uppercase">
                 Por Repasar
               </p>
-              <p className="text-2xl font-brand text-parla-dark">12</p>
+              <p className="text-2xl font-brand text-parla-dark">{stats.needReview}</p>
             </div>
           </div>
           <div className="bg-parla-dark border-4 border-[#1a2f40] rounded-3xl p-5 shadow-[0_4px_0_0_#1a2f40] flex items-center gap-4">
@@ -130,9 +241,9 @@ export default function VocabularioPage() {
             </div>
             <div>
               <p className="text-parla-mist font-black text-sm uppercase">
-                Racha de Repaso
+                Total de Frases
               </p>
-              <p className="text-2xl font-brand text-white">5 días</p>
+              <p className="text-2xl font-brand text-white">{stats.total}</p>
             </div>
           </div>
         </ScrollReveal>
@@ -173,19 +284,59 @@ export default function VocabularioPage() {
           </div>
         </ScrollReveal>
 
-        {/* GRID DE FLASHCARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4">
-          {MOCK_WORDS.map((item, index) => (
-            <ScrollReveal
-              key={item.id}
-              animation="animate-slide-in-bottom"
-              delay={`${index * 100}ms`}
-            >
-              <Flashcard item={item} />
-            </ScrollReveal>
-          ))}
-        </div>
+        {/* GRID DE FRASES */}
+        {isLoadingPhrases ? (
+          <div className="flex items-center justify-center py-20">
+            <p className="text-parla-dark text-lg font-bold">Cargando frases...</p>
+          </div>
+        ) : filteredPhrases.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-parla-dark text-2xl font-brand mb-4">
+              {searchQuery || activeFilter !== "Todos" 
+                ? "No se encontraron frases" 
+                : "¡Aún no tienes frases!"}
+            </p>
+            <p className="text-parla-light font-bold mb-6">
+              {searchQuery || activeFilter !== "Todos"
+                ? "Intenta con otro filtro o búsqueda"
+                : "Comienza agregando tu primera frase"}
+            </p>
+            {!searchQuery && activeFilter === "Todos" && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-parla-blue text-white font-black text-lg py-3 px-6 rounded-2xl border-b-4 border-[#1a5f8f] hover:bg-[#2a7ab8] active:border-b-0 active:translate-y-1 transition-all"
+              >
+                <Plus className="inline h-5 w-5 mr-2" />
+                Agregar Frase
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4">
+            {filteredPhrases.map((phrase, index) => (
+              <ScrollReveal
+                key={phrase.id}
+                animation="animate-slide-in-bottom"
+                delay={`${Math.min(index * 50, 500)}ms`}
+              >
+                <PhraseCard
+                  phrase={phrase}
+                  onEdit={handleEditPhrase}
+                  onDelete={handleDeletePhrase}
+                />
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
       </div>
+
+      <PhraseModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={editingPhrase ? handleUpdatePhrase : handleCreatePhrase}
+        phrase={editingPhrase}
+        userId={1}
+      />
     </div>
   );
 }

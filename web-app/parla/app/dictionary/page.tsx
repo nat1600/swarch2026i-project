@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
-import { Search, Book, Plus, Loader2 } from "lucide-react";
+import { Search, Book, Plus, Loader2, RefreshCw } from "lucide-react";
 import HomeNavBar from "@/components/core/HomeNavBar";
 import { getInitials } from "@/lib/user-utils";
 import { useDictionary } from "@/contexts/DictionaryContext";
@@ -32,7 +32,10 @@ export default function DictionaryPage() {
     words,
     isLoading,
     isInitialized,
+    isPopulating,
+    populationProgress,
     loadDictionary,
+    populateFromPhrases,
     addWord,
     updateWord,
     deleteWord,
@@ -78,6 +81,17 @@ export default function DictionaryPage() {
     }
   }, [isInitialized, loadDictionary]);
 
+  // Auto-populate dictionary from phrases when user is authenticated
+  useEffect(() => {
+    if (user && isInitialized && words.length === 0 && !isPopulating) {
+      // Get user ID from Auth0 user object
+      const userId = 1; // TODO: Extract from user.sub or user metadata
+      
+      console.log('🔄 Auto-populating dictionary from user phrases...');
+      populateFromPhrases(userId);
+    }
+  }, [user, isInitialized, words.length, isPopulating, populateFromPhrases]);
+
   // Redirect if not logged in
   useEffect(() => {
     if (!user && !isUserLoading) {
@@ -108,6 +122,12 @@ export default function DictionaryPage() {
     if (word) {
       updateWord(id, { isLearned: !word.isLearned });
     }
+  };
+
+  const handleRefreshDictionary = () => {
+    const userId = 1; // TODO: Extract from user.sub or user metadata
+    console.log('🔄 Manually refreshing dictionary from phrases...');
+    populateFromPhrases(userId);
   };
 
   const handleAddWord = (wordData: {
@@ -196,13 +216,23 @@ export default function DictionaryPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsAddDialogOpen(true)}
-            className="w-full md:w-auto bg-parla-red text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#8C0327] hover:bg-[#a0032e] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]"
-          >
-            <Plus className="h-6 w-6" strokeWidth={3} />
-            Agregar Palabra
-          </button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button
+              onClick={handleRefreshDictionary}
+              disabled={isPopulating}
+              className="bg-parla-blue text-white font-black text-xl py-4 px-6 rounded-2xl border-b-8 border-[#1f6d8e] hover:bg-[#25719a] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Actualizar desde frases"
+            >
+              <RefreshCw className={`h-6 w-6 ${isPopulating ? 'animate-spin' : ''}`} strokeWidth={3} />
+            </button>
+            <button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="flex-1 md:flex-none bg-parla-red text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#8C0327] hover:bg-[#a0032e] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]"
+            >
+              <Plus className="h-6 w-6" strokeWidth={3} />
+              Agregar Palabra
+            </button>
+          </div>
         </ScrollReveal>
 
         {/* STATS */}
@@ -268,12 +298,35 @@ export default function DictionaryPage() {
         )}
 
         {/* WORDS LIST */}
-        {isLoading ? (
+        {isLoading || isPopulating ? (
           <div className="flex flex-col items-center justify-center py-20 bg-white/80 backdrop-blur rounded-3xl border-4 border-parla-light">
             <Loader2 className="w-12 h-12 text-parla-blue animate-spin mb-4" />
-            <h3 className="text-lg font-black text-parla-dark">
-              Cargando diccionario...
+            <h3 className="text-lg font-black text-parla-dark mb-2">
+              {isPopulating ? 'Poblando diccionario desde tus frases...' : 'Cargando diccionario...'}
             </h3>
+            {populationProgress && (
+              <div className="w-full max-w-md space-y-2">
+                <p className="text-sm font-bold text-parla-blue text-center">
+                  {populationProgress.message}
+                </p>
+                {populationProgress.currentWord && (
+                  <p className="text-xs font-bold text-parla-light text-center">
+                    Procesando: {populationProgress.currentWord}
+                  </p>
+                )}
+                <div className="w-full bg-parla-mist rounded-full h-3 border-2 border-parla-light overflow-hidden">
+                  <div
+                    className="bg-parla-blue h-full transition-all duration-300 rounded-full"
+                    style={{
+                      width: `${(populationProgress.currentStep / populationProgress.totalSteps) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs font-bold text-parla-dark text-center">
+                  {populationProgress.currentStep} / {populationProgress.totalSteps}
+                </p>
+              </div>
+            )}
           </div>
         ) : displayedWords.length === 0 ? (
           <div className="text-center py-20 bg-white/80 backdrop-blur rounded-3xl border-4 border-parla-light">
