@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from app.routes import users
+from app.routes import users, gql_users
 from app.core.config import get_settings
 
 
@@ -32,12 +32,13 @@ def get_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-User-Sub"],
     )
 
     # -------------------------- Routers --------------------------
     app.include_router(users.router)
+    app.include_router(gql_users.graphql_app, prefix='/graphql')  # Montamos el router de GraphQL
 
     return app
 
