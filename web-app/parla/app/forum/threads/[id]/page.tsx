@@ -158,7 +158,7 @@ export default function ThreadDetailPage() {
           content: editContent,
           tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),
         },
-        user.sub
+        
       );
       setThread(updated);
       setEditing(false);
@@ -173,7 +173,7 @@ export default function ThreadDetailPage() {
   const handleDeleteThread = async () => {
     if (!thread || !user?.sub) return;
     try {
-      await deleteThread(thread._id, user.sub);
+      await deleteThread(thread._id, );
       router.push("/forum");
     } catch (err) {
       console.error("Failed to delete thread:", err);
@@ -188,7 +188,7 @@ export default function ThreadDetailPage() {
         const updated = await updateReply(
           reply._id,
           { content: newContent.trim() },
-          user.sub
+          
         );
         handleReplyUpdated(updated);
       } catch (err) {
@@ -208,7 +208,7 @@ export default function ThreadDetailPage() {
       await handleDeleteThread();
     } else {
       try {
-        await deleteReply(confirmDelete, user.sub);
+        await deleteReply(confirmDelete, );
         setReplies((prev) => prev.filter((r) => r._id !== confirmDelete));
       } catch (err) {
         console.error("Failed to delete reply:", err);
@@ -318,11 +318,11 @@ export default function ThreadDetailPage() {
                       likes={thread.likes}
                       likesCount={thread.likes_count}
                       onLike={async () => {
-                        const updated = await likeThread(thread._id, user?.sub ?? undefined);
+                        const updated = await likeThread(thread._id);
                         setThread(updated);
                       }}
                       onUnlike={async () => {
-                        const updated = await unlikeThread(thread._id, user?.sub ?? undefined);
+                        const updated = await unlikeThread(thread._id);
                         setThread(updated);
                       }}
                     />
