@@ -11,6 +11,9 @@ importers:
       '@apollo/client':
         specifier: ^4.1.6
         version: 4.1.6(graphql@16.13.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rxjs@7.8.2)
+      '@apollo/client-integration-nextjs':
+        specifier: ^0.14.4
+        version: 0.14.4(@apollo/client@4.1.6(graphql@16.13.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rxjs@7.8.2))(@types/react@19.2.14)(graphql@16.13.1)(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rxjs@7.8.2)
       '@apollo/client-react-streaming':
         specifier: ^0.14.4
         version: 0.14.4(@apollo/client@4.1.6(graphql@16.13.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rxjs@7.8.2))(@types/react@19.2.14)(graphql@16.13.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rxjs@7.8.2)
@@ -38,6 +41,9 @@ importers:
       graphql:
         specifier: ^16.13.1
         version: 16.13.1
+      graphql-tag:
+        specifier: ^2.12.6
+        version: 2.12.6(graphql@16.13.1)
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

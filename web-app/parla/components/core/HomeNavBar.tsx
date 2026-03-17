@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, MessageSquare, BookOpen, Book, LogOut, Gamepad2, Medal } from "lucide-react";
+import {
+  Trophy,
+  MessageSquare,
+  BookOpen,
+  Book,
+  LogOut,
+  Gamepad2,
+  Medal,
+} from "lucide-react";
 
 interface HomeNavBarProps {
   userPicture: string;
   initials: string;
 }
 
-export default function HomeNavBar({
-  userPicture,
-  initials,
-}: HomeNavBarProps) {
+export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
   return (
     <nav className="bg-white border-b-4 border-parla-dark px-4 py-3 sticky top-0 z-50 animate-fade-in-down">
       <div className="max-w-5xl mx-auto flex justify-between items-center">
@@ -84,12 +89,17 @@ export default function HomeNavBar({
           </Link>
 
           {/* Avatar */}
-          <Avatar className="w-9 h-9 border-2 border-parla-dark shadow-[0_2px_0_0_#254159]">
-            <AvatarImage src={userPicture} />
-            <AvatarFallback className="font-extrabold text-parla-dark bg-parla-mist text-sm">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <Link
+            href="/me"
+            className="inline-block transition-transform hover:-translate-y-1 hover:scale-105 cursor-pointer rounded-full"
+          >
+            <Avatar className="w-9 h-9 border-2 border-parla-dark shadow-[0_2px_0_0_#254159]">
+              <AvatarImage src={userPicture} />
+              <AvatarFallback className="font-extrabold text-parla-dark bg-parla-mist text-sm">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
 
           {/* Logout */}
           <Link href="/api/auth/logout">
