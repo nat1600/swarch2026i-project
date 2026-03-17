@@ -10,14 +10,25 @@ const coreApiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - add auth token if needed
+// Request interceptor - add auth token from cookie
 coreApiClient.interceptors.request.use(
-  (config) => {
-    // TODO: Add authentication token when auth is implemented
-    // const token = getAuthToken();
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+  async (config) => {
+    // Get access token from Auth0 session cookie
+    // The token is automatically sent via cookies by the browser
+    // For client-side requests, we need to use the /api/auth/token endpoint
+    try {
+      if (typeof window !== 'undefined') {
+        const tokenResponse = await fetch('/api/auth/token');
+        if (tokenResponse.ok) {
+          const { accessToken } = await tokenResponse.json();
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to get access token:', error);
+    }
     return config;
   },
   (error) => {

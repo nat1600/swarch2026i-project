@@ -10,6 +10,7 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import HomeNavBar from "@/components/core/HomeNavBar";
 import { getInitials } from "@/lib/user-utils";
 import { Phrase, PhraseCreate, PhraseUpdate } from "@/lib/types/phrases";
+import { phrasesService } from "@/lib/services/phrasesService";
 import { toast } from "sonner";
 
 const FILTERS = ["Todos", "Recientes", "Necesitan Repaso", "Dominadas"];
@@ -39,9 +40,7 @@ export default function VocabularioPage() {
   const fetchPhrases = async () => {
     try {
       setIsLoadingPhrases(true);
-      const response = await fetch("/api/phrases");
-      if (!response.ok) throw new Error("Failed to fetch phrases");
-      const data = await response.json();
+      const data = await phrasesService.getAllPhrases();
       setPhrases(data);
     } catch (error) {
       console.error("Error fetching phrases:", error);
@@ -53,12 +52,7 @@ export default function VocabularioPage() {
 
   const handleCreatePhrase = async (data: PhraseCreate | PhraseUpdate) => {
     try {
-      const response = await fetch("/api/phrases", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create phrase");
+      await phrasesService.createPhrase(data as PhraseCreate);
       toast.success("Frase creada exitosamente");
       await fetchPhrases();
     } catch (error) {
@@ -71,12 +65,7 @@ export default function VocabularioPage() {
   const handleUpdatePhrase = async (data: PhraseCreate | PhraseUpdate) => {
     if (!editingPhrase) return;
     try {
-      const response = await fetch(`/api/phrases/${editingPhrase.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to update phrase");
+      await phrasesService.updatePhrase(editingPhrase.id, data as PhraseUpdate);
       toast.success("Frase actualizada exitosamente");
       await fetchPhrases();
     } catch (error) {
@@ -89,10 +78,7 @@ export default function VocabularioPage() {
   const handleDeletePhrase = async (phraseId: number) => {
     if (!confirm("¿Estás seguro de que quieres eliminar esta frase?")) return;
     try {
-      const response = await fetch(`/api/phrases/${phraseId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete phrase");
+      await phrasesService.deletePhrase(phraseId);
       toast.success("Frase eliminada exitosamente");
       await fetchPhrases();
     } catch (error) {
@@ -197,7 +183,9 @@ export default function VocabularioPage() {
               <Plus className="h-6 w-6" strokeWidth={3} />
               Nueva Frase
             </button>
-            <button className="flex-1 md:flex-initial bg-[#F5A623] text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#D08B1B] hover:bg-[#ffb53a] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]">
+            <button 
+              onClick={() => router.push('/vocabulary/practice')}
+              className="flex-1 md:flex-initial bg-[#F5A623] text-white font-black text-xl py-4 px-8 rounded-2xl border-b-8 border-[#D08B1B] hover:bg-[#ffb53a] active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-3 shadow-[0_4px_0_0_rgba(0,0,0,0.1)]">
               <Brain className="h-6 w-6" strokeWidth={3} />
               Entrenar
             </button>
