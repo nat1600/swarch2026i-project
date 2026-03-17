@@ -2,12 +2,16 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { DictionaryWord } from '@/lib/types/dictionary';
+import { populateDictionaryFromPhrases, PopulationProgress } from '@/lib/services/dictionaryPopulation';
 
 interface DictionaryContextType {
   words: DictionaryWord[];
   isLoading: boolean;
   isInitialized: boolean;
+  isPopulating: boolean;
+  populationProgress: PopulationProgress | null;
   loadDictionary: () => Promise<void>;
+  populateFromPhrases: (userId: number) => Promise<void>;
   addWord: (word: DictionaryWord) => void;
   updateWord: (id: string, updates: Partial<DictionaryWord>) => void;
   deleteWord: (id: string) => void;
@@ -22,6 +26,8 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
   const [words, setWords] = useState<DictionaryWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isPopulating, setIsPopulating] = useState(false);
+  const [populationProgress, setPopulationProgress] = useState<PopulationProgress | null>(null);
 
   // Load dictionary from localStorage
   const loadDictionary = useCallback(async () => {
@@ -90,11 +96,51 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
+  // Populate dictionary from user's phrases
+  const populateFromPhrases = useCallback(async (userId: number) => {
+    setIsPopulating(true);
+    setPopulationProgress(null);
+
+    try {
+      const result = await populateDictionaryFromPhrases(userId, {
+        filterStopWords: true,
+        maxDefinitionsPerWord: 3,
+        targetLanguage: 'es',
+        onProgress: (progress) => {
+          setPopulationProgress(progress);
+        },
+      });
+
+      if (result.success && result.dictionaryEntries.length > 0) {
+        // Add new words to dictionary (avoid duplicates)
+        setWords(prev => {
+          const existingWords = new Set(prev.map(w => w.word.toLowerCase()));
+          const newWords = result.dictionaryEntries.filter(
+            entry => !existingWords.has(entry.word.toLowerCase())
+          );
+          return [...prev, ...newWords];
+        });
+
+        console.log(`✅ Dictionary populated: ${result.successfulDefinitions} words added`);
+      } else {
+        console.warn('No words were added to dictionary');
+      }
+    } catch (error) {
+      console.error('Error populating dictionary:', error);
+    } finally {
+      setIsPopulating(false);
+      setPopulationProgress(null);
+    }
+  }, []);
+
   const value: DictionaryContextType = {
     words,
     isLoading,
     isInitialized,
+    isPopulating,
+    populationProgress,
     loadDictionary,
+    populateFromPhrases,
     addWord,
     updateWord,
     deleteWord,
