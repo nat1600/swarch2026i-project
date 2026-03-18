@@ -156,6 +156,13 @@ services:
     ports:
       - "3000:3000"
     env_file: ./web-app/parla/.env
+    environment:
+      SERVER_AUTH_URL: http://api-gateway:8080/api/auth
+      SERVER_CORE_URL: http://api-gateway:8080/api/core
+      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/core/graphql
+      SERVER_FORUM_URL: http://api-gateway:8080/api/forum
+      SERVER_GAME_URL: http://api-gateway:8080/api/game
+      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/game
     depends_on:
       - api-gateway
 

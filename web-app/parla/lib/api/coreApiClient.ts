@@ -1,9 +1,13 @@
 // Core Service API Client Configuration
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
+const baseURL = typeof window === 'undefined' 
+  ? process.env.SERVER_CORE_URL || process.env.NEXT_PUBLIC_CORE_URL || 'http://localhost:8080/api/core'
+  : process.env.NEXT_PUBLIC_CORE_URL || 'http://localhost:8080/api/core';
+
 // Create axios instance with base configuration
 const coreApiClient: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_CORE_API_URL || 'http://localhost:8000',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

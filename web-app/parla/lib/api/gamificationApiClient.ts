@@ -1,8 +1,12 @@
 // Gamification Service API Client
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
+const baseURL = typeof window === 'undefined'
+  ? process.env.SERVER_GAMIFICATION_URL || process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:8080/api/game'
+  : process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:8080/api/game';
+
 const gamificationApiClient: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:8080',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
