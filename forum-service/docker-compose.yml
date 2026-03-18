@@ -1,0 +1,30 @@
+services:
+  forum_database:
+    container_name: forum_database
+    image: mongo:7
+    env_file: .env
+    ports:
+      - "27017:27017"
+    volumes:
+      - forum_service_database:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  forum_service:
+    container_name: forum_service
+    build: .
+    env_file: .env
+    environment:
+      MONGO_URL: mongodb://forum_database:27017
+    ports:
+      - "8001:8001"
+    depends_on:
+      forum_database:
+        condition: service_healthy
+
+volumes:
+  forum_service_database:
