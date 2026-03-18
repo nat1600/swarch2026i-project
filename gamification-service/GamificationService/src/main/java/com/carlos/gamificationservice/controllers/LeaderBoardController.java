@@ -31,7 +31,6 @@ public class LeaderBoardController {
         } else {
             return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @GetMapping("/getLeaderBoard")
@@ -43,7 +42,6 @@ public class LeaderBoardController {
         int weekOfTheYear = currentWeek.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
 
         return new ResponseEntity<>(leaderBoardService.getTopNUsers(year, weekOfTheYear, 15), HttpStatus.OK);
-
     }
 
     @GetMapping("/getUserRank")
@@ -60,7 +58,6 @@ public class LeaderBoardController {
         UserScoreRankDTO userScoreRankDTO = new UserScoreRankDTO(userName, result, position);
 
         return new ResponseEntity<>(userScoreRankDTO, HttpStatus.OK);
-
     }
 
 }

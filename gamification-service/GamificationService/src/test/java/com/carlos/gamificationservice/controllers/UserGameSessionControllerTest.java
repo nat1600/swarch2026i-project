@@ -90,7 +90,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.deleteAllUserGameSessions(userName)).thenReturn(result);
 
         mockMvc.perform(delete(baseUrl + "/deleteAllUserGameSessions")
-                        .param("userName", userName))
+                        .header("userName", userName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(true));
     }
@@ -101,7 +101,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.deleteAllUserGameSessions(userName)).thenReturn(result);
 
         mockMvc.perform(delete(baseUrl + "/deleteAllUserGameSessions")
-                        .param("userName", userName))
+                        .header("userName", userName))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -113,7 +113,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.deleteAllUserGameSessionsPerDate(userName, intendedDate)).thenReturn(result);
         // 2024-03-14
         mockMvc.perform(delete(baseUrl + "/deleteAllUserGameSessionsPerDate")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .param("intendedDate", intendedDate.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(true));
@@ -125,7 +125,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.deleteAllUserGameSessionsPerDate(userName, intendedDate)).thenReturn(result);
 
         mockMvc.perform(delete(baseUrl + "/deleteAllUserGameSessionsPerDate")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .param("intendedDate", intendedDate.toString()))
                 .andExpect(status().isInternalServerError());
     }
@@ -139,7 +139,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.getAllUserGameSessions(userName)).thenReturn(gameSessions);
 
         mockMvc.perform(get(baseUrl + "/getAllUserGameSessions")
-                        .param("userName", userName))
+                        .header("userName", userName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
@@ -149,7 +149,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.getAllUserGameSessions(userName)).thenReturn(null);
 
         mockMvc.perform(get(baseUrl + "/getAllUserGameSessions")
-                        .param("userName", userName))
+                        .header("userName", userName))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -162,7 +162,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.getAllUserGameSessionsPerDate(userName, intendedDate)).thenReturn(gameSessions);
 
         mockMvc.perform(get(baseUrl + "/getAllUserGameSessionsPerDate")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .param("intendedDate", intendedDate.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -175,7 +175,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.getAllUserGameSessionsPerDate(userName, intendedDate)).thenReturn(null);
 
         mockMvc.perform(get(baseUrl + "/getAllUserGameSessionsPerDate")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .param("intendedDate", intendedDate.toString()))
                 .andExpect(status().isInternalServerError());
     }
@@ -190,7 +190,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.getAllUserGameSessionsPerPoints(userName, intendedPoints)).thenReturn(gameSessions);
 
         mockMvc.perform(get(baseUrl + "/getAllUserGameSessionsPerPoints")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .param("intendedPoints", intendedPoints.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -205,7 +205,7 @@ public class UserGameSessionControllerTest {
         when(userGameSessionService.getAllUserGameSessionsPerPoints(userName, intendedPoints)).thenReturn(null);
 
         mockMvc.perform(get(baseUrl + "/getAllUserGameSessionsPerPoints")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .param("intendedPoints", intendedPoints.toString()))
                 .andExpect(status().isInternalServerError());
     }

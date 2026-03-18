@@ -38,7 +38,7 @@ public class UserStreakControllerTest {
         when(userStreakService.registerUserActivity(userName)).thenReturn(userStreakDTO);
 
         mockMvc.perform(post(baseUrl + "/postUserActivity")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .characterEncoding("UTF-8"))
                         .andExpect(jsonPath("$.currentStreak").value(12))
                         .andExpect(jsonPath("$.longestStreak").value(13))
@@ -53,7 +53,7 @@ public class UserStreakControllerTest {
         when(userStreakService.registerUserActivity(userName)).thenThrow(new RuntimeException("System Failure Simulation"));
 
         mockMvc.perform(post(baseUrl + "/postUserActivity")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .characterEncoding("UTF-8"))
                         .andExpect(status().isInternalServerError());
     }
@@ -67,7 +67,7 @@ public class UserStreakControllerTest {
         when(userStreakService.getUserActivity(userName)).thenReturn(userStreakDTO);
 
         mockMvc.perform(get(baseUrl + "/getUserStreakData")
-                        .param("userName", userName)
+                        .header("userName", userName)
                         .characterEncoding("UTF-8"))
                 .andExpect(jsonPath("$.currentStreak").value(12))
                 .andExpect(jsonPath("$.longestStreak").value(13))
