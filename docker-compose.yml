@@ -57,6 +57,9 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017
       DB_NAME: forum_db
+      ATLAS_USER: dummy
+      ATLAS_PASS: dummy
+      ATLAS_CLUSTER: dummy
     depends_on:
       mongo:
         condition: service_healthy
@@ -124,6 +127,9 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017
       DB_NAME: forum_db
+      ATLAS_USER: dummy
+      ATLAS_PASS: dummy
+      ATLAS_CLUSTER: dummy
     depends_on:
       mongo:
         condition: service_healthy
