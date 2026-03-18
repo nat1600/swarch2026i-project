@@ -31,6 +31,24 @@ services:
       retries: 5
 
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
+  auth_migration:
+    container_name: auth_migration
+    build: auth-service/
+    command: bash scripts/migrate.sh
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: root
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
+      AUTH0_DOMAIN: dev-pzxsxsfqc2je00n4.us.auth0.com
+      AUTH0_API_AUDIENCE: https://parla.com
+      DEBUG: "true"
+      CORS_ORIGINS: "http://localhost:3000,http://web-app:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   core_migration:
     container_name: core_migration
     build: core-service/
@@ -100,6 +118,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      auth_migration:
+        condition: service_completed_successfully
 
   core-service:
     build: ./core-service
