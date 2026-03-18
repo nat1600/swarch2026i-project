@@ -1,19 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getAccessToken } from '@auth0/nextjs-auth0';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const result = await getAccessToken(request);
-    
-    if (!result || typeof result === 'string') {
-      return NextResponse.json(
-        { error: 'No access token available' },
-        { status: 401 }
-      );
-    }
+    const accessToken = await getAccessToken();
 
-    const { accessToken } = result;
-    
     if (!accessToken) {
       return NextResponse.json(
         { error: 'No access token available' },

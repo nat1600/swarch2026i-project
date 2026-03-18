@@ -1,153 +1,119 @@
 services:
-
-  # ── Auth DB ───────────────────────────────────────────────────────────────────
-  auth_database:
-    container_name: auth_database
+  # ─── DATABASES ─────────────────────────────────────────────────────────────
+  postgres:
     image: postgres:16
-    env_file: auth-service/.env
-    shm_size: 128mb
-    command: >
-      postgres
-      -c shared_buffers=64MB
-      -c work_mem=4MB
-      -c maintenance_work_mem=32MB
-      -c effective_cache_size=128MB
-      -c max_connections=20
-    ports:
-      - "5433:5432"
+    container_name: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
     volumes:
-      - auth_service_database:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U root"]
       interval: 5s
       timeout: 3s
       retries: 10
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
 
-  # ── Auth Migrations ───────────────────────────────────────────────────────────
-  auth_migration:
-    container_name: auth_migration
-    build: auth-service/
-    command: bash scripts/migrate.sh
-    env_file: auth-service/.env
-    environment:
-      POSTGRES_HOST: auth_database
-      POSTGRES_PORT: 5432
-    depends_on:
-      auth_database:
-        condition: service_healthy
-
-  # ── Auth Service ──────────────────────────────────────────────────────────────
-  auth_service:
-    container_name: auth_service
-    build: auth-service/
-    env_file: auth-service/.env
-    environment:
-      POSTGRES_HOST: auth_database
-      POSTGRES_PORT: 5432
-    volumes:
-      - ./auth-service/app:/app/app
-    networks:
-      default:
-        aliases:
-          - auth-service
-    depends_on:
-      auth_migration:
-        condition: service_completed_successfully
-
-  # ── Core DB ───────────────────────────────────────────────────────────────────
-  core_database:
-    container_name: core_database
-    image: postgres:16
-    env_file: core-service/.env
-    ports:
-      - "5434:5432"
-    volumes:
-      - core_service_database:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
-
-  # ── Core Mongo ────────────────────────────────────────────────────────────────
-  core_mongo:
-    container_name: core_mongo
+  mongo:
     image: mongo:7
+    container_name: mongo
     ports:
-      - "27018:27017"
+      - "27017:27017"
     volumes:
-      - core_mongo_database:/data/db
+      - mongo_data:/data/db
     healthcheck:
-      test: ['CMD-SHELL', 'mongosh --eval "db.adminCommand(\"ping\")" --quiet']
-      interval: 5m
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
-  # ── Core Migrations ───────────────────────────────────────────────────────────
-  core_migration:
-    container_name: core_migration
-    build: core-service/
-    command: bash scripts/migrate.sh
-    env_file: core-service/.env
-    environment:
-      POSTGRES_HOST: core_database
-      POSTGRES_PORT: 5432
-    depends_on:
-      core_database:
-        condition: service_healthy
-
-  # ── Core Service ──────────────────────────────────────────────────────────────
-  core_service:
-    container_name: core_service
-    build: core-service/
-    env_file: core-service/.env
-    environment:
-      POSTGRES_HOST: core_database
-      POSTGRES_PORT: 5432
-      MONGO_URL: mongodb://core_mongo:27017
-    ports:
-      - "8000:8000"
-    networks:
-      default:
-        aliases:
-          - core-service
-    depends_on:
-      core_database:
-        condition: service_healthy
-      core_mongo:
-        condition: service_healthy
-      core_migration:
-        condition: service_completed_successfully
-
-  # ── API Gateway ───────────────────────────────────────────────────────────────
-  api_gateway:
-    container_name: api_gateway
-    build: api-gateway/
-    env_file: api-gateway/.env
+  # ─── API GATEWAY ────────────────────────────────────────────────────────────
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      SERVICES_AUTH_URL: http://auth-service:8000
+      SERVICES_CORE_URL: http://core-service:8000
+      SERVICES_FORUM_URL: http://forum-service:8003
+      SERVICES_GAME_URL: http://gamification-service:8080
+      auth0.domain: dev-pzxsxsfqc2je00n4.us.auth0.com
+      auth0.audience: https://parla.com
     depends_on:
-      - auth_service
-      - core_service
+      - auth-service
+      - core-service
+      - forum-service
+      - gamification-service
 
-  # ── Web App ───────────────────────────────────────────────────────────────────
-  web_app:
-    container_name: web_app
-    build: web-app/parla/
-    env_file: web-app/parla/.env
+  # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: root
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
+      AUTH0_DOMAIN: dev-pzxsxsfqc2je00n4.us.auth0.com
+      AUTH0_API_AUDIENCE: https://parla.com
+      DEBUG: "true"
+      CORS_ORIGINS: "http://localhost:3000,http://web-app:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  core-service:
+    build: ./core-service
+    container_name: core-service
+    environment:
+      POSTGRES_DB: core_db
+      POSTGRES_USER: root
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  forum-service:
+    build: ./forum-service/api
+    container_name: forum-service
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      DB_NAME: forum_db
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  gamification-service:
+    build: ./gamification-service/GamificationService
+    container_name: gamification-service
+    environment:
+      LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
+      LOCAL_DB_USERNAME: root
+      LOCAL_DB_PASSWORD: password
+      JPA_DDL_AUTO: update
+      JPA_SHOW_SQL: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
+  web-app:
+    build: ./web-app/parla
+    container_name: web-app
     ports:
       - "3000:3000"
+    env_file: ./web-app/parla/.env
     depends_on:
-      - api_gateway
+      - api-gateway
 
 volumes:
-  auth_service_database:
-  core_service_database:
-  core_mongo_database:
+  postgres_data:
+  mongo_data:
