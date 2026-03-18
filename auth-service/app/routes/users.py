@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.models.user import User
 from app.models.language import Language
-from app.core.dependencies import get_db
-from app.core.validation import get_current_user_sub
 from app.schemas.users import UserResponse, CreateUser
+from app.core.dependencies import get_db, get_current_user_sub
 
 
 router = APIRouter(prefix='/users', tags=['users'])

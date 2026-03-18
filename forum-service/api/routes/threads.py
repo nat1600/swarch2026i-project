@@ -19,10 +19,10 @@ def _threads():
 
 
 # ── Helper: extract user_id from gateway header ─────────────
-def _require_user(x_user_id: str | None) -> str:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="Missing X-User-Id header.")
-    return x_user_id
+def _require_user(x_user_sub: str | None) -> str:
+    if not x_user_sub:
+        raise HTTPException(status_code=401, detail="Missing X-User-Sub header.")
+    return x_user_sub
 
 
 # ── GET /threads ─────────────────────────────────────────────
@@ -107,10 +107,10 @@ async def search_threads(
 @router.post("", response_model=ThreadResponse, status_code=status.HTTP_201_CREATED)
 async def create_thread(
     body: ThreadCreate,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Create a new thread."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     # Validate category exists
     cat = await get_database().categories.find_one({"_id": ObjectId(body.category_id)})
@@ -146,10 +146,10 @@ async def get_thread(thread_id: str):
 async def update_thread(
     thread_id: str,
     body: ThreadUpdate,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Partially update a thread. Only the author can edit."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(thread_id):
         raise HTTPException(status_code=400, detail="Invalid thread id.")
@@ -177,10 +177,10 @@ async def update_thread(
 @router.delete("/{thread_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_thread(
     thread_id: str,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Delete a thread and all its replies. Only the author can delete."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(thread_id):
         raise HTTPException(status_code=400, detail="Invalid thread id.")
@@ -202,10 +202,10 @@ async def delete_thread(
 @router.post("/{thread_id}/like", response_model=ThreadResponse)
 async def like_thread(
     thread_id: str,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Add a like to a thread."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(thread_id):
         raise HTTPException(status_code=400, detail="Invalid thread id.")
@@ -233,10 +233,10 @@ async def like_thread(
 @router.delete("/{thread_id}/like", response_model=ThreadResponse)
 async def unlike_thread(
     thread_id: str,
-    x_user_id: str | None = Header(None),
+    x_user_sub: str | None = Header(None),
 ):
     """Remove a like from a thread."""
-    user_id = _require_user(x_user_id)
+    user_id = _require_user(x_user_sub)
 
     if not ObjectId.is_valid(thread_id):
         raise HTTPException(status_code=400, detail="Invalid thread id.")

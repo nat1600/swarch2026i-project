@@ -102,7 +102,7 @@ export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
           </Link>
 
           {/* Logout */}
-          <Link href="/api/auth/logout">
+          <Link href="/api/auth/logout" prefetch={false}>
             <Button
               variant="ghost"
               size="icon"

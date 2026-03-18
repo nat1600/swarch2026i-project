@@ -1,5 +1,3 @@
-"""Tests for /users endpoints."""
-import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -23,12 +23,34 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - forum_mongo_database:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
+  core_migration:
+    container_name: core_migration
+    build: core-service/
+    command: bash scripts/migrate.sh
+    env_file: core-service/.env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  forum_seed:
+    container_name: forum_seed
+    build: forum-service/api/
+    command: python -m scripts.seed_categories
+    env_file: forum-service/api/.env
+    depends_on:
+      mongo:
+        condition: service_healthy
 
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
@@ -80,6 +102,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      core_migration:
+        condition: service_completed_successfully
 
   forum-service:
     build: ./forum-service/api
@@ -90,6 +114,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      forum_seed:
+        condition: service_completed_successfully
 
   gamification-service:
     build: ./gamification-service/GamificationService
@@ -116,4 +142,4 @@ services:
 
 volumes:
   postgres_data:
-  mongo_data:
+  forum_mongo_database:
