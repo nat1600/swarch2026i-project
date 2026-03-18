@@ -35,10 +35,17 @@ services:
     container_name: core_migration
     build: core-service/
     command: bash scripts/migrate.sh
-    env_file: core-service/.env
     environment:
+      POSTGRES_DB: core_db
+      POSTGRES_USER: root
       POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DB: core_db
+      DEBUG: "true"
+      DEEPL_API_KEY: "dummy"
+      LIBRETRANSLATE_URL: "https://libretranslate.com"
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +54,9 @@ services:
     container_name: forum_seed
     build: forum-service/api/
     command: python -m scripts.seed_categories
-    env_file: forum-service/api/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      DB_NAME: forum_db
     depends_on:
       mongo:
         condition: service_healthy
@@ -98,7 +107,11 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DB: core_db
       DEBUG: "true"
+      DEEPL_API_KEY: "dummy"
+      LIBRETRANSLATE_URL: "https://libretranslate.com"
     depends_on:
       postgres:
         condition: service_healthy
