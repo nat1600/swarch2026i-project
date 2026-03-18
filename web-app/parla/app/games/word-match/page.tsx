@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from "@/components/games/useTranslation";
+import { useGameSession } from '@/hooks/useGameSession';
 
 // Mock data
 const wordPairs = [
@@ -37,11 +38,19 @@ const generateShuffledCards = () => {
 
 export default function WordMatchGame() {
     const { t } = useTranslation();
+    const { recordGameSession } = useGameSession();
     const [cards, setCards] = useState<CardItem[]>(generateShuffledCards);
     const [selectedCards, setSelectedCards] = useState<CardItem[]>([]);
     const [matches, setMatches] = useState(0);
     const [moves, setMoves] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
+
+    // Record session when game ends: 1 match = 50 XP
+    useEffect(() => {
+        if (isGameOver) {
+            recordGameSession({ gamePlayed: 'word-match', points: matches * 50 });
+        }
+    }, [isGameOver]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const initializeGame = useCallback(() => {
         setCards(generateShuffledCards());
