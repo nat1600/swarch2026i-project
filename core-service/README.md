@@ -10,7 +10,7 @@ The core service exposes a REST API built with **FastAPI** and persists data in 
 
 | Layer       | Technology                        |
 |-------------|-----------------------------------|
-| Language    | Python 3.14                       |
+| Language    | Python 3.13                       |
 | Framework   | FastAPI                           |
 | ORM         | SQLAlchemy 2.x                    |
 | Database    | PostgreSQL 16                     |
@@ -21,6 +21,10 @@ The core service exposes a REST API built with **FastAPI** and persists data in 
 
 ```
 core-service/
+├── alembic/
+│   ├── versions/              # Auto-generated migration scripts (committed to repo)
+│   ├── env.py                 # Alembic runtime config; imports all models for autogenerate
+│   └── README
 ├── app/
 │   ├── core/
 │   │   ├── config.py          # Settings loaded from .env
@@ -31,13 +35,24 @@ core-service/
 │   │   ├── phrase.py          # Phrase and ReviewData models
 │   │   └── review.py
 │   ├── routes/
-│   │   └── phrases.py         # /phrases endpoints
+│   │   ├── phrases.py         # /phrases endpoints
+│   │   └── translate.py       # /translate endpoint
 │   ├── schemas/
 │   │   └── phrases.py         # Pydantic request/response schemas
 │   ├── services/
-│   │   └── phrase_service.py  # Business logic layer
+│   │   ├── phrase_service.py  # Business logic for phrases and SM-2 reviews
+│   │   ├── translation_service.py  # Multi-provider translation orchestrator
+│   │   ├── sm2.py             # SM-2 spaced repetition algorithm
+│   │   └── providers/
+│   │       ├── base.py        # Abstract TranslationProvider interface
+│   │       ├── deepl.py       # DeepL API provider (500k chars/month free)
+│   │       ├── libretranslate.py  # LibreTranslate provider (no API key required)
+│   │       └── mymemory.py    # MyMemory provider (fallback)
 │   └── main.py                # FastAPI app factory
-├── docker-compose.yml         # PostgreSQL container
+├── scripts/
+│   └── migrate.sh             # Convenience wrapper: prints state, runs upgrade head
+├── alembic.ini
+├── docker-compose.yml
 ├── pyproject.toml
 └── .env.example
 ```
@@ -74,9 +89,37 @@ Holds the SM-2 algorithm state for each phrase.
 
 ## API Endpoints
 
-| Method | Path       | Description              |
-|--------|------------|--------------------------|
-| `GET`  | `/phrases` | List all phrases         |
+| Method   | Path                      | Description                              |
+|----------|---------------------------|------------------------------------------|
+| `GET`    | `/phrases`                | List all active phrases                  |
+| `POST`   | `/phrases`                | Create a new phrase                      |
+| `GET`    | `/phrases/due`            | Get phrases due for review today         |
+| `GET`    | `/phrases/{id}`           | Get a phrase by ID                       |
+| `DELETE` | `/phrases/{id}`           | Soft-delete a phrase                     |
+| `POST`   | `/phrases/{id}/review`    | Submit SM-2 review result (quality 0–5)  |
+| `POST`   | `/translate`              | Translate text via multi-provider system |
+
+
+## Translation Providers
+
+The `/translate` endpoint tries providers in order, falling back to the next if one fails or is unavailable:
+
+1. **DeepL** — highest quality, requires `DEEPL_API_KEY`, 500k chars/month free tier
+2. **LibreTranslate** — open source, no API key required by default
+3. **MyMemory** — public API, used as last resort fallback
+
+## SM-2 Algorithm
+
+The `POST /phrases/{id}/review` endpoint accepts a `quality` score (0–5) and updates the phrase scheduling:
+
+| Quality | Meaning                        |
+|---------|--------------------------------|
+| 0 – 2   | Failed — interval resets to 1 day |
+| 3       | Recalled with difficulty       |
+| 4       | Recalled correctly             |
+| 5       | Perfect recall                 |
+
+
 
 Interactive docs are available at `/docs` when `DEBUG=true`.
 
@@ -102,6 +145,11 @@ POSTGRES_PORT=5432
 
 # Set to true to enable the interactive docs at /docs (disable in production)
 DEBUG=true
+
+# Translation providers (optional — service falls back if not set)
+DEEPL_API_KEY=your_deepl_api_key_here
+LIBRETRANSLATE_URL=https://libretranslate.com
+LIBRETRANSLATE_API_KEY=         # optional
 ```
 
 ## Running Locally
@@ -118,10 +166,48 @@ docker compose up -d
 uv sync
 ```
 
-### 3. Run the development server
+### 3. Apply migrations
+
+```bash
+bash scripts/migrate.sh
+```
+
+### 4. Run the development server
 
 ```bash
 uvicorn app.main:app --reload 
 ```
 
 The API will be available at `http://localhost:8000` and the interactive docs at `http://localhost:8000/docs`.
+
+## Database Migrations
+
+Migrations are managed with [Alembic](https://alembic.sqlalchemy.org/). All migration scripts live in `alembic/versions/` and are committed to the repository — never edit them by hand after they have been applied.
+
+### Check the current migration state
+
+```bash
+uv run alembic current
+```
+
+### Create a new migration after changing a model
+
+```bash
+uv run alembic revision --autogenerate -m "short description of change"
+```
+
+Review the generated file in `alembic/versions/` before applying it. Autogenerate cannot detect every kind of change (e.g. renamed columns), so always verify the output.
+
+### Apply all pending migrations
+
+```bash
+uv run alembic upgrade head
+# or use the convenience script:
+bash scripts/migrate.sh
+```
+
+### Roll back the last migration
+
+```bash
+uv run alembic downgrade -1
+```

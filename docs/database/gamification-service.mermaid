@@ -1,0 +1,31 @@
+---
+title: "gamification_db — Gamification Service (PostgreSQL)"
+---
+erDiagram
+    LEADERBOARD_USER }o--|{ LEADERBOARD : "belongs to"
+    GAME_SESSION }o--|| GAME : "belongs to"
+
+    LEADERBOARD {
+        int id PK
+        date start_date
+        date end_date
+    }
+
+    LEADERBOARD_USER {
+        int id PK
+        int user_id "soft ref → auth_db.USER"
+        int leaderboard_id FK
+        int score
+    }
+
+    GAME {
+        int id PK
+        string name
+    }
+
+    GAME_SESSION {
+        int id PK
+        int user_id "soft ref → auth_db.USER"
+        int game_id FK
+        int score
+    }

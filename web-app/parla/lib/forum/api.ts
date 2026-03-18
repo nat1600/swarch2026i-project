@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8003",
+  baseURL: process.env.NEXT_PUBLIC_FORUM_URL || "http://localhost:8003",
 });
 
 api.interceptors.request.use(async (config) => {

@@ -1,4 +1,3 @@
-
 graph TD
     %% ── PRESENTATION LAYER ──
     subgraph PRESENTATION["🖥️ Presentation Layer"]
@@ -13,24 +12,19 @@ graph TD
 
     %% ── LOGIC LAYER ──
     subgraph LOGIC["🔧 Logic Layer — Microservices"]
-        AuthService["🔐 Auth Service\nPython · FastAPI · JWT"]
-        CoreService["🧠 Core Service\nPython · FastAPI · SQLAlchemy"]
+        AuthService["🔐 Auth Service\nPython · FastAPI"]
+        CoreService["🧠 Core Service\nPython · FastAPI"]
         GamificationService["🎮 Gamification Service\nGo · Gin"]
         ForumService["💬 Forum Service\nPython · FastAPI"]
     end
 
     %% ── DATA LAYER ──
     subgraph DATA["🗄️ Data Layer"]
-        PostgreSQL[("🗄 PostgreSQL\nRelacional · SQL")]
-        MongoDB[("🍃 MongoDB\nNoSQL · Document")]
+        AuthDB[("🔐 auth_db\nPostgreSQL")]
+        CoreDB[("🧠 core_db\nPostgreSQL")]
+        GamificationDB[("🎮 gamification_db\nPostgreSQL")]
+        ForumDB[("💬 forum_db\nMongoDB")]
     end
-
-    %% ── EXTERNAL SERVICES ──
-    subgraph EXTERNAL["🌐 External Services"]
-        AnkiConnect["📚 AnkiConnect\nExternal API"]
-    end
-
-    %% ── CONNECTORS ──
 
     %% Presentation → Gateway
     WebApp      -->|"GraphQL"| APIGateway
@@ -42,17 +36,12 @@ graph TD
     APIGateway  -->|"REST"| GamificationService
     APIGateway  -->|"REST"| ForumService
 
-    %% Microservices → Databases
-    AuthService         -.->|"TCP / psycopg2"| PostgreSQL
-    CoreService         -.->|"TCP / psycopg2"| PostgreSQL
-    CoreService         -.->|"TCP / pymongo"| MongoDB
-    GamificationService -.->|"TCP / pgx"| PostgreSQL
-    ForumService        -.->|"TCP / pymongo"| MongoDB
+    %% Microservices → Own Databases (one per service)
+    AuthService         -.->|"SQLAlchemy"| AuthDB
+    CoreService         -.->|"SQLAlchemy"| CoreDB
+    GamificationService -.->|"pgx"| GamificationDB
+    ForumService        -.->|"pymongo"| ForumDB
 
-    %% Core → External
-    CoreService -->|"REST export"| AnkiConnect
-
-    %% ── STYLES ──
     classDef presentation fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
     classDef gateway      fill:#2e1065,stroke:#7c3aed,color:#e2e8f0
     classDef logic        fill:#064e3b,stroke:#10b981,color:#e2e8f0
@@ -63,6 +52,5 @@ graph TD
     class WebApp,Extension presentation
     class APIGateway gateway
     class AuthService,CoreService,GamificationService,ForumService logic
-    class PostgreSQL dataRel
-    class MongoDB dataNoSQL
-    class AnkiConnect external
+    class AuthDB,CoreDB,GamificationDB dataRel
+    class ForumDB dataNoSQL

@@ -4,6 +4,7 @@ erDiagram
     USER ||--o{ PHRASE : "has"
     USER }o--|| LANGUAGE : "is learning"
     USER ||--o{ GAME_SESSION : "has"
+    USER ||--o{ STREAK : "has"
     REVIEW_SESSION }|--|{ REVIEW_SESSION_PHRASE : "belongs to"
     PHRASE }|--o{ REVIEW_SESSION_PHRASE : "reviewed in"
     PHRASE ||--|| REVIEW_DATA: ""
@@ -19,8 +20,6 @@ erDiagram
         string email
         string username
         string timezone
-        int current_streak
-        int longest_streak
         int accumulated_points
     }
 
@@ -88,4 +87,11 @@ erDiagram
     GAME {
         int id PK
         string name
+    }
+
+    STREAK {
+        int id PK
+        int user_id FK
+        int current_streak
+        int longest_streak
     }

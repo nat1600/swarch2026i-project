@@ -1,6 +1,5 @@
 from pathlib import Path
 from functools import lru_cache
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +17,11 @@ class Settings(BaseSettings):
     postgres_host: str
     postgres_password: str
     postgres_port: int
+
     debug: bool
+
+    mongo_url: str
+    mongo_db: str
 
     @property
     def database_url(self) -> str:
@@ -26,7 +29,6 @@ class Settings(BaseSettings):
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
-
 
 @lru_cache
 def get_settings() -> Settings:

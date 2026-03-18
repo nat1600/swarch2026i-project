@@ -1,0 +1,29 @@
+---
+title: "auth_db — Auth Service (PostgreSQL)"
+---
+erDiagram
+    USER ||--o{ STREAK : "has"
+    USER }o--|| LANGUAGE : "has native\learning language"
+
+    USER {
+        int id PK
+        int native_language_id FK
+        int learning_language_id FK
+        bool active
+        string email
+        string username
+        string timezone
+        int accumulated_points
+    }
+
+    LANGUAGE {
+        int id PK
+        string name
+    }
+
+    STREAK {
+        int id PK
+        int user_id FK
+        int current_streak
+        int longest_streak
+    }

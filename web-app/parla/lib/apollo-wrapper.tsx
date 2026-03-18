@@ -10,7 +10,7 @@ export function ApolloWrapper({ children }: { children: React.ReactNode }) {
   
   const makeClient = () => {
     const httpLink = new HttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8000/graphql",
+      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://api_gateway:8080/api/core/graphql",
     });
 
     const authLink = new SetContextLink(async ({ headers }) => {
