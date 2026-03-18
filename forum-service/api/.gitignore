@@ -3,3 +3,4 @@ forum-service/
 __pycache__/
 *.pyc
 .ruff_cache/
+venv/
