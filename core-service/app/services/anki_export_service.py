@@ -1,7 +1,8 @@
-import os
 import tempfile
+
 import genanki
 from sqlalchemy.orm import Session
+
 from app.models.phrase import Phrase
 from app.services.phrase_service import PhraseService
 
@@ -32,7 +33,7 @@ class AnkiExportService:
     def __init__(self, db_session: Session):
         self.db = db_session
 
-    def export_deck(self, user_id: int) -> str:
+    def export_deck(self, user_id: str) -> str:
         """
         Generates a .apkg file for all active phrases of a user.
         Returns the path to the temporary file.

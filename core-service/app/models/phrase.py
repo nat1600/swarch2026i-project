@@ -6,6 +6,8 @@ from sqlalchemy import TIMESTAMP, ForeignKey, CheckConstraint, Numeric
 
 from app.models.base import Base
 from app.models.language import Language
+
+
 class Phrase(Base):
     """A vocabulary entry captured by a user from subtitles or other sources."""
 
@@ -23,7 +25,7 @@ class Phrase(Base):
         ForeignKey('languages.id'),
         comment="Language the user already knows (used for the translation)"
     )
-    user_id: Mapped[int] = mapped_column(
+    user_id: Mapped[str] = mapped_column(
         index=True, comment="Owner of this phrase; references a user in the auth-service"
     )
     original_text: Mapped[str] = mapped_column(
@@ -63,7 +65,8 @@ class ReviewData(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     phrase_id: Mapped[int] = mapped_column(
-        ForeignKey('phrases.id'), comment="Phrase this scheduling data belongs to"
+        ForeignKey('phrases.id'), comment="Phrase this scheduling data belongs to",
+        unique=True
     )
     repetition_number: Mapped[int] = mapped_column(
         server_default='0',

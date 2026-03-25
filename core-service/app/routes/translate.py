@@ -1,12 +1,14 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.phrases import TranslateRequest, TranslateResponse
+
 from app.services.translation_service import TranslationService
+from app.schemas.phrases import TranslateRequest, TranslateResponse
+
 
 router = APIRouter(prefix='/translate', tags=['translate'])
 
+
 @router.post('/', response_model=TranslateResponse)
 def translate(body: TranslateRequest):
-
     """
     Endpoint that translates a text from one language to another.
 
@@ -18,11 +20,9 @@ def translate(body: TranslateRequest):
     Returns:
         translated text 
     """
-
     service = TranslationService()
 
     try:
-        
         result = service.translate(body.text, body.source_lang, body.target_lang)
         return TranslateResponse(
             original=result['original'],
@@ -33,4 +33,6 @@ def translate(body: TranslateRequest):
             provider=result['provider'],
         )
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)
+        )
