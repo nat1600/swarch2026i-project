@@ -1,0 +1,169 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "tailwind-animations";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   PARLA — Design Tokens
+   ============================================================ */
+@theme {
+  /* Paleta de marca */
+  --color-parla-blue:  #2D83A6;
+  --color-parla-dark:  #254159;
+  --color-parla-red:   #BF0436;
+  --color-parla-light: #A9CBD9;
+  --color-parla-mist:  #E6F0F4;
+
+  /* Fuentes (variables inyectadas por next/font en layout.tsx) */
+  --font-app:   var(--font-nunito);
+  --font-brand: var(--font-boogaloo);
+
+  /*
+   * Animaciones custom — solo las que tailwind-animations NO cubre:
+   *   • ticker   → marquee horizontal infinito de idiomas
+   *   • waveMove → animación de background-position del fondo del onboarding
+   */
+  --animate-ticker:   ticker   18s linear     infinite;
+  --animate-wave-bg:  waveMove 20s linear     infinite;
+}
+
+/* ============================================================
+   KEYFRAMES CUSTOM
+   (solo los que tailwind-animations no provee)
+   ============================================================ */
+
+/* Marquee horizontal: desplaza el track -50% para loop seamless */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Fondo animado del onboarding: mueve el background-position */
+@keyframes waveMove {
+  0%   { background-position: 0 0; }
+  100% { background-position: 100px 100px; }
+}
+
+/* ============================================================
+   UTILITIES DE PARLA — @utility
+   ============================================================
+   Tailwind v4 @utility: cada una genera una utility class que se
+   puede combinar con variants (hover:, lg:, etc.) y que Tailwind
+   incluye automáticamente cuando detecta el nombre en source files.
+
+   Para clases complejas con nested pseudo-clases, la sintaxis
+   @utility soporta nesting con & (ver "Complex utilities" en docs).
+   ============================================================ */
+
+/* Fondo polka-dot compartido entre landing y login */
+@utility bg-polka {
+  background-color: #A9CBD9;
+  background-image: radial-gradient(#2D83A6 10%, transparent 10%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+/* Fondo animado del onboarding */
+@utility bg-wave {
+  background-color: #A9CBD9;
+  background-image: repeating-radial-gradient(
+    circle at 0 0,
+    transparent 0,
+    #A9CBD9 40px,
+    #2D83A6 40px,
+    #2D83A6 42px,
+    transparent 42px,
+    transparent 80px
+  );
+  background-size: 100px 100px;
+  animation: var(--animate-wave-bg);
+}
+
+/* Watermark tipográfico gigante "PARLA" */
+@utility watermark {
+  font-family: var(--font-brand);
+  font-size: clamp(120px, 22vw, 280px);
+  line-height: 0.85;
+  color: transparent;
+  -webkit-text-stroke: 3px rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -4px;
+}
+
+/* Pista del ticker de idiomas */
+@utility ticker-track {
+  animation: var(--animate-ticker);
+}
+
+/* ============================================================
+   COMPONENT CLASSES
+   ============================================================
+   Clases complejas multi-propiedad con pseudo-clases.
+   Fuera de @layer para máxima especificidad y garantizar
+   que siempre se incluyen en el output CSS.
+   ============================================================ */
+
+/* Botón primario rojo 3D */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #BF0436;
+  color: #fff;
+  font-family: var(--font-app);
+  font-weight: 900;
+  font-size: 1.25rem;
+  padding: 18px 48px;
+  border-radius: 18px;
+  border-bottom: 8px solid #8C0327;
+  transition: transform 0.12s, border-bottom-width 0.12s, background 0.12s;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover  { background: #a0032e; }
+  &:active { border-bottom-width: 2px; transform: translateY(6px); }
+}
+
+/* Botón secundario blanco 3D */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  color: #254159;
+  font-family: var(--font-app);
+  font-weight: 900;
+  font-size: 1.1rem;
+  padding: 16px 36px;
+  border-radius: 18px;
+  border: 4px solid #A9CBD9;
+  border-bottom: 8px solid #7AAEC2;
+  transition: transform 0.12s, border-bottom-width 0.12s, background 0.12s;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover  { background: #f0f8fc; border-color: #2D83A6; border-bottom-color: #1f6d8e; }
+  &:active { border-bottom-width: 2px; transform: translateY(6px); }
+}
+
+/* Tarjeta de feature con hover lift 3D */
+.feat-card {
+  background: #fff;
+  border: 4px solid #254159;
+  border-bottom: 8px solid #254159;
+  border-radius: 24px;
+  padding: 32px 28px;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 0 0 #1a2f40;
+  }
+}

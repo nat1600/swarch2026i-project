@@ -34,6 +34,10 @@ def apply_sm2(
         repetitions += 1
 
     easiness = max(1.3, easiness + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+    
+    if easiness > 2.5:
+        easiness = 2.5
+        
     next_review = date.today() + timedelta(days=interval)
 
     return repetitions, easiness, interval, next_review
