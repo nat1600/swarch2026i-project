@@ -43,30 +43,8 @@
 
 The platform follows a **microservices architecture** with an API Gateway as the single entry point. Each service owns its own database and communicates through the gateway.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client Layer                         │
-│          Web App (Next.js)   +   Browser Extension          │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     API Gateway :8080                       │
-└──────┬────────────────┬──────────────────┬──────────────────┘
-       │                │                  │
-       ▼                ▼                  ▼
-┌────────────┐  ┌──────────────┐  ┌───────────────────┐
-│ Auth       │  │ Core         │  │ Gamification /    │
-│ Service    │  │ Service      │  │ Forum Service     │
-│            │  │ :8000        │  │                   │
-└─────┬──────┘  └──────┬───────┘  └───────────────────┘
-      │                │
-      ▼                ▼
-┌──────────┐  ┌────────────────────┐
-│ Postgres │  │ Postgres + MongoDB │
-│ :5433    │  │ :5434  /  :27018   │
-└──────────┘  └────────────────────┘
-```
+![Diagrama Arquitectura-C C](https://github.com/user-attachments/assets/0c6786d9-abeb-4fcb-bd7d-9fe5a1529500)
+
 
 ---
 
