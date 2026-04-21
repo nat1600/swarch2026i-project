@@ -1,0 +1,59 @@
+services:
+  # ── Spring Boot Application ────────────────────────────────────────────────
+  gamification-service:
+    build: .
+    container_name: gamification-service
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/GamificationService
+      DB_USERNAME: Carlitos
+      DB_PASSWORD: whistleblower2256
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DOCKER_COMPOSE_ENABLED: false
+      SPRING_CONFIG_IMPORT: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gamification-network
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: arquisoft_postgres_2
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: Carlitos
+      POSTGRES_PASSWORD: whistleblower2256
+      POSTGRES_DB: GamificationService
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Carlitos -d GamificationService"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gamification-network
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis
+    container_name: redis_gamification_2
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gamification-network
+
+# ── Network ────────────────────────────────────────────────────────────────
+networks:
+  gamification-network:
+    driver: bridge
