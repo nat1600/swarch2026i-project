@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, RefreshCw, Type } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from "@/components/games/useTranslation";
+import { useGameSession } from '@/hooks/useGameSession';
 
 // Mock data
 const mockWords = [
@@ -21,6 +22,7 @@ const mockWords = [
 
 export default function TypingGame() {
     const { t } = useTranslation();
+    const { recordGameSession } = useGameSession();
     const [currentWord, setCurrentWord] = useState(mockWords[0]);
     const [inputValue, setInputValue] = useState('');
     const [score, setScore] = useState(0);
@@ -47,6 +49,13 @@ export default function TypingGame() {
 
         return () => clearInterval(timer);
     }, [isPlaying, timeLeft]);
+
+    // Record session when game ends: 1 correct word = 20 XP
+    useEffect(() => {
+        if (isGameOver) {
+            recordGameSession({ gamePlayed: 'typing', points: score * 20 });
+        }
+    }, [isGameOver]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (isPlaying && inputRef.current) {

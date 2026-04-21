@@ -18,7 +18,7 @@ public class UserStreakController {
     private final UserStreakService userStreakService;
 
     @PostMapping("/postUserActivity")
-    public ResponseEntity<UserStreakDTO> postUserStreak(@RequestHeader String userName) {
+    public ResponseEntity<UserStreakDTO> postUserStreak(@RequestParam String userName) {
         try {
             UserStreakDTO registered = userStreakService.registerUserActivity(userName);
             return new ResponseEntity<>(registered, HttpStatus.CREATED);
@@ -29,7 +29,7 @@ public class UserStreakController {
     }
 
     @GetMapping("/getUserStreakData")
-    public ResponseEntity<UserStreakDTO> getUserStreak(@RequestHeader String userName) {
+    public ResponseEntity<UserStreakDTO> getUserStreak(@RequestParam String userName) {
         try {
             UserStreakDTO currentUserActivity = userStreakService.getUserActivity(userName);
             return new ResponseEntity<>(currentUserActivity, HttpStatus.OK);

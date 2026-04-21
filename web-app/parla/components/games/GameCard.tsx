@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import * as Icons from 'lucide-react';
+import type React from 'react';
 
 interface GameCardProps {
     title: string;
@@ -11,7 +12,7 @@ interface GameCardProps {
 
 export function GameCard({ title, description, href, icon, color = "blue" }: GameCardProps) {
     // Map string to Lucide component
-    const LucideIcon = (Icons as Record<string, any>)[icon] || Icons.Gamepad2;
+    const LucideIcon = ((Icons as unknown) as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>)[icon] || Icons.Gamepad2;
 
     const colorClasses = {
         blue: 'text-parla-blue bg-parla-mist',

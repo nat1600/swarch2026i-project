@@ -71,11 +71,11 @@ export function ReplyCard({
             likes={reply.likes}
             likesCount={reply.likes_count}
             onLike={async () => {
-              const updated = await likeReply(reply._id, user?.sub ?? undefined);
+              const updated = await likeReply(reply._id);
               onReplyUpdated(updated);
             }}
             onUnlike={async () => {
-              const updated = await unlikeReply(reply._id, user?.sub ?? undefined);
+              const updated = await unlikeReply(reply._id);
               onReplyUpdated(updated);
             }}
           />

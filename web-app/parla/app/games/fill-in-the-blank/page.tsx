@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from "@/components/games/useTranslation";
+import { useGameSession } from '@/hooks/useGameSession';
 
 // Mock data for the game
 const mockQuestions = [
@@ -32,12 +33,20 @@ const mockQuestions = [
 
 export default function FillInTheBlankGame() {
     const { t } = useTranslation();
+    const { recordGameSession } = useGameSession();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedWord, setSelectedWord] = useState<string | null>(null);
     const [isChecked, setIsChecked] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
     const [score, setScore] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
+
+    // Record session when game ends: 1 correct answer = 50 XP
+    useEffect(() => {
+        if (isGameOver) {
+            recordGameSession({ gamePlayed: 'fill-in-the-blank', points: score * 50 });
+        }
+    }, [isGameOver]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const currentQuestion = mockQuestions[currentQuestionIndex];
 

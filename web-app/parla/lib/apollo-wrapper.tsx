@@ -1,53 +1,42 @@
 "use client";
 
-import {
-  ApolloClient,
-  ApolloNextAppProvider,
-  InMemoryCache,
-} from "@apollo/experimental-nextjs-app-support";
+import { ApolloClient, ApolloNextAppProvider, InMemoryCache } from "@apollo/client-integration-nextjs";
 import { HttpLink } from "@apollo/client";
+import { SetContextLink } from "@apollo/client/link/context";
 
-/**
- * Fábrica del cliente Apollo para Client Components.
- *
- * Usa `ApolloClient` e `InMemoryCache` de `@apollo/experimental-nextjs-app-support`
- * (no de `@apollo/client` directamente) para garantizar compatibilidad con SSR
- * y streaming en Next.js App Router.
- *
- * TODO: Cuando el backend esté listo, inyectar el access token de Auth0
- * usando un `authLink`. Ejemplo:
- *
- *   import { setContext } from "@apollo/client/link/context";
- *   const authLink = setContext(async (_, { headers }) => {
- *     const res = await fetch("/api/auth/profile");
- *     const session = await res.json();
- *     return {
- *       headers: {
- *         ...headers,
- *         authorization: session?.accessToken ? `Bearer ${session.accessToken}` : "",
- *       },
- *     };
- *   });
- *   link: authLink.concat(httpLink)
- */
-function makeClient() {
-  const httpLink = new HttpLink({
-    uri: process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://api_gateway:8080/api/core/graphql",
-  });
+import { getClientToken } from "@/actions/auth/authActions";
 
-  return new ApolloClient({
-    cache: new InMemoryCache(),
-    link: httpLink,
-  });
-}
-
-/**
- * Provider que envuelve la aplicación para que los Client Components
- * puedan usar `useQuery`, `useMutation`, `useSuspenseQuery`, etc.
- *
- * Se añade en app/layout.tsx, dentro de Auth0Provider.
- */
 export function ApolloWrapper({ children }: { children: React.ReactNode }) {
+  
+  const makeClient = () => {
+    const httpLink = new HttpLink({
+      uri: typeof window === 'undefined' 
+        ? (process.env.SERVER_GRAPHQL_URL ?? process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8080/api/core/graphql")
+        : (process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8080/api/core/graphql"),
+    });
+
+    const authLink = new SetContextLink(async ({ headers }) => {
+
+      const token = await getClientToken();
+      
+      if (token) {
+        return {
+          headers: {
+            ...headers,
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      }
+      
+      return { headers };
+    });
+
+    return new ApolloClient({
+      cache: new InMemoryCache(),
+      link: authLink.concat(httpLink),
+    });
+  };
+
   return (
     <ApolloNextAppProvider makeClient={makeClient}>
       {children}

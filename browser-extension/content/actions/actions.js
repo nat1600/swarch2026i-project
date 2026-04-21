@@ -21,55 +21,38 @@ const ParlaActions = {
      *
      * @param {string} originalText    - Text the user selected on the page
      * @param {string} translatedText  - Translation returned by the API
-     * @param {number} sourceLangId    - ID of the source language (default: 1 = English)
-     * @param {number} targetLangId    - ID of the target language (default: 2 = Spanish)
+     * @param {number} sourceLangId    - ID of the source language (default: 4 = English)
+     * @param {number} targetLangId    - ID of the target language (default: 13 = Spanish)
      */
-    async savePhrase(originalText, translatedText, sourceLangId = 1, targetLangId = 2) {
-      console.log(' Saving phrase:', originalText);
-  // const { parla_user } = await chrome.storage.local.get(['parla_user']);
-/**
-  const { parla_user } = await chrome.storage.local.get(['parla_user']);
+    async savePhrase(originalText, translatedText, sourceLangId = 4, targetLangId = 13) {
+      console.log('Saving phrase:', originalText);
 
-  if (!parla_user) {
-    showNotification('Inicia sesión para guardar frases');
-    return;
-  }
+      const authState = await new Promise(resolve =>
+        chrome.runtime.sendMessage({ action: 'getAuthState' }, resolve)
+      );
 
-  const phrase = {
-    user_id:            parla_user.id,
-    source_language_id: parla_user.learning_language_id,  // francés
-    target_language_id: parla_user.native_language_id,    // español
-    original_text:      originalText,
-    translated_text:    translatedText,
-    pronunciation:      null
-  };
- * 
- * 
- * 
- */
+      if (!authState?.isLoggedIn) {
+        showNotification('Inicia sesión para guardar frases');
+        return;
+      }
 
-
-  // TODO: UNCOMMENT THIS WHEN WE HAVE ALREADY SINCRONIced
-
-  
       const phrase = {
-        user_id:            1,              // TODO: replace with auth user id
-        source_language_id: sourceLangId,   // TODO: user.learning_language_id
-        target_language_id: targetLangId,   // TODO: user.native_language_id
+        source_language_id: sourceLangId,
+        target_language_id: targetLangId,
         original_text:      originalText,
         translated_text:    translatedText,
         pronunciation:      null
       };
-  
+
       // Send to background.js → POST /phrases/
       chrome.runtime.sendMessage({ action: 'savePhrase', phrase }, (response) => {
         if (response?.success) {
-          console.log(' Phrase saved:', response.savedPhrase);
+          console.log('Phrase saved:', response.savedPhrase);
           window.ParlaPopup?.hide();
           showNotification('✓ Frase guardada');
         } else {
-          console.error(' Error saving phrase:', response?.error);
-          showNotification(' Error al guardar');
+          console.error('Error saving phrase:', response?.error);
+          showNotification('Error al guardar');
         }
       });
     },

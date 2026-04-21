@@ -45,8 +45,7 @@ export function ReplyForm({
     try {
       const reply = await createReply(
         threadId,
-        { content: data.content, parent_reply_id: parentReplyId },
-        user.sub
+        { content: data.content, parent_reply_id: parentReplyId }
       );
       onCreated(reply);
       reset();

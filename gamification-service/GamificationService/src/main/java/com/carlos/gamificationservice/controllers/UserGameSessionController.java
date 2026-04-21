@@ -33,7 +33,7 @@ public class UserGameSessionController {
     }
 
     @DeleteMapping("/deleteAllUserGameSessions")
-    public ResponseEntity<BooleanDTO> deleteAllUserGameSessions(@RequestHeader String userName) {
+    public ResponseEntity<BooleanDTO> deleteAllUserGameSessions(@RequestParam String userName) {
 
         BooleanDTO result = userGameSessionService.deleteAllUserGameSessions(userName);
 
@@ -46,7 +46,7 @@ public class UserGameSessionController {
     }
 
     @DeleteMapping("/deleteAllUserGameSessionsPerDate")
-    public ResponseEntity<BooleanDTO> deleteAllUserGameSessionsPerDate(@RequestHeader String userName, @RequestParam LocalDate intendedDate) {
+    public ResponseEntity<BooleanDTO> deleteAllUserGameSessionsPerDate(@RequestParam String userName, @RequestParam LocalDate intendedDate) {
 
         BooleanDTO result = userGameSessionService.deleteAllUserGameSessionsPerDate(userName, intendedDate);
 
@@ -59,7 +59,7 @@ public class UserGameSessionController {
     }
 
     @GetMapping("/getAllUserGameSessions")
-    public ResponseEntity<List<UserGameSession>> getAllUserGameSessions(@RequestHeader String userName) {
+    public ResponseEntity<List<UserGameSession>> getAllUserGameSessions(@RequestParam String userName) {
 
         List<UserGameSession> gameSessions = userGameSessionService.getAllUserGameSessions(userName);
 
@@ -72,7 +72,7 @@ public class UserGameSessionController {
     }
 
     @GetMapping("/getAllUserGameSessionsPerDate")
-    public ResponseEntity<List<UserGameSession>> getAllUserGameSessionsPerDate(@RequestHeader String userName, @RequestParam LocalDate intendedDate) {
+    public ResponseEntity<List<UserGameSession>> getAllUserGameSessionsPerDate(@RequestParam String userName, @RequestParam LocalDate intendedDate) {
 
         List<UserGameSession> gameSessions = userGameSessionService.getAllUserGameSessionsPerDate(userName, intendedDate);
 
@@ -85,7 +85,7 @@ public class UserGameSessionController {
     }
 
     @GetMapping("/getAllUserGameSessionsPerPoints")
-    public ResponseEntity<List<UserGameSession>> getAllUserGameSessionsPerPoints(@RequestHeader String userName, @RequestParam Integer intendedPoints) {
+    public ResponseEntity<List<UserGameSession>> getAllUserGameSessionsPerPoints(@RequestParam String userName, @RequestParam Integer intendedPoints) {
 
         List<UserGameSession> gameSessions = userGameSessionService.getAllUserGameSessionsPerPoints(userName, intendedPoints);
 
