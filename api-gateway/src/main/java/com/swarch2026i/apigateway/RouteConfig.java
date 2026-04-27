@@ -27,19 +27,35 @@ public class RouteConfig {
         return builder.routes()
                 .route("auth-service", route -> route
                         .path("/api/auth/**")
-                        .filters(filter -> filter.rewritePath("/api/auth/?(?<remaining>.*)", "/${remaining}"))
+                        .filters(filter -> filter
+                                .rewritePath("/api/auth/?(?<remaining>.*)", "/${remaining}")
+                                .dedupeResponseHeader("Access-Control-Allow-Origin", "RETAIN_FIRST")
+                                .dedupeResponseHeader("Access-Control-Allow-Credentials", "RETAIN_FIRST")
+                        )
                         .uri(normalizedAuthUrl))
                 .route("core-service", route -> route
                         .path("/api/core/**")
-                        .filters(filter -> filter.rewritePath("/api/core/?(?<remaining>.*)", "/${remaining}"))
+                        .filters(filter -> filter
+                                .rewritePath("/api/core/?(?<remaining>.*)", "/${remaining}")
+                                .dedupeResponseHeader("Access-Control-Allow-Origin", "RETAIN_FIRST")
+                                .dedupeResponseHeader("Access-Control-Allow-Credentials", "RETAIN_FIRST")
+                        )
                         .uri(normalizedCoreUrl))
                 .route("forum-service", route -> route
                         .path("/api/forum/**")
-                        .filters(filter -> filter.rewritePath("/api/forum/?(?<remaining>.*)", "/${remaining}"))
+                        .filters(filter -> filter
+                                .rewritePath("/api/forum/?(?<remaining>.*)", "/${remaining}")
+                                .dedupeResponseHeader("Access-Control-Allow-Origin", "RETAIN_FIRST")
+                                .dedupeResponseHeader("Access-Control-Allow-Credentials", "RETAIN_FIRST")
+                        )
                         .uri(normalizedForumUrl))
                 .route("gamification-service", route -> route
                         .path("/api/game/**")
-                        .filters(filter -> filter.rewritePath("/api/game/?(?<remaining>.*)", "/${remaining}"))
+                        .filters(filter -> filter
+                                .rewritePath("/api/game/?(?<remaining>.*)", "/${remaining}")
+                                .dedupeResponseHeader("Access-Control-Allow-Origin", "RETAIN_FIRST")
+                                .dedupeResponseHeader("Access-Control-Allow-Credentials", "RETAIN_FIRST")
+                        )
                         .uri(normalizedGameUrl))
                 .build();
     }

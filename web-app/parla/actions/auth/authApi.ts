@@ -22,7 +22,8 @@ authApi.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (error) {
-    console.error("Error occurred while fetching session:", error);
+    console.error("Error occurred while fetching session in authApi interceptor:", error);
+    throw error;
   }
   return config;
 });

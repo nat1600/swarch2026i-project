@@ -13,8 +13,12 @@ import type {
   ReplyUpdatePayload,
 } from "./types";
 
+const baseURL = typeof window === 'undefined'
+  ? process.env.SERVER_FORUM_URL || process.env.NEXT_PUBLIC_FORUM_URL || "http://localhost:8003"
+  : process.env.NEXT_PUBLIC_FORUM_URL || "http://localhost:8003";
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_FORUM_URL || "http://localhost:8003",
+  baseURL,
 });
 
 api.interceptors.request.use(async (config) => {

@@ -37,6 +37,7 @@ export async function registerUserAction(data: CreateUserPayload) {
     console.error(
       "Error during registration: ",
       error.response?.data || error.message,
+      error // Logs the full stack trace
     );
 
     if (error.response) {
@@ -68,6 +69,7 @@ export async function checkUserExistsAction() {
     console.error(
       "Error checking user existence: ",
       error.response?.data || error.message,
+      error // Logs the full stack trace
     );
 
     return { exists: false, user: null };
