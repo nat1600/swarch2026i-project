@@ -30,6 +30,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
     container_name: auth_migration
@@ -165,8 +176,12 @@ services:
       LOCAL_DB_PASSWORD: password
       JPA_DDL_AUTO: update
       JPA_SHOW_SQL: "true"
+      REDIS_HOST: redis      
+      REDIS_PORT: 6379 
     depends_on:
       postgres:
+        condition: service_healthy
+      redis: 
         condition: service_healthy
 
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
