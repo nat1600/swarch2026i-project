@@ -8,6 +8,8 @@ _nlp = None
 
 
 def get_nlp():
+    """
+    Returns the spaCy model, loading it only the first time."""
     global _nlp
     if _nlp is None:
         settings = get_settings()
@@ -17,6 +19,15 @@ def get_nlp():
 
 
 def get_pos(sentence: str, word: str) -> str:
+
+    """
+    
+    Analyze the sentence using spaCy and return the part-of-speech tag for the word.
+    Example outputs: ADJ, NOUN, VERB, ADV
+
+    If the word is not found in the sentence, return ‘WORD’ as a fallback
+    so that the workflow is not interrupted.
+    """
     nlp = get_nlp()
     doc = nlp(sentence)
 
