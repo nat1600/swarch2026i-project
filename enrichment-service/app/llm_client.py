@@ -38,11 +38,15 @@ Target word: "{word}"
 Part of speech: {pos_label}
 Example sentence: "{sentence}"
 
+The student must choose "{word}" to complete the blank in the sentence.
 Generate exactly 3 English {pos_label} that:
 1. Are the same part of speech as "{word}"
-2. Fit grammatically in the sentence above (replacing "{word}")
-3. Are semantically related but clearly wrong in context — plausible distractors, not synonyms
-4. Are common English words (B1-B2 level)
+2. Fit grammatically in the sentence (replacing "{word}")
+3. Are CLEARLY WRONG in the specific context of this sentence
+4. Are semantically related to "{word}" (same category) but don't make sense here
+5. Are common English words (B1-B2 level)
+
+The goal is that only "{word}" makes sense in context, not the distractors.
 
 Respond ONLY with valid JSON, no explanation, no markdown, no code blocks:
 {{"distractors": ["word1", "word2", "word3"]}}"""
