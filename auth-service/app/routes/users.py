@@ -1,4 +1,4 @@
-from sqlalchemy.orm import selectinload
+""" from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException
@@ -98,3 +98,4 @@ async def register(
         .execution_options(populate_existing=True)
     )
     return UserResponse.from_db(user)
+ """
