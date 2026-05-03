@@ -10,9 +10,11 @@ interface PhraseModalProps {
   onSave: (data: PhraseCreate | PhraseUpdate) => Promise<void>;
   phrase?: Phrase | null;
   userId: number;
+  sourceLanguageId: number;
+  targetLanguageId: number;
 }
 
-export default function PhraseModal({ isOpen, onClose, onSave, phrase, userId }: PhraseModalProps) {
+export default function PhraseModal({ isOpen, onClose, onSave, phrase, userId, sourceLanguageId, targetLanguageId }: PhraseModalProps) {
   const [originalText, setOriginalText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [pronunciation, setPronunciation] = useState("");
@@ -45,8 +47,8 @@ export default function PhraseModal({ isOpen, onClose, onSave, phrase, userId }:
       } else {
         const createData: PhraseCreate = {
           user_id: userId,
-          source_language_id: 1,
-          target_language_id: 2,
+          source_language_id: sourceLanguageId,
+          target_language_id: targetLanguageId,
           original_text: originalText,
           translated_text: translatedText,
           pronunciation: pronunciation || null,
