@@ -1,4 +1,4 @@
-from datetime import datetime
+""" from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -52,3 +52,4 @@ class UserResponse(BaseModel):
             accumulated_points=user.accumulated_points,
             last_login_at=user.last_login_at
         ))
+ """
