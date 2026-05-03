@@ -30,6 +30,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
     container_name: auth_migration
@@ -91,6 +102,7 @@ services:
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
+      SERVICES_GAME_URL: http://gamification-service:8080
     depends_on:
       - auth-service
       - core-service
@@ -158,8 +170,12 @@ services:
 #      LOCAL_DB_PASSWORD: password
 #      JPA_DDL_AUTO: update
 #      JPA_SHOW_SQL: "true"
+#      REDIS_HOST: redis
+#      REDIS_PORT: 6379
 #    depends_on:
 #      postgres:
+#        condition: service_healthy
+#      redis:
 #        condition: service_healthy
 
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
@@ -172,13 +188,13 @@ services:
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
       SERVER_CORE_URL: http://api-gateway:8080/api/core
-      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/core/graphql
+      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/auth/graphql
       SERVER_FORUM_URL: http://api-gateway:8080/api/forum
       SERVER_GAME_URL: http://api-gateway:8080/api/game
-      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/game
+      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
     depends_on:
       - api-gateway
-
+      - redis
 volumes:
   postgres_data:
   forum_mongo_database:
