@@ -5,15 +5,15 @@ import logging
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
-
 _client = None
 
-POS_LABELS = {
-    "VERB": "verbs",
-    "NOUN": "nouns",
-    "ADJ": "adjectives",
-    "ADV": "adverbs",
-    "WORD": "words", 
+LEVEL_DESCRIPTIONS = {
+    "A1": "very simple words and very short sentences, basic everyday vocabulary",
+    "A2": "simple words and short sentences, elementary vocabulary",
+    "B1": "intermediate vocabulary, clear and natural sentences",
+    "B2": "upper-intermediate vocabulary, more complex sentences",
+    "C1": "advanced vocabulary, sophisticated sentences",
+    "C2": "mastery-level vocabulary, nuanced and complex sentences",
 }
 
 def get_client():
@@ -25,59 +25,63 @@ def get_client():
     return _client
 
 
-async def get_distractors(word: str, sentence: str, pos: str) -> list[str]:
+async def enrich_word(word: str, level: str) -> dict | None:
     """
-    Asks the LLM for 3 distractor words of the same part of speech
-    to be used in a vocabulary quiz.
+    Asks the LLM to generate a fill-in-the-blank sentence and 3 distractors
+    for the given word, calibrated to the student's level.
+    Returns a dict with 'sentence' and 'distractors', or None on failure.
     """
-    pos_label = POS_LABELS.get(pos, "words")
+    level_desc = LEVEL_DESCRIPTIONS.get(level.upper(), LEVEL_DESCRIPTIONS["B1"])
 
-    prompt = f"""You are generating distractors for an English vocabulary quiz.
+    prompt = f"""You are creating a vocabulary quiz item for an English language learning app.
 
+Student level: {level.upper()} ({level_desc})
 Target word: "{word}"
-Part of speech: {pos_label}
-Example sentence: "{sentence}"
 
-The student must choose "{word}" to complete the blank in the sentence.
-Generate exactly 3 English {pos_label} that:
-1. Are the same part of speech as "{word}"
-2. Fit grammatically in the sentence (replacing "{word}")
-3. Are CLEARLY WRONG in the specific context of this sentence
-4. Are semantically related to "{word}" (same category) but don't make sense here
-5. Are common English words (B1-B2 level)
+Your task:
+1. Write a natural English sentence that clearly shows the meaning of "{word}" in context.
+   - The sentence difficulty must match the {level.upper()} level: {level_desc}
+   - The sentence must make "{word}" the ONLY correct answer for the blank
+   - Do NOT include "{word}" in the sentence — use ___ as the blank
 
-The goal is that only "{word}" makes sense in context, not the distractors.
+2. Generate exactly 3 distractor words that:
+   - Are the same part of speech as "{word}"
+   - Fit grammatically in the blank
+   - Are plausible but CLEARLY WRONG in this specific context
+   - Match the {level.upper()} vocabulary level
 
 Respond ONLY with valid JSON, no explanation, no markdown, no code blocks:
-{{"distractors": ["word1", "word2", "word3"]}}"""
+{{"sentence": "The ___ barked loudly at the stranger.", "distractors": ["word1", "word2", "word3"]}}"""
 
     try:
         client = get_client()
         response = await client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=100,
+            max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
         )
 
         raw = response.content[0].text.strip()
+        if "```" in raw:
+            raw = raw.replace("```json", "").replace("```", "").strip()
 
-
-        if "```" in raw: raw = raw.replace("```json", "").replace("```", "").strip() #por si modelo responde con un bloque de código
         logger.info(f"LLM raw response: '{raw}'")
-
-
         result = json.loads(raw)
+
+        sentence = result.get("sentence", "")
         distractors = result.get("distractors", [])
 
+        if not sentence or "___" not in sentence:
+            raise ValueError(f"Frase inválida: '{sentence}'")
         if len(distractors) != 3:
             raise ValueError(f"Se esperaban 3 distractores, llegaron {len(distractors)}")
 
-        logger.info(f"LLM: distractores para '{word}': {distractors}")
-        return distractors
+        logger.info(f"LLM: frase='{sentence}' distractores={distractors}")
+        return {"sentence": sentence, "distractors": distractors}
 
     except (json.JSONDecodeError, ValueError, KeyError) as e:
         logger.error(f"LLM: respuesta inválida para '{word}': {e}")
-        return []
+        return None
     except anthropic.APIError as e:
         logger.error(f"LLM: error de API para '{word}': {e}")
-        return []
+        return None
