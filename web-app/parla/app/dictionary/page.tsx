@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
@@ -8,6 +8,7 @@ import { Search, Book, Plus, Loader2, RefreshCw } from "lucide-react";
 import HomeNavBar from "@/components/core/HomeNavBar";
 import { getInitials } from "@/lib/user-utils";
 import { useDictionary } from "@/contexts/DictionaryContext";
+import { useParlaUser } from "@/hooks/useParlaUser";
 import { DictionaryCard } from "@/components/dictionary/DictionaryCard";
 import { DictionaryStatsCards } from "@/components/dictionary/DictionaryStats";
 import { DictionaryFiltersPanel } from "@/components/dictionary/DictionaryFilters";
@@ -28,6 +29,8 @@ import {
 export default function DictionaryPage() {
   const router = useRouter();
   const { user, isLoading: isUserLoading } = useUser();
+  const { numericId, learningLanguageCode } = useParlaUser();
+  const hasAttemptedPopulation = useRef(false);
   const {
     words,
     isLoading,
@@ -83,14 +86,18 @@ export default function DictionaryPage() {
 
   // Auto-populate dictionary from phrases when user is authenticated
   useEffect(() => {
-    if (user && isInitialized && words.length === 0 && !isPopulating) {
-      // Get user ID from Auth0 user object
-      const userId = 1; // TODO: Extract from user.sub or user metadata
-      
-      console.log('🔄 Auto-populating dictionary from user phrases...');
-      populateFromPhrases(userId);
+    if (
+      user &&
+      isInitialized &&
+      numericId &&
+      words.length === 0 &&
+      !isPopulating &&
+      !hasAttemptedPopulation.current
+    ) {
+      hasAttemptedPopulation.current = true;
+      populateFromPhrases(numericId, learningLanguageCode ?? 'es');
     }
-  }, [user, isInitialized, words.length, isPopulating, populateFromPhrases]);
+  }, [user, isInitialized, numericId, learningLanguageCode, words.length, isPopulating, populateFromPhrases]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -100,10 +107,17 @@ export default function DictionaryPage() {
   }, [user, isUserLoading, router]);
 
   // Handlers
+  const langMap: Record<string, string> = {
+    en: "en-US", es: "es-ES", fr: "fr-FR", de: "de-DE",
+    it: "it-IT", pt: "pt-BR", ja: "ja-JP", zh: "zh-CN", ko: "ko-KR",
+    nl: "nl-NL", pl: "pl-PL", ru: "ru-RU", ar: "ar-SA",
+  };
+
   const handleSpeak = (text: string, wordId: string) => {
     if ("speechSynthesis" in window) {
+      const word = words.find((w) => w.id === wordId);
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
+      utterance.lang = langMap[word?.language ?? "en"] ?? "en-US";
       setSpeakingWordId(wordId);
       window.speechSynthesis.speak(utterance);
       setTimeout(() => setSpeakingWordId(null), 2000);
@@ -125,9 +139,8 @@ export default function DictionaryPage() {
   };
 
   const handleRefreshDictionary = () => {
-    const userId = 1; // TODO: Extract from user.sub or user metadata
-    console.log('🔄 Manually refreshing dictionary from phrases...');
-    populateFromPhrases(userId);
+    if (!numericId) return;
+    populateFromPhrases(numericId, learningLanguageCode ?? 'es');
   };
 
   const handleAddWord = (wordData: {

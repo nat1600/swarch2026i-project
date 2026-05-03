@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
 import { Search, Brain, Flame, BatteryWarning, Plus } from "lucide-react";
 import PhraseCard from "@/components/vocabulary/PhraseCard";
 import PhraseModal from "@/components/vocabulary/PhraseModal";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { useParlaUser } from "@/hooks/useParlaUser";
 import HomeNavBar from "@/components/core/HomeNavBar";
 import { getInitials } from "@/lib/user-utils";
 import { Phrase, PhraseCreate, PhraseUpdate } from "@/lib/types/phrases";
@@ -18,12 +19,14 @@ const FILTERS = ["Todos", "Recientes", "Necesitan Repaso", "Dominadas"];
 export default function VocabularioPage() {
   const router = useRouter();
   const { user, isLoading } = useUser();
+  const { numericId, nativeLanguageId, learningLanguageId } = useParlaUser();
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [isLoadingPhrases, setIsLoadingPhrases] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPhrase, setEditingPhrase] = useState<Phrase | null>(null);
+  const [deletingPhraseId, setDeletingPhraseId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -31,13 +34,7 @@ export default function VocabularioPage() {
     }
   }, [user, isLoading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchPhrases();
-    }
-  }, [user]);
-
-  const fetchPhrases = async () => {
+  const fetchPhrases = useCallback(async () => {
     try {
       setIsLoadingPhrases(true);
       const data = await phrasesService.getAllPhrases();
@@ -48,7 +45,13 @@ export default function VocabularioPage() {
     } finally {
       setIsLoadingPhrases(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchPhrases();
+    }
+  }, [user, fetchPhrases]);
 
   const handleCreatePhrase = async (data: PhraseCreate | PhraseUpdate) => {
     try {
@@ -75,11 +78,16 @@ export default function VocabularioPage() {
     }
   };
 
-  const handleDeletePhrase = async (phraseId: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta frase?")) return;
+  const handleDeletePhrase = (phraseId: number) => {
+    setDeletingPhraseId(phraseId);
+  };
+
+  const confirmDeletePhrase = async () => {
+    if (!deletingPhraseId) return;
     try {
-      await phrasesService.deletePhrase(phraseId);
+      await phrasesService.deletePhrase(deletingPhraseId);
       toast.success("Frase eliminada exitosamente");
+      setDeletingPhraseId(null);
       await fetchPhrases();
     } catch (error) {
       console.error("Error deleting phrase:", error);
@@ -323,8 +331,34 @@ export default function VocabularioPage() {
         onClose={handleCloseModal}
         onSave={editingPhrase ? handleUpdatePhrase : handleCreatePhrase}
         phrase={editingPhrase}
-        userId={1}
+        userId={numericId ?? 1}
+        sourceLanguageId={nativeLanguageId ?? 1}
+        targetLanguageId={learningLanguageId ?? 2}
       />
+
+      {/* Confirm delete dialog */}
+      {deletingPhraseId !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl border-4 border-parla-dark shadow-[0_8px_0_0_var(--color-parla-dark)] max-w-sm w-full p-6 space-y-4">
+            <h2 className="font-brand text-2xl text-parla-dark">¿Eliminar frase?</h2>
+            <p className="font-bold text-parla-blue">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setDeletingPhraseId(null)}
+                className="flex-1 py-3 px-6 rounded-xl border-2 border-parla-light text-parla-dark font-black hover:bg-parla-mist transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeletePhrase}
+                className="flex-1 py-3 px-6 rounded-xl bg-parla-red text-white font-black border-b-4 border-[#8C0327] hover:bg-[#a0032e] active:border-b-0 active:translate-y-1 transition-all"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
