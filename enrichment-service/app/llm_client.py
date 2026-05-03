@@ -1,39 +1,51 @@
-# app/lllm_client.py
+# app/llm_client.py
 import anthropic
 import json
 import logging
 from app.config import get_settings
 
-
 logger = logging.getLogger(__name__)
 
 _client = None
 
-def get_client():
+POS_LABELS = {
+    "VERB": "verbs",
+    "NOUN": "nouns",
+    "ADJ": "adjectives",
+    "ADV": "adverbs",
+    "WORD": "words", 
+}
 
+def get_client():
     global _client
     if _client is None:
         settings = get_settings()
         logger.info("Inicializando cliente de Anthropic")
-        _client = anthropic.AsyncAnthropic(settings.anthropic_api_key)
-
+        _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     return _client
+
 
 async def get_distractors(word: str, sentence: str, pos: str) -> list[str]:
     """
-    It asks the LLM for 3 words of the same part of speech that fit into the sentence, like synoniumous, in fact synonimous :v
+    Asks the LLM for 3 distractor words of the same part of speech
+    to be used in a vocabulary quiz.
     """
-    prompt = f"""Word: "{word}" (part of speech: {pos})
-Sentence: "{sentence}"
+    pos_label = POS_LABELS.get(pos, "words")
 
-Give exactly 3 English {pos}s that:
-1. Fit grammatically in the same sentence
-2. Have a slightly different meaning from "{word}"
-3. Are plausible enough to be confusing in a vocabulary quiz
+    prompt = f"""You are generating distractors for an English vocabulary quiz.
 
-Respond ONLY with valid JSON, no explanation, no markdown:
+Target word: "{word}"
+Part of speech: {pos_label}
+Example sentence: "{sentence}"
+
+Generate exactly 3 English {pos_label} that:
+1. Are the same part of speech as "{word}"
+2. Fit grammatically in the sentence above (replacing "{word}")
+3. Are semantically related but clearly wrong in context — plausible distractors, not synonyms
+4. Are common English words (B1-B2 level)
+
+Respond ONLY with valid JSON, no explanation, no markdown, no code blocks:
 {{"distractors": ["word1", "word2", "word3"]}}"""
-    
 
     try:
         client = get_client()
