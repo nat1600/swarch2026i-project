@@ -17,11 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 async def on_message(message: aio_pika.IncomingMessage) -> None:
-    """
-Process a message from the queue.
-    - If enrich() returns True → ACK (message processed, removed from the queue)
-    - If enrich() returns False → NACK (message returned to the queue for retry)
-    """
+
     async with message.process(requeue=True):
         try:
             data = json.loads(message.body)
@@ -34,6 +30,27 @@ Process a message from the queue.
         except Exception as e:
             logger.error(f"Error procesando mensaje: {e}")
             raise
+
+
+async def on_message(message: aio_pika.IncomingMessage) -> None:
+    """
+    Process a message from the queue.
+    - If enrich() returns True → ACK (message processed, removed from the queue)
+    - If enrich() returns False → NACK (message returned to the queue for retry)
+    """
+    
+    async with message.process(requeue=False): 
+        try:
+            data = json.loads(message.body)
+            msg = EnrichmentMessage(**data)
+            success = await enrich(msg)
+            if not success:
+                logger.warning(f"enrich() falló para phrase_id={msg.phrase_id}, descartando mensaje")
+        except Exception as e:
+            logger.error(f"Error procesando mensaje: {e}")
+            raise
+
+
 
 async def main() -> None:
     logger.info("enrichemenet service starting...")

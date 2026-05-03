@@ -56,6 +56,12 @@ Respond ONLY with valid JSON, no explanation, no markdown, no code blocks:
         )
 
         raw = response.content[0].text.strip()
+
+
+        if "```" in raw: raw = raw.replace("```json", "").replace("```", "").strip() #por si modelo responde con un bloque de código
+        logger.info(f"LLM raw response: '{raw}'")
+
+
         result = json.loads(raw)
         distractors = result.get("distractors", [])
 
