@@ -102,7 +102,7 @@ services:
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
-      SERVICES_GAME_URL: http://gamification-service:8080
+      SERVICE_GAME_URL: http://gamification-service:8080
     depends_on:
       - auth-service
       - core-service
