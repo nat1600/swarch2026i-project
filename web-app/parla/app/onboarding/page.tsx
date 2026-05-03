@@ -59,6 +59,8 @@ export default function OnboardingPage() {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       username: "",
+      native_language: "Spanish",
+      learning_language: "English",
       // Puedes dejar estos vacíos para obligar al usuario a elegir
     },
   });
@@ -73,6 +75,9 @@ export default function OnboardingPage() {
       router.push("/login");
       return;
     }
+
+    // Si hay usuario logueado, marcar que puede usar la extensión
+    localStorage.setItem('parla_web_app_logged_in', 'true');
 
     // Si hay usuario en Auth0, preguntamos a FastAPI si ya existe en la BD
     const verifyDatabase = async () => {

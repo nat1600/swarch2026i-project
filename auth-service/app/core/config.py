@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     debug: bool = False
     cors_origins: list[str] | None
+    CORS_ORIGINS: str
 
     @field_validator("cors_origins", mode='before')
     @classmethod

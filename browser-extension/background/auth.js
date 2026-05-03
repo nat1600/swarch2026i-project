@@ -193,20 +193,80 @@ async function authLogin(interactive = true) {
 }
 
 /**
- * Returns a valid access token. Tries cached → silent SSO.
- * Returns null when no session exists (user must login interactively).
+ * Returns a valid access token. Tries cached → automatic login.
+ * Returns null when login fails.
  */
 async function getAccessToken() {
   const cached = await getStoredToken();
   if (cached) return cached;
 
-  try { return await authLogin(false); }
-  catch { return null; }
+  try { 
+    console.log('No cached token, attempting automatic login...');
+    return await login(); 
+  }
+  catch (error) { 
+    console.error('Auto-login failed:', error);
+    return null; 
+  }
 }
 
-/** Interactive login — opens Auth0 popup. */
+/** Check if user is logged into the web app */
+async function checkWebAppSession() {
+  try {
+    // Check if web app is accessible and user might be logged in
+    // We'll do a simple connectivity test first
+    const webAppResponse = await fetch('http://localhost:3000/', {
+      method: 'HEAD',
+      credentials: 'include'
+    });
+    
+    // If web app is accessible, assume user needs to be logged in there first
+    // This is a simplified check - in production you'd verify actual session
+    return webAppResponse.ok;
+  } catch (error) {
+    console.log('Web app connectivity check failed:', error);
+    // If we can't reach the web app, show the login message anyway
+    return false;
+  }
+}
+
+/** Interactive login — requires web app login first */
 async function login() {
-  return authLogin(true);
+  try {
+    // Check if user is logged into the web app by making a request
+    const webAppCheck = await fetch('http://localhost:3000/api/extension/check-auth', {
+      method: 'GET',
+      credentials: 'include' // Include cookies from web app
+    });
+    
+    if (!webAppCheck.ok) {
+      throw new Error('Debes iniciar sesión en la aplicación web primero. Ve a http://localhost:3000');
+    }
+    
+    // If user is logged into web app, get extension token
+    const response = await fetch('http://localhost:8080/api/auth/users/extension-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Login failed: ${response.statusText}`);
+    }
+    
+    const tokens = await response.json();
+    
+    // Store the token locally
+    await storeTokens({
+      access_token: tokens.access_token,
+      expires_in: 3600 // 1 hour
+    });
+    
+    return tokens.access_token;
+  } catch (error) {
+    throw new Error(`Extension login failed: ${error.message}`);
+  }
 }
 
 /** Logout — clears local tokens only (does NOT end Auth0 session, so the web-app stays logged in). */

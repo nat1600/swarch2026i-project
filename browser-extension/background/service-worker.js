@@ -35,7 +35,7 @@ async function callApi(endpoint, method = 'GET', body = null) {
 
   if (response.status === 401) {
     await clearTokens();
-    throw { message: 'No autenticado', code: 401 };
+    throw { message: 'Para usar Parla, inicia sesión en http://localhost:3000', code: 401 };
   }
 
   if (!response.ok) {

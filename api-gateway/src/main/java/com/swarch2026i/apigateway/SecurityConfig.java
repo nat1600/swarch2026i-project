@@ -38,6 +38,20 @@ public class SecurityConfig {
     private String audience;
 
     @Bean
+    @org.springframework.core.annotation.Order(1)
+    public SecurityWebFilterChain publicRoutes(ServerHttpSecurity http) {
+        return http
+                .securityMatcher(new org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher("/api/auth/users/extension-login"))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .authorizeExchange(exchanges -> exchanges
+                        .anyExchange().permitAll()
+                )
+                .build();
+    }
+
+    @Bean
+    @org.springframework.core.annotation.Order(2)
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

@@ -2,6 +2,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from app.models.user import User
 from app.models.language import Language
@@ -98,3 +99,25 @@ async def register(
         .execution_options(populate_existing=True)
     )
     return UserResponse.from_db(user)
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+@router.post(
+    "/extension-login",
+    response_model=LoginResponse
+)
+async def extension_login():
+    """
+    Endpoint for browser extension to get a mock token.
+    In production, this should integrate with proper OAuth flow.
+    """
+    # For development: return a mock token that the API Gateway will accept
+    # In production: implement proper extension OAuth flow
+    return LoginResponse(
+        access_token="extension-mock-token",
+        token_type="bearer"
+    )

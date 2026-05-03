@@ -61,7 +61,16 @@ const ParlaTranslation = {
                 </div>
               `;
             } else {
-              container.innerHTML = `<div class="parla-error">Error al traducir</div>`;
+              const errorMessage = response?.error?.includes('localhost:3000') 
+                ? `<div class="parla-error">
+                     <p>Inicia sesión en Parla primero</p>
+                     <a href="http://localhost:3000" target="_blank" style="color: #4A90E2; text-decoration: underline;">
+                       Ir a Parla →
+                     </a>
+                   </div>`
+                : `<div class="parla-error">Error al traducir</div>`;
+              
+              container.innerHTML = errorMessage;
               console.error(' Translation error:', response?.error);
             }
           }

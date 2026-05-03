@@ -179,12 +179,12 @@ services:
       LOCAL_DB_PASSWORD: password
       JPA_DDL_AUTO: update
       JPA_SHOW_SQL: "true"
-      REDIS_HOST: redis      
-      REDIS_PORT: 6379 
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres:
         condition: service_healthy
-      redis: 
+      redis:
         condition: service_healthy
 
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
@@ -200,13 +200,13 @@ services:
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
       SERVER_CORE_URL: http://api-gateway:8080/api/core
-      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/core/graphql
+      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/auth/graphql
       SERVER_FORUM_URL: http://api-gateway:8080/api/forum
       SERVER_GAME_URL: http://api-gateway:8080/api/game
-      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/game
+      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
     depends_on:
       - api-gateway
-
+      - redis
 volumes:
   postgres_data:
   forum_mongo_database:
