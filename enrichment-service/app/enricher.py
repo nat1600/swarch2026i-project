@@ -1,10 +1,11 @@
+# app/enricher.py
 import asyncio
 import json
 import logging
 import aio_pika
 from app.config import get_settings
 from app.models import EnrichmentMessage
-from app.enricher import enrich
+from app.consumer import enrich
 from app.mongo_client import close as close_mongo
 
 

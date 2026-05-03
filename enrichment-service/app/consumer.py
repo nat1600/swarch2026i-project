@@ -1,3 +1,4 @@
+# app/consumer.py
 import logging
 from app.models import EnrichmentMessage
 from app.tatoeba_client import get_sentences

@@ -1,3 +1,4 @@
+# app/models.py
 from pydantic import BaseModel
 class EnrichmentMessage(BaseModel):
     """a mesage that is sent from core service via RabbitMQ"""
