@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "path_prefix": "/api/auth",
+      "service_name": "auth"
+    },
+    {
+      "path_prefix": "/api/core",
+      "service_name": "core"
+    },
+    {
+      "path_prefix": "/api/forum",
+      "service_name": "forum"
+    },
+    {
+      "path_prefix": "/api/game",
+      "service_name": "game"
+    }
+  ]
+}

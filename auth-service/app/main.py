@@ -40,6 +40,10 @@ def get_app() -> FastAPI:
     app.include_router(users.router)
     app.include_router(gql_users.graphql_app, prefix='/graphql')  # Montamos el router de GraphQL
 
+    @app.get("/health", tags=["Health"])
+    async def health_check():
+        return {"status": "ok", "service": "auth-service"}
+
     return app
 
 
