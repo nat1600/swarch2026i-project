@@ -41,6 +41,18 @@ services:
       timeout: 3s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
     container_name: auth_migration
@@ -149,6 +161,7 @@ services:
       DEBUG: "true"
       DEEPL_API_KEY: "dummy"
       LIBRETRANSLATE_URL: "https://libretranslate.com"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:
       postgres:
         condition: service_healthy
@@ -179,12 +192,22 @@ services:
       LOCAL_DB_PASSWORD: password
       JPA_DDL_AUTO: update
       JPA_SHOW_SQL: "true"
-      REDIS_HOST: redis      
-      REDIS_PORT: 6379 
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres:
         condition: service_healthy
-      redis: 
+      redis:
+        condition: service_healthy
+
+  enrichment-service:
+    build: ./enrichment-service
+    container_name: enrichment-service
+    env_file: ./enrichment-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
 
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
