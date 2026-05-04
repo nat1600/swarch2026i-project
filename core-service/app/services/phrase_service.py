@@ -48,7 +48,7 @@ class PhraseService:
             self.db.commit()
             self.db.refresh(phrase)
 
-            ## Were a goint to send a messafe to RabbitMQ, in a second thread
+            ## We are going to send a message to RabbitMQ, in a second thread
 
             await self._publish_enrichment(phrase)
             return phrase

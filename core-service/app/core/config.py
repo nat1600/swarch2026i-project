@@ -17,12 +17,12 @@ class Settings(BaseSettings):
     postgres_host: str
     postgres_password: str
     postgres_port: int
-
     debug: bool
 
     mongo_url: str
     mongo_db: str
 
+    rabbitmq_url: str = "amqp://guest:guest@rabbitmq/"
     @property
     def database_url(self) -> str:
         return (
