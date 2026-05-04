@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Parla - Aprende idiomas mientras navegas",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAur0ATzkYK0KThu7NOf8A1ISOinfknZ0iGFPkLxSHyBaghI61ARQTuNlLSai/dVqrmY8LWDCqI6ebht7//YMjhnaSpoN6GhnDIDhKElx6/ErJojIIWcKqsoIlFTki6oMTre3sWdVoiUARR91ALDTuDPubbmeF6MW99Cxd9ablh+dXTk24zbzN8YBn+IdtAWIdMHba5Xmu2kzLRZnKd0cH9rZkHV0vuPRT02yUo4gEgp4CLk2fZkErEkjfkb8vv65VMdEFTx/34eypfQeMMWEPzaamZ8TaEjyix19FaoIzj3zP09DO4ObVKRRNfRFsvK4Ldh3Q2GAIWEdb/eA+Z6hPFQIDAQAB",
   "version": "1.0.0",
   "description": "Traduce y guarda frases de YouTube, Netflix, PDFs y páginas web.",
 

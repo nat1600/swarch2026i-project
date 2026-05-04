@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { useParlaUser } from "@/hooks/useParlaUser";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
 import { Brain, ArrowLeft, RotateCcw, CheckCircle, Loader2, Trophy } from "lucide-react";
 import HomeNavBar from "@/components/core/HomeNavBar";
@@ -60,6 +61,7 @@ const QUALITY_OPTIONS = [
 export default function PracticePage() {
   const router = useRouter();
   const { user, isLoading: isUserLoading } = useUser();
+  const { numericId } = useParlaUser();
   const [duePhrases, setDuePhrases] = useState<Phrase[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -75,20 +77,13 @@ export default function PracticePage() {
     }
   }, [user, isUserLoading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchDuePhrases();
-    }
-  }, [user]);
-
-  const fetchDuePhrases = async () => {
+  const fetchDuePhrases = useCallback(async () => {
+    if (!numericId) return;
     try {
       setIsLoading(true);
-      // TODO: Get actual user ID from Auth0 session - for now the backend extracts it from JWT
-      const userId = 1;
-      const data = await phrasesService.getDuePhrases(userId);
+      const data = await phrasesService.getDuePhrases(numericId);
       setDuePhrases(data);
-      
+
       if (data.length === 0) {
         toast.info("¡No tienes frases pendientes de repaso!");
       }
@@ -98,7 +93,13 @@ export default function PracticePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [numericId]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDuePhrases();
+    }
+  }, [user, fetchDuePhrases]);
 
   const handleFlip = () => {
     if (!showRating) {
@@ -160,7 +161,7 @@ export default function PracticePage() {
     setShowRating(false);
     setSessionComplete(false);
     setReviewedCount(0);
-    fetchDuePhrases();
+    void fetchDuePhrases();
   };
 
   if (isUserLoading || isLoading) {

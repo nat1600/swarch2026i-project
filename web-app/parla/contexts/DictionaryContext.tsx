@@ -11,7 +11,7 @@ interface DictionaryContextType {
   isPopulating: boolean;
   populationProgress: PopulationProgress | null;
   loadDictionary: () => Promise<void>;
-  populateFromPhrases: (userId: number) => Promise<void>;
+  populateFromPhrases: (userId: number, targetLanguage?: string) => Promise<void>;
   addWord: (word: DictionaryWord) => void;
   updateWord: (id: string, updates: Partial<DictionaryWord>) => void;
   deleteWord: (id: string) => void;
@@ -56,7 +56,7 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
 
   // Save to localStorage whenever words change
   useEffect(() => {
-    if (isInitialized && words.length >= 0) {
+    if (isInitialized) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
     }
   }, [words, isInitialized]);
@@ -97,7 +97,7 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   // Populate dictionary from user's phrases
-  const populateFromPhrases = useCallback(async (userId: number) => {
+  const populateFromPhrases = useCallback(async (userId: number, targetLanguage?: string) => {
     setIsPopulating(true);
     setPopulationProgress(null);
 
@@ -105,7 +105,7 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
       const result = await populateDictionaryFromPhrases(userId, {
         filterStopWords: true,
         maxDefinitionsPerWord: 3,
-        targetLanguage: 'es',
+        targetLanguage: (targetLanguage ?? 'es') as import('@/lib/types/dictionary').Language,
         onProgress: (progress) => {
           setPopulationProgress(progress);
         },

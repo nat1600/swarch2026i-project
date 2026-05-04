@@ -59,6 +59,8 @@ export default function OnboardingPage() {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       username: "",
+      native_language: "Spanish",
+      learning_language: "English",
       // Puedes dejar estos vacíos para obligar al usuario a elegir
     },
   });

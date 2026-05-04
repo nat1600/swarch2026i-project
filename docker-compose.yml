@@ -1,8 +1,8 @@
 services:
   # ─── DATABASES ─────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16
     container_name: postgres
+    image: postgres:16
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: password
@@ -18,8 +18,8 @@ services:
       retries: 10
 
   mongo:
-    image: mongo:7
     container_name: mongo
+    image: mongo:7
     ports:
       - "27017:27017"
     volumes:
@@ -56,26 +56,26 @@ services:
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
     container_name: auth_migration
-    build: auth-service/
+    build: ./auth-service/
     command: bash scripts/migrate.sh
+    env_file:
+      - ./auth-service/.env
     environment:
       POSTGRES_DB: auth_db
       POSTGRES_USER: root
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      AUTH0_DOMAIN: dev-pzxsxsfqc2je00n4.us.auth0.com
-      AUTH0_API_AUDIENCE: https://parla.com
-      DEBUG: "true"
-      CORS_ORIGINS: "http://localhost:3000,http://web-app:3000"
     depends_on:
       postgres:
         condition: service_healthy
 
   core_migration:
     container_name: core_migration
-    build: core-service/
+    build: ./core-service/
     command: bash scripts/migrate.sh
+    env_file:
+      - ./core-service/.env
     environment:
       POSTGRES_DB: core_db
       POSTGRES_USER: root
@@ -84,16 +84,13 @@ services:
       POSTGRES_PORT: 5432
       MONGO_URL: mongodb://mongo:27018
       MONGO_DB: core_db
-      DEBUG: "true"
-      DEEPL_API_KEY: "dummy"
-      LIBRETRANSLATE_URL: "https://libretranslate.com"
     depends_on:
       postgres:
         condition: service_healthy
 
   forum_seed:
     container_name: forum_seed
-    build: forum-service/api/
+    build: ./forum-service/api/
     command: python -m scripts.seed_categories
     environment:
       MONGO_URI: mongodb://mongo:27017
@@ -111,36 +108,34 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    env_file:
+      - ./api-gateway/.env
     dns:
       - 8.8.8.8
       - 8.8.4.4
     environment:
-      SERVICES_AUTH_URL: http://auth-service:8000
-      SERVICES_CORE_URL: http://core-service:8000
-      SERVICES_FORUM_URL: http://forum-service:8003
-      SERVICES_GAME_URL: http://gamification-service:8080
-      auth0.domain: dev-pzxsxsfqc2je00n4.us.auth0.com
-      auth0.audience: https://parla.com
+      SERVICE_AUTH_URL: http://auth-service:8000
+      SERVICE_CORE_URL: http://core-service:8000
+      SERVICE_FORUM_URL: http://forum-service:8003
+      SERVICE_GAME_URL: http://gamification-service:8080
     depends_on:
       - auth-service
       - core-service
       - forum-service
-      - gamification-service
+#      - gamification-service
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
-    build: ./auth-service
     container_name: auth-service
+    build: ./auth-service
+    env_file:
+      - ./auth-service/.env
     environment:
       POSTGRES_DB: auth_db
       POSTGRES_USER: root
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      AUTH0_DOMAIN: dev-pzxsxsfqc2je00n4.us.auth0.com
-      AUTH0_API_AUDIENCE: https://parla.com
-      DEBUG: "true"
-      CORS_ORIGINS: "http://localhost:3000,http://web-app:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -150,6 +145,8 @@ services:
   core-service:
     build: ./core-service
     container_name: core-service
+    env_file:
+      - ./core-service/.env
     environment:
       POSTGRES_DB: core_db
       POSTGRES_USER: root
@@ -183,22 +180,24 @@ services:
       forum_seed:
         condition: service_completed_successfully
 
-  gamification-service:
-    build: ./gamification-service/GamificationService
-    container_name: gamification-service
-    environment:
-      LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
-      LOCAL_DB_USERNAME: root
-      LOCAL_DB_PASSWORD: password
-      JPA_DDL_AUTO: update
-      JPA_SHOW_SQL: "true"
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+#  gamification-service:
+#    build: ./gamification-service/GamificationService
+#    container_name: gamification-service
+#    environment:
+#      LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
+#      LOCAL_DB_USERNAME: root
+#      LOCAL_DB_PASSWORD: password
+#      JPA_DDL_AUTO: update
+#      JPA_SHOW_SQL: "true"
+#      REDIS_HOST: redis
+#      REDIS_PORT: 6379
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+
+
 
   enrichment-service:
     build: ./enrichment-service
@@ -209,7 +208,7 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
-
+        
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
   web-app:
     build: ./web-app/parla
@@ -223,13 +222,13 @@ services:
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
       SERVER_CORE_URL: http://api-gateway:8080/api/core
-      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/core/graphql
+      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/auth/graphql
       SERVER_FORUM_URL: http://api-gateway:8080/api/forum
       SERVER_GAME_URL: http://api-gateway:8080/api/game
-      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/game
+      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
     depends_on:
       - api-gateway
-
+      - redis
 volumes:
   postgres_data:
   forum_mongo_database:

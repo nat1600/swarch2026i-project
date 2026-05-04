@@ -1,14 +1,23 @@
 # ── Build stage ───────────────────────────────────────────────────────────────
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM golang:1.26-alpine AS builder
+
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-COPY src ./src
-RUN mvn package -DskipTests -B
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN go build -o gateway cmd/main.go
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jre-jammy
+FROM alpine:3.20
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+COPY --from=builder /app .
+COPY config.json .
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+CMD ["./gateway"]
