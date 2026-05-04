@@ -15,6 +15,10 @@
     {
       "path_prefix": "/api/game",
       "service_name": "game"
+    },
+    {
+      "path_prefix": "/api/gamification",
+      "service_name": "game"
     }
   ]
 }
