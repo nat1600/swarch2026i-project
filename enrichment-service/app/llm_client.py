@@ -46,6 +46,7 @@ Your task:
    - The sentence must make "{word}" the ONLY correct answer for the blank
    - Do NOT include "{word}" in the sentence — use ___ as the blank
    - The entire sentence must be written in {language}
+   - The context must clearly distinguish "{word}" from similar words
 
 2. Generate exactly 3 distractor words in {language} that:
    - Are the same part of speech as "{word}"
@@ -53,6 +54,8 @@ Your task:
    - Are plausible but CLEARLY WRONG in this specific context
    - Match the {level.upper()} vocabulary level
    - Must be in {language}
+   - Must NOT be synonyms of "{word}" — they should belong to the same semantic field but have a different meaning
+   - A student who knows the word should be able to rule them out based on the context of the sentence
 
 Respond ONLY with valid JSON, no explanation, no markdown, no code blocks:
 {{"sentence": "The ___ barked loudly at the stranger.", "distractors": ["word1", "word2", "word3"]}}"""
