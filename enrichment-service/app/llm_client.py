@@ -16,6 +16,7 @@ LEVEL_DESCRIPTIONS = {
     "C2": "mastery-level vocabulary, nuanced and complex sentences",
 }
 
+
 def get_client():
     global _client
     if _client is None:
@@ -25,30 +26,33 @@ def get_client():
     return _client
 
 
-async def enrich_word(word: str, level: str) -> dict | None:
+async def enrich_word(word: str, level: str, language: str = "english") -> dict | None:
     """
     Asks the LLM to generate a fill-in-the-blank sentence and 3 distractors
-    for the given word, calibrated to the student's level.
+    for the given word, calibrated to the student's level and language.
     Returns a dict with 'sentence' and 'distractors', or None on failure.
     """
     level_desc = LEVEL_DESCRIPTIONS.get(level.upper(), LEVEL_DESCRIPTIONS["B1"])
 
-    prompt = f"""You are creating a vocabulary quiz item for an English language learning app.
+    prompt = f"""You are creating a vocabulary quiz item for a language learning app.
 
+Language: {language}
 Student level: {level.upper()} ({level_desc})
 Target word: "{word}"
 
 Your task:
-1. Write a natural English sentence that clearly shows the meaning of "{word}" in context.
+1. Write a natural {language} sentence that clearly shows the meaning of "{word}" in context.
    - The sentence difficulty must match the {level.upper()} level: {level_desc}
    - The sentence must make "{word}" the ONLY correct answer for the blank
    - Do NOT include "{word}" in the sentence — use ___ as the blank
+   - The entire sentence must be written in {language}
 
-2. Generate exactly 3 distractor words that:
+2. Generate exactly 3 distractor words in {language} that:
    - Are the same part of speech as "{word}"
    - Fit grammatically in the blank
    - Are plausible but CLEARLY WRONG in this specific context
    - Match the {level.upper()} vocabulary level
+   - Must be in {language}
 
 Respond ONLY with valid JSON, no explanation, no markdown, no code blocks:
 {{"sentence": "The ___ barked loudly at the stranger.", "distractors": ["word1", "word2", "word3"]}}"""
