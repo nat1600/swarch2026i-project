@@ -46,7 +46,7 @@ services:
     container_name: rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672"
+      - "15672:15673"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 5s
@@ -82,7 +82,7 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      MONGO_URL: mongodb://mongo:27017
+      MONGO_URL: mongodb://mongo:27018
       MONGO_DB: core_db
       DEBUG: "true"
       DEEPL_API_KEY: "dummy"
