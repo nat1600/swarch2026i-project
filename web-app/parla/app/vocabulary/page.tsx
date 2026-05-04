@@ -38,7 +38,7 @@ export default function VocabularioPage() {
     try {
       setIsLoadingPhrases(true);
       const data = await phrasesService.getAllPhrases();
-      setPhrases(data);
+      setPhrases(data.filter(p => p.active));
     } catch (error) {
       console.error("Error fetching phrases:", error);
       toast.error("Error al cargar las frases");
@@ -77,6 +77,7 @@ export default function VocabularioPage() {
       throw error;
     }
   };
+  
 
   const handleDeletePhrase = (phraseId: number) => {
     setDeletingPhraseId(phraseId);
