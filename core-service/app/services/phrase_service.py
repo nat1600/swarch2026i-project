@@ -1,3 +1,7 @@
+import json
+import logging
+import aio_pika
+
 from decimal import Decimal
 from datetime import date, datetime, time, timezone
 
@@ -5,8 +9,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.services.sm2 import apply_sm2
+from app.core.config import get_settings
 from app.schemas.phrases import PhraseCreate
 from app.models.phrase import Phrase, ReviewData
+
 
 
 class PhraseService:
@@ -23,7 +29,7 @@ class PhraseService:
             Phrase.active == True
         ).first()
     
-    def create_phrase(self, data: PhraseCreate, user_id: str) -> Phrase:
+    async def create_phrase(self, data: PhraseCreate, user_id: str) -> Phrase:
         try:
             phrase = Phrase(
                 user_id=user_id,
@@ -41,11 +47,46 @@ class PhraseService:
 
             self.db.commit()
             self.db.refresh(phrase)
+
+            ## Were a goint to send a messafe to RabbitMQ, in a second thread
+
+            await self._publish_enrichment(phrase)
             return phrase
 
         except Exception:
             self.db.rollback()
             raise
+        
+    async def _publish_enrichment(self, phrase: Phrase) -> None:
+        """
+        Publishes to RabbitMQ for enrichment-service to process
+        the phrase in the background. If it fails, only logs
+        does not affect the user.
+        """
+        try:
+            settings = get_settings()
+            connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+            async with connection:
+                channel = await connection.channel()
+                await channel.default_exchange.publish(
+                    aio_pika.Message(
+                        body=json.dumps({
+                            "phrase_id": phrase.id,
+                            "original_text": phrase.original_text,
+                            "level": "B1",
+                            "language": "english",
+                        }).encode(),
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    ),
+                    routing_key="word.enrichment",
+                )
+                logging.getLogger(__name__).info(
+                    f"RabbitMQ: publicado phrase_id={phrase.id}"
+                )
+        except Exception as e:
+            logging.getLogger(__name__).warning(f"RabbitMQ publish falló: {e}")
+
+
 
     def delete_phrase(self, phrase_id: int) -> None:
         phrase = self.get_phrase(phrase_id)
