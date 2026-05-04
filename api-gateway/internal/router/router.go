@@ -4,8 +4,8 @@ import (
 	"api-gateway/config"
 	"api-gateway/internal/middleware"
 	"api-gateway/internal/proxy"
+	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
@@ -15,9 +15,23 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 
 	// General health check: includes this api gateway and the microservices
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		log.Print("Preguntaste por mi salud?")
+		status := map[string]string{}
+		allHealthy := true
+
+		for _, route := range cfg.Routes {
+			if CheckService(route.TargetURL + "/health") {
+				status[route.ServiceName] = "OK"
+			} else {
+				status[route.ServiceName] = "NOT OK"
+				allHealthy = false
+			}
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("listo perrito todo saludable\n"))
+		if !allHealthy {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+		json.NewEncoder(w).Encode(status)
 	})
 
 	// Create auth middleware

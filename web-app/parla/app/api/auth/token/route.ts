@@ -12,7 +12,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ accessToken });
+    return NextResponse.json({ accessToken: accessToken });
   } catch (error) {
     console.error('Error getting access token:', error);
     return NextResponse.json(

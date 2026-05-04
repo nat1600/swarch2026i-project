@@ -92,7 +92,7 @@ Holds the SM-2 algorithm state for each phrase.
 | Method   | Path                      | Description                              |
 |----------|---------------------------|------------------------------------------|
 | `GET`    | `/phrases`                | List all active phrases                  |
-| `POST`   | `/phrases`                | Create a new phrase                      |
+| `POST`   | `/phrases`                |  Create a new phrase and publishes an asynchronous enrichment event (`word.enrichment`) via RabbitMQ                      |
 | `GET`    | `/phrases/due`            | Get phrases due for review today         |
 | `GET`    | `/phrases/{id}`           | Get a phrase by ID                       |
 | `DELETE` | `/phrases/{id}`           | Soft-delete a phrase                     |
@@ -119,6 +119,29 @@ The `POST /phrases/{id}/review` endpoint accepts a `quality` score (0–5) and u
 | 4       | Recalled correctly             |
 | 5       | Perfect recall                 |
 
+
+## Event System (RabbitMQ)
+
+The service uses RabbitMQ to decouple enrichment logic from the core API.
+
+### Exchange / Routing
+
+| Component | Value |
+|----------|------|
+| Routing Key | `word.enrichment` |
+| Message Type | JSON |
+| Delivery Mode | Persistent |
+
+### Event Payload
+
+```json
+{
+  "phrase_id": 123,
+  "original_text": "the winner takes it all",
+  "level": "B1",
+  "language": "english"
+}
+```
 
 
 Interactive docs are available at `/docs` when `DEBUG=true`.
