@@ -141,6 +141,7 @@ The service uses RabbitMQ to decouple enrichment logic from the core API.
   "level": "B1",
   "language": "english"
 }
+```
 
 
 Interactive docs are available at `/docs` when `DEBUG=true`.
