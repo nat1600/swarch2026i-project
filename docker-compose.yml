@@ -41,6 +41,18 @@ services:
       timeout: 3s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15673"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
     container_name: auth_migration
@@ -70,7 +82,7 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      MONGO_URL: mongodb://mongo:27017
+      MONGO_URL: mongodb://mongo:27018
       MONGO_DB: core_db
     depends_on:
       postgres:
@@ -98,6 +110,7 @@ services:
       - "8080:8080"
     env_file:
       - ./api-gateway/.env
+   
     environment:
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
@@ -140,6 +153,10 @@ services:
       POSTGRES_PORT: 5432
       MONGO_URL: mongodb://mongo:27017
       MONGO_DB: core_db
+      DEBUG: "true"
+      DEEPL_API_KEY: "dummy"
+      LIBRETRANSLATE_URL: "https://libretranslate.com"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:
       postgres:
         condition: service_healthy
@@ -178,12 +195,25 @@ services:
 #      redis:
 #        condition: service_healthy
 
+
+
+  enrichment-service:
+    build: ./enrichment-service
+    container_name: enrichment-service
+    env_file: ./enrichment-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+        
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
   web-app:
     build: ./web-app/parla
     container_name: web-app
     ports:
       - "3000:3000"
+  
     env_file: ./web-app/parla/.env
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth

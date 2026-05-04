@@ -28,7 +28,7 @@ def get_phrases(
 
 
 @router.post('/', response_model=PhraseResponse, status_code=status.HTTP_201_CREATED)
-def create_phrase(
+async def create_phrase(
         body: PhraseCreate,
         db: Session = Depends(get_db),
         user_id: str = Depends(get_current_user_sub)
@@ -42,7 +42,7 @@ def create_phrase(
         - 500: Internal server error
     """
     service = PhraseService(db_session=db)
-    return service.create_phrase(body, user_id)
+    return await service.create_phrase(body, user_id)
 
 
 @router.get('/due', response_model=list[PhraseResponse])
