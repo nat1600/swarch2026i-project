@@ -110,9 +110,7 @@ services:
       - "8080:8080"
     env_file:
       - ./api-gateway/.env
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+   
     environment:
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
@@ -215,9 +213,7 @@ services:
     container_name: web-app
     ports:
       - "3000:3000"
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+  
     env_file: ./web-app/parla/.env
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
