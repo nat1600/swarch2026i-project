@@ -2,19 +2,19 @@ export const translations = {
     es: {
         dashboard: {
             title: "Arcade Parla",
-            subtitle: "¡Sube de nivel tus habilidades lingüísticas con nuestros mini-juegos interactivos!",
+            subtitle: "¡Practica tu vocabulario guardado con nuestros mini-juegos interactivos!",
             games: {
-                fillInTheBlank: {
-                    title: "Completa el Espacio",
-                    desc: "Completa las oraciones con las palabras que faltan de tu vocabulario.",
+                fillInTheWord: {
+                    title: "Completa la Palabra",
+                    desc: "Escribe la palabra que falta en la frase usando tu vocabulario guardado.",
                 },
-                wordMatch: {
-                    title: "Emparejar Palabras",
-                    desc: "Encuentra pares que coincidan entre palabras y sus significados.",
+                stopwatch: {
+                    title: "Contrarreloj",
+                    desc: "Elige la traducción correcta antes de que se acabe el tiempo.",
                 },
-                typing: {
-                    title: "Entrenamiento de Escritura",
-                    desc: "Pon a prueba tu velocidad y precisión escribiendo palabras que caen.",
+                matching: {
+                    title: "Emparejar",
+                    desc: "Conecta cada frase con su traducción correcta.",
                 },
             },
         },
@@ -27,38 +27,49 @@ export const translations = {
             keepGoing: "¡Sigue así!",
             levelCleared: "¡Nivel Superado!",
             exit: "Salir",
+            xpEarned: "XP ganado",
+            correct: "Correctas",
+            wrong: "Incorrectas",
+            loading: "Cargando frases...",
+            notEnoughPhrases: "Necesitas al menos 4 frases guardadas para jugar.",
+            goToVocabulary: "Ir a Vocabulario",
         },
-        fillInTheBlank: {
-            instruction: "Elige la palabra correcta:",
+        fillInTheWord: {
+            instruction: "Escribe la palabra que falta:",
+            placeholder: "Tu respuesta...",
+            check: "Verificar",
+            next: "Siguiente",
+            hintLabel: "Pista: primera letra es",
         },
-        wordMatch: {
-            moves: "Movimientos",
+        stopwatch: {
+            timeLeft: "Tiempo",
+            question: "¿Cuál es la traducción de",
+            chooseCorrect: "Elige la traducción correcta",
+        },
+        matching: {
+            instruction: "Conecta cada frase con su traducción",
+            original: "Original",
+            translation: "Traducción",
+            mismatches: "Errores",
             pairs: "Pares",
-        },
-        typing: {
-            placeholder: "Escribe aquí...",
-            wpm: "PPM",
-            accuracy: "Precisión",
-            timer: "Tiempo",
-            start: "Comenzar",
         },
     },
     en: {
         dashboard: {
             title: "Arcade Parla",
-            subtitle: "Level up your language skills with our interactive mini-games!",
+            subtitle: "Practice your saved vocabulary with our interactive mini-games!",
             games: {
-                fillInTheBlank: {
-                    title: "Fill-in-the-blank",
-                    desc: "Complete the sentences with the missing words from your vocabulary.",
+                fillInTheWord: {
+                    title: "Fill in the Word",
+                    desc: "Type the missing word in a phrase from your saved vocabulary.",
                 },
-                wordMatch: {
-                    title: "Word Match",
-                    desc: "Find matching pairs between words and their meanings.",
+                stopwatch: {
+                    title: "Stopwatch",
+                    desc: "Choose the correct translation before time runs out.",
                 },
-                typing: {
-                    title: "Typing Training",
-                    desc: "Test your speed and accuracy by typing falling words.",
+                matching: {
+                    title: "Matching",
+                    desc: "Connect each phrase with its correct translation.",
                 },
             },
         },
@@ -71,20 +82,31 @@ export const translations = {
             keepGoing: "Keep going!",
             levelCleared: "Level Cleared!",
             exit: "Exit",
+            xpEarned: "XP earned",
+            correct: "Correct",
+            wrong: "Wrong",
+            loading: "Loading phrases...",
+            notEnoughPhrases: "You need at least 4 saved phrases to play.",
+            goToVocabulary: "Go to Vocabulary",
         },
-        fillInTheBlank: {
-            instruction: "Choose the correct word:",
+        fillInTheWord: {
+            instruction: "Type the missing word:",
+            placeholder: "Your answer...",
+            check: "Check",
+            next: "Next",
+            hintLabel: "Hint: first letter is",
         },
-        wordMatch: {
-            moves: "Moves",
+        stopwatch: {
+            timeLeft: "Time",
+            question: "What is the translation of",
+            chooseCorrect: "Choose the correct translation",
+        },
+        matching: {
+            instruction: "Connect each phrase with its translation",
+            original: "Original",
+            translation: "Translation",
+            mismatches: "Errors",
             pairs: "Pairs",
-        },
-        typing: {
-            placeholder: "Type here...",
-            wpm: "WPM",
-            accuracy: "Accuracy",
-            timer: "Timer",
-            start: "Start",
         },
     },
 };

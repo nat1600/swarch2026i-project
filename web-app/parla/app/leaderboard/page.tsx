@@ -6,8 +6,9 @@ import { ArrowLeft, Medal, Crown, Star } from "lucide-react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { getDisplayName, getInitials } from "@/lib/user-utils";
 import {
-  getAllUserGameSessions,
-  computeTotalXP,
+  getLeaderBoard,
+  getUserRank,
+  UserScoreRankDTO,
 } from "@/lib/api/gamificationService";
 
 interface LeaderboardUser {
@@ -19,30 +20,64 @@ interface LeaderboardUser {
   isMe?: boolean;
 }
 
-// Mock data for other users — will be replaced by a Redis leaderboard endpoint
-// TODO: replace with GET /leaderboard (Redis ZRANGE) once available
-const MOCK_LEADERBOARD: LeaderboardUser[] = [
-  { id: 2, name: "Sofia Lopez", xp: 2100, streak: 8, avatar: "https://i.pravatar.cc/150?u=sofia" },
-  { id: 3, name: "Carlos Ruiz", xp: 1950, streak: 15, avatar: "https://i.pravatar.cc/150?u=carlos" },
-  { id: 4, name: "Ana Maria", xp: 1800, streak: 5, avatar: "https://i.pravatar.cc/150?u=ana" },
-  { id: 5, name: "Juan Perez", xp: 1650, streak: 3, avatar: "https://i.pravatar.cc/150?u=juan" },
-  { id: 6, name: "Elena Gomez", xp: 1500, streak: 10, avatar: "https://i.pravatar.cc/150?u=elena" },
-  { id: 7, name: "Diego Torres", xp: 1400, streak: 2, avatar: "https://i.pravatar.cc/150?u=diego" },
-];
+function labelFromUserId(userId: string): string {
+  // Auth0 subs look like "auth0|abc123" — truncate for display
+  const parts = userId.split('|');
+  return parts.length > 1 ? parts[1].slice(0, 8) : userId.slice(0, 8);
+}
 
 export default function LeaderboardPage() {
   const { user, isLoading: isUserLoading } = useUser();
-  const [myXP, setMyXP] = useState<number | null>(null);
+  const [allData, setAllData] = useState<LeaderboardUser[]>([]);
+  const [loadingBoard, setLoadingBoard] = useState(true);
 
   useEffect(() => {
     if (!user?.sub) return;
 
-    getAllUserGameSessions(user.sub).then((sessions) => {
-      setMyXP(computeTotalXP(sessions));
-    });
-  }, [user?.sub]);
+    Promise.all([getLeaderBoard(), getUserRank(user.sub)]).then(
+      ([board, myRank]: [UserScoreRankDTO[], UserScoreRankDTO | null]) => {
+        const myUserId = user.sub!;
+        const meOnBoard = board.find((e) => e.userId === myUserId);
 
-  if (isUserLoading) {
+        // Build the list from Redis; inject current user if not present
+        const entries: LeaderboardUser[] = board.map((e, idx) => ({
+          id: idx + 1,
+          name: e.userId === myUserId ? getDisplayName(user) : labelFromUserId(e.userId),
+          xp: e.score,
+          streak: 0,
+          avatar: e.userId === myUserId ? (user.picture || null) : null,
+          isMe: e.userId === myUserId,
+        }));
+
+        if (!meOnBoard) {
+          entries.push({
+            id: entries.length + 1,
+            name: getDisplayName(user),
+            xp: myRank?.score ?? 0,
+            streak: 0,
+            avatar: user.picture || null,
+            isMe: true,
+          });
+        }
+
+        setAllData(entries.sort((a, b) => b.xp - a.xp));
+        setLoadingBoard(false);
+      }
+    ).catch(() => {
+      // Graceful fallback: show only the current user with 0 XP
+      setAllData([{
+        id: 1,
+        name: getDisplayName(user),
+        xp: 0,
+        streak: 0,
+        avatar: user?.picture || null,
+        isMe: true,
+      }]);
+      setLoadingBoard(false);
+    });
+  }, [user?.sub]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (isUserLoading || loadingBoard) {
     return (
       <div className="min-h-screen bg-polka flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-parla-blue border-t-transparent rounded-full animate-spin" />
@@ -50,17 +85,11 @@ export default function LeaderboardPage() {
     );
   }
 
-  const currentUserData: LeaderboardUser = {
-    id: 1,
-    name: getDisplayName(user),
-    // Show real XP once loaded, show 0 while loading
-    xp: myXP ?? 0,
-    streak: 0, // streak is shown on the stats page; not needed on the podium
-    isMe: true,
-    avatar: user?.picture || null,
-  };
+  // Ensure at least 3 entries so the podium never crashes
+  while (allData.length < 3) {
+    allData.push({ id: allData.length + 1, name: '—', xp: 0, streak: 0, avatar: null });
+  }
 
-  const allData = [currentUserData, ...MOCK_LEADERBOARD].sort((a, b) => b.xp - a.xp);
   const top3 = allData.slice(0, 3);
   const others = allData.slice(3);
 
