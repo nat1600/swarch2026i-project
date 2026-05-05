@@ -16,6 +16,18 @@ export const translations = {
                     title: "Emparejar",
                     desc: "Conecta cada frase con su traducción correcta.",
                 },
+                fillInTheBlank: {
+                    title: "Completa el Espacio",
+                    desc: "Completa las oraciones con las palabras que faltan.",
+                },
+                wordMatch: {
+                    title: "Emparejar Palabras",
+                    desc: "Encuentra pares que coincidan entre palabras y sus significados.",
+                },
+                typing: {
+                    title: "Entrenamiento de Escritura",
+                    desc: "Pon a prueba tu velocidad y precisión escribiendo palabras.",
+                },
             },
         },
         common: {
@@ -53,6 +65,20 @@ export const translations = {
             mismatches: "Errores",
             pairs: "Pares",
         },
+        fillInTheBlank: {
+            instruction: "Elige la palabra correcta:",
+        },
+        wordMatch: {
+            moves: "Movimientos",
+            pairs: "Pares",
+        },
+        typing: {
+            placeholder: "Escribe aquí...",
+            wpm: "PPM",
+            accuracy: "Precisión",
+            timer: "Tiempo",
+            start: "Comenzar",
+        },
     },
     en: {
         dashboard: {
@@ -70,6 +96,18 @@ export const translations = {
                 matching: {
                     title: "Matching",
                     desc: "Connect each phrase with its correct translation.",
+                },
+                fillInTheBlank: {
+                    title: "Fill-in-the-blank",
+                    desc: "Complete the sentences with the missing words.",
+                },
+                wordMatch: {
+                    title: "Word Match",
+                    desc: "Find matching pairs between words and their meanings.",
+                },
+                typing: {
+                    title: "Typing Training",
+                    desc: "Test your speed and accuracy by typing falling words.",
                 },
             },
         },
@@ -107,6 +145,20 @@ export const translations = {
             translation: "Translation",
             mismatches: "Errors",
             pairs: "Pairs",
+        },
+        fillInTheBlank: {
+            instruction: "Choose the correct word:",
+        },
+        wordMatch: {
+            moves: "Moves",
+            pairs: "Pairs",
+        },
+        typing: {
+            placeholder: "Type here...",
+            wpm: "WPM",
+            accuracy: "Accuracy",
+            timer: "Timer",
+            start: "Start",
         },
     },
 };
