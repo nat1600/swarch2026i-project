@@ -204,9 +204,14 @@ async function getAccessToken() {
   catch { return null; }
 }
 
-/** Interactive login — opens Auth0 popup. */
+/** Interactive login — opens Auth0 popup or redirects to web app. */
 async function login() {
-  return authLogin(true);
+  try {
+    return await authLogin(false);
+  } catch (error) {
+    chrome.tabs.create({ url: 'http://localhost:3000/login' });
+    throw new Error('Redirigiendo a la web-app para iniciar sesión...');
+  }
 }
 
 /** Logout — clears local tokens only (does NOT end Auth0 session, so the web-app stays logged in). */
@@ -216,6 +221,6 @@ async function logout() {
 
 /** Returns { isLoggedIn } for UI rendering. */
 async function getAuthState() {
-  const token = await getStoredToken();
+  const token = await getAccessToken();
   return { isLoggedIn: !!token };
 }
