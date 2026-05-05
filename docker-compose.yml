@@ -110,8 +110,8 @@ services:
       - "8080:8080"
     env_file:
       - ./api-gateway/.env
-   
     environment:
+      PORT: 8080
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
@@ -179,7 +179,11 @@ services:
         condition: service_completed_successfully
 
   gamification-service:
-    build: ./gamification-service/GamificationService
+    build:
+      context: ./gamification-service/GamificationService
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
     container_name: gamification-service
     environment:
       LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
