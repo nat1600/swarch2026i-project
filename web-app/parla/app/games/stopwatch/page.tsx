@@ -8,26 +8,11 @@ import { useGameSession } from '@/hooks/useGameSession';
 import { phrasesService } from '@/lib/services/phrasesService';
 import { Phrase } from '@/lib/types/phrases';
 
+import { shuffle, buildStopwatchChoices } from '@/lib/games/gameUtils';
+
 const GAME_TIME = 60;
 const POINTS_CORRECT = 50;
 const POINTS_WRONG = -15;
-const NUM_CHOICES = 4;
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function buildChoices(correct: Phrase, pool: Phrase[]): string[] {
-  const distractors = shuffle(pool.filter((p) => p.id !== correct.id))
-    .slice(0, NUM_CHOICES - 1)
-    .map((p) => p.translated_text);
-  return shuffle([correct.translated_text, ...distractors]);
-}
 
 export default function StopwatchGame() {
   const { t } = useTranslation();
@@ -58,7 +43,7 @@ export default function StopwatchGame() {
     const shuffled = shuffle(pool);
     const next = shuffled[0];
     setCurrentPhrase(next);
-    setChoices(buildChoices(next, pool));
+    setChoices(buildStopwatchChoices(next, pool));
     setFeedback(null);
   }, []);
 

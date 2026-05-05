@@ -6,6 +6,9 @@ import {
   getAllUserGameSessions,
   computeTotalXP,
   computeWeeklyActivity,
+  incrementScore,
+  getLeaderBoard,
+  getUserRank,
 } from '../gamificationService';
 
 // Mock axios client
@@ -140,22 +143,19 @@ describe('gamificationService', () => {
     });
 
     it('adds 10 minutes per session on a matching day', () => {
-      // Build the Monday label the same way the service does:
-      // using toISOString() on a zero-time Date — which is UTC-based.
       const now = new Date();
-      const dayOfWeek = now.getDay(); // 0 = Sun
+      const dayOfWeek = now.getDay();
       const monday = new Date(now);
       monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
       monday.setHours(0, 0, 0, 0);
-      const mondayLabel = monday.toISOString().split('T')[0]; // "YYYY-MM-DD" in UTC
+      const mondayLabel = monday.toISOString().split('T')[0];
 
       const sessions = [
-        { userName: 'u', gamePlayed: 'word-match', points: 100, sessionDate: mondayLabel },
-        { userName: 'u', gamePlayed: 'typing', points: 50, sessionDate: mondayLabel },
+        { userName: 'u', gamePlayed: 'fill-in-the-word', points: 100, sessionDate: mondayLabel },
+        { userName: 'u', gamePlayed: 'stopwatch', points: 50, sessionDate: mondayLabel },
       ];
 
       const result = computeWeeklyActivity(sessions);
-      // Find the day whose label equals mondayLabel (handles timezone edge cases)
       const mondayEntry = result.find(
         (_, i) => {
           const d = new Date(monday);
@@ -163,7 +163,84 @@ describe('gamificationService', () => {
           return d.toISOString().split('T')[0] === mondayLabel;
         }
       );
-      expect(mondayEntry?.minutes).toBe(20); // 2 sessions × 10 min
+      expect(mondayEntry?.minutes).toBe(20);
+    });
+  });
+
+  // ─── incrementScore ───────────────────────────────────────────────────────
+  describe('incrementScore', () => {
+    it('posts to the correct endpoint with userId header and newExp param', async () => {
+      mockedClient.post = jest.fn().mockResolvedValue({ data: null });
+
+      await incrementScore('auth0|testuser', 150);
+
+      expect(mockedClient.post).toHaveBeenCalledWith(
+        '/leaderBoard/incrementScore',
+        null,
+        expect.objectContaining({
+          params: { newExp: 150 },
+          headers: expect.objectContaining({ userId: 'auth0|testuser' }),
+        })
+      );
+    });
+
+    it('does not throw on error (swallows silently)', async () => {
+      mockedClient.post = jest.fn().mockRejectedValue(new Error('Network error'));
+      await expect(incrementScore('auth0|testuser', 100)).resolves.toBeUndefined();
+    });
+  });
+
+  // ─── getLeaderBoard ───────────────────────────────────────────────────────
+  describe('getLeaderBoard', () => {
+    it('fetches the leaderboard and returns ranked users', async () => {
+      const board = [
+        { userId: 'user1', score: 500, rank: 1 },
+        { userId: 'user2', score: 300, rank: 2 },
+      ];
+      mockedClient.get = jest.fn().mockResolvedValue({ data: board });
+
+      const result = await getLeaderBoard();
+
+      expect(mockedClient.get).toHaveBeenCalledWith('/leaderBoard/getLeaderBoard');
+      expect(result).toHaveLength(2);
+      expect(result[0].score).toBe(500);
+    });
+
+    it('returns empty array on error', async () => {
+      mockedClient.get = jest.fn().mockRejectedValue(new Error('fail'));
+      const result = await getLeaderBoard();
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array when response data is null', async () => {
+      mockedClient.get = jest.fn().mockResolvedValue({ data: null });
+      const result = await getLeaderBoard();
+      expect(result).toEqual([]);
+    });
+  });
+
+  // ─── getUserRank ──────────────────────────────────────────────────────────
+  describe('getUserRank', () => {
+    it('fetches rank for a specific user with correct header', async () => {
+      const rankData = { userId: 'auth0|testuser', score: 250, rank: 3 };
+      mockedClient.get = jest.fn().mockResolvedValue({ data: rankData });
+
+      const result = await getUserRank('auth0|testuser');
+
+      expect(mockedClient.get).toHaveBeenCalledWith(
+        '/leaderBoard/getUserRank',
+        expect.objectContaining({
+          headers: expect.objectContaining({ userName: 'auth0|testuser' }),
+        })
+      );
+      expect(result?.score).toBe(250);
+      expect(result?.rank).toBe(3);
+    });
+
+    it('returns null on error', async () => {
+      mockedClient.get = jest.fn().mockRejectedValue(new Error('fail'));
+      const result = await getUserRank('auth0|testuser');
+      expect(result).toBeNull();
     });
   });
 

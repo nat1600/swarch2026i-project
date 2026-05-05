@@ -8,30 +8,14 @@ import { useGameSession } from '@/hooks/useGameSession';
 import { phrasesService } from '@/lib/services/phrasesService';
 import { Phrase } from '@/lib/types/phrases';
 
+import { shuffle, buildFillRound, FillRound } from '@/lib/games/gameUtils';
+
 const POINTS_CORRECT = 100;
 const POINTS_HINT = 60;
 const POINTS_WRONG = -10;
 const TOTAL_ROUNDS = 8;
 
-function buildRound(phrase: Phrase) {
-  const words = phrase.original_text.trim().split(/\s+/);
-  if (words.length < 2) return null;
-  const blankIdx = Math.floor(Math.random() * words.length);
-  const answer = words[blankIdx];
-  const display = words.map((w, i) => (i === blankIdx ? '___' : w)).join(' ');
-  return { display, answer, phrase, hintLetter: answer[0] };
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-type RoundState = ReturnType<typeof buildRound> & object;
+type RoundState = FillRound;
 
 export default function FillInTheWordGame() {
   const { t } = useTranslation();
@@ -63,7 +47,7 @@ export default function FillInTheWordGame() {
     const built: RoundState[] = [];
     for (const p of shuffled) {
       if (built.length >= TOTAL_ROUNDS) break;
-      const r = buildRound(p);
+      const r = buildFillRound(p);
       if (r) built.push(r as RoundState);
     }
     return built;
