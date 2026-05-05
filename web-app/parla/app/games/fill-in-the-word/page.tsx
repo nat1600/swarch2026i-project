@@ -232,7 +232,7 @@ export default function FillInTheWordGame() {
           )}
           {showHint && !feedback && (
             <p className="text-center font-black text-parla-dark/60">
-              {t.fillInTheWord.hintLetter} &quot;<span className="text-parla-blue">{currentRound.hintLetter}</span>&quot;
+              {t.fillInTheWord.hintLabel} &quot;<span className="text-parla-blue">{currentRound.hintLetter}</span>&quot;
             </p>
           )}
         </div>
