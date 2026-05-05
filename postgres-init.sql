@@ -1,3 +1,4 @@
 CREATE DATABASE auth_db;
 CREATE DATABASE core_db;
 CREATE DATABASE gamification_db;
+CREATE DATABASE payment_db;

@@ -88,6 +88,18 @@ services:
       postgres:
         condition: service_healthy
 
+  payment_migration:
+    container_name: payment_migration
+    build: ./payment-service/
+    command: bash scripts/migrate.sh
+    env_file:
+      - ./payment-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   forum_seed:
     container_name: forum_seed
     build: ./forum-service/api/
@@ -116,6 +128,7 @@ services:
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
       SERVICE_GAME_URL: http://gamification-service:8080
+      SERVICE_PAYMENT_URL: http://payment-service:8005
     depends_on:
       - auth-service
       - core-service
@@ -178,6 +191,26 @@ services:
       forum_seed:
         condition: service_completed_successfully
 
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    env_file:
+      - ./payment-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
+      # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_PUBLIC_KEY and JWT_SECRET are
+      # provided via the service env_file (payment-service/.env). Avoid using
+      # ${VAR} interpolation here so Compose does not require them in the host
+      # environment and the file values are used inside the container.
+      AUTH_SERVICE_URL: http://auth-service:8000
+    ports:
+      - "8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      payment_migration:
+        condition: service_completed_successfully
+
 #  gamification-service:
 #    build: ./gamification-service/GamificationService
 #    container_name: gamification-service
@@ -222,6 +255,7 @@ services:
       SERVER_FORUM_URL: http://api-gateway:8080/api/forum
       SERVER_GAME_URL: http://api-gateway:8080/api/game
       SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
+      SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
     depends_on:
       - api-gateway
       - redis

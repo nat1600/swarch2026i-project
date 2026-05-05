@@ -56,12 +56,12 @@ The platform follows a **microservices architecture** with an API Gateway as the
 | **Browser Extension** | JavaScript / TypeScript |
 | **API Gateway** | Node.js / TypeScript |
 | **Auth Service** | Python (FastAPI) |
+| **Payment Service** | Python (FastAPI) |
 | **Core Service** | Python (FastAPI) |
 | **Gamification Service** | Java (Spring Boot) |
 | **Forum Service** | Java (Spring Boot) |
 | **Databases** | PostgreSQL 16 + MongoDB 7 |
 | **Containerization** | Docker / Docker Compose |
-
 ---
 
 ## Project Structure
@@ -72,6 +72,7 @@ swarch2026i-project/
 ├── auth-service/         # Authentication & user management
 ├── browser-extension/    # Chrome/Firefox extension for subtitle capture
 ├── core-service/         # Vocabulary, flashcards, and core learning logic
+├── payment-service/      # MercadoPago checkout and payment tracking
 ├── forum-service/        # Community discussions
 ├── gamification-service/ # Games, streaks, and leaderboard
 ├── web-app/              # Frontend — Next.js application (parla/)
@@ -179,6 +180,9 @@ Handles user registration, login, and JWT session management. Uses PostgreSQL as
 
 ###  Core Service
 The heart of the platform — manages vocabulary entries, flashcard reviews (SM-2 algorithm), and media context. Uses both PostgreSQL (relational data) and MongoDB (flexible word/context documents).
+
+###  Payment Service
+Creates MercadoPago checkout preferences for VIP plans, tracks payment state, and processes webhook callbacks. The API Gateway handles authentication before requests reach this service.
 
 ###  API Gateway
 Single entry point for all client requests. Routes traffic to the appropriate microservice, handles CORS, and can enforce authentication middleware.
