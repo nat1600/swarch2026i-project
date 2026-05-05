@@ -9,6 +9,11 @@
       "service_name": "core"
     },
     {
+      "path_prefix": "/api/payments",
+      "service_name": "payment",
+      "auth_exempt_paths": ["/webhook"]
+    },
+    {
       "path_prefix": "/api/forum",
       "service_name": "forum"
     },

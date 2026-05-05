@@ -82,10 +82,15 @@ export default function LandingPage() {
           </span>
         </div>
 
-        {/* Botón nav más pequeño: sobreescribimos padding/tamaño con Tailwind directamente */}
-        <Link href="/login" className="btn-secondary  py-3! px-7 text-sm!">
-          Iniciar sesión →
-        </Link>
+        {/* Botones nav */}
+        <div className="flex items-center gap-3">
+          <Link href="/payment" className="btn-primary py-3! px-7 text-sm! bg-parla-red hover:shadow-[0_4px_0_0_#8B0228]">
+            👑 Consigue VIP
+          </Link>
+          <Link href="/login" className="btn-secondary py-3! px-7 text-sm!">
+            Iniciar sesión →
+          </Link>
+        </div>
       </nav>
 
       {/* ══════════════════════════════════════
@@ -277,6 +282,59 @@ export default function LandingPage() {
             </ScrollReveal>
           ))}
         </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          VIP SECTION
+      ══════════════════════════════════════ */}
+      <section className="relative z-10 max-w-4xl mx-auto px-6 md:px-12 py-10 mb-10">
+        <ScrollReveal className="relative overflow-hidden bg-gradient-to-br from-parla-red to-[#8B0228] rounded-4xl border-4 border-parla-dark shadow-[0_12px_0_0_#254159] p-10 md:p-14 text-white">
+          {/* Decorative emoji background */}
+          <div className="absolute top-0 right-0 text-8xl opacity-10 transform translate-x-8 -translate-y-8">
+            👑
+          </div>
+
+          <div className="relative z-10">
+            <div className="inline-block bg-white text-parla-red font-brand text-sm px-4 py-2 rounded-full border-2 border-white mb-4 font-bold">
+              ⭐ PREMIUM
+            </div>
+
+            <h2 className="font-brand text-4xl md:text-5xl mb-4 font-bold leading-tight">
+              Desbloquea Parla VIP
+            </h2>
+
+            <p className="text-lg font-semibold mb-6 text-white/90">
+              Lecciones ilimitadas, chats sin límites, y acceso a todos los
+              desafíos premium.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">⚡</span>
+                <span className="font-bold">Lecciones ilimitadas</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🔥</span>
+                <span className="font-bold">Sin publicidad</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📊</span>
+                <span className="font-bold">Estadísticas avanzadas</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🏆</span>
+                <span className="font-bold">Desafíos premium</span>
+              </div>
+            </div>
+
+            <Link
+              href="/payment"
+              className="inline-block bg-white text-parla-red font-brand text-lg font-bold px-10 py-4 rounded-xl border-3 border-white shadow-[0_4px_0_0_rgba(255,255,255,0.4)] hover:shadow-[0_6px_0_0_rgba(255,255,255,0.4)] transition-all"
+            >
+              Comienza tu prueba gratuita de 7 días →
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* ══════════════════════════════════════
