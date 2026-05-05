@@ -52,6 +52,7 @@ export const translations = {
             check: "Verificar",
             next: "Siguiente",
             hintLabel: "Pista: primera letra es",
+            phraseContext: "Tu frase",
         },
         stopwatch: {
             timeLeft: "Tiempo",
@@ -133,6 +134,7 @@ export const translations = {
             check: "Check",
             next: "Next",
             hintLabel: "Hint: first letter is",
+            phraseContext: "Your phrase",
         },
         stopwatch: {
             timeLeft: "Time",

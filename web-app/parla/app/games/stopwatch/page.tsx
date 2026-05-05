@@ -34,7 +34,7 @@ export default function StopwatchGame() {
 
   useEffect(() => {
     phrasesService.getAllPhrases().then((data) => {
-      setPhrases(data.filter((p) => p.active));
+      setPhrases(data.filter((p) => p.active && p.original_text?.trim() && p.translated_text?.trim()));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

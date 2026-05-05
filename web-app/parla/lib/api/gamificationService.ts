@@ -106,7 +106,7 @@ export async function getAllUserGameSessions(userName: string): Promise<UserGame
 // ─── Leaderboard endpoints ────────────────────────────────────────────────────
 
 export interface UserScoreRankDTO {
-  userId: string;
+  userName: string;
   score: number;
   rank: number;
 }
@@ -152,7 +152,7 @@ export async function getUserRank(userName: string): Promise<UserScoreRankDTO | 
   try {
     const response = await gamificationApiClient.get<UserScoreRankDTO>(
       '/leaderBoard/getUserRank',
-      { headers: { userName } }
+      { headers: { userName, userId: userName } }
     );
     return response.data;
   } catch (error) {
