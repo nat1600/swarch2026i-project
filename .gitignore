@@ -9,8 +9,6 @@
 .env
 
 # Testing (development) files
-/tests/
-tests/
 auth-service/tmp
 
 # vscode
