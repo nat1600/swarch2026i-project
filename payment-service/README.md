@@ -36,6 +36,8 @@ All user-facing endpoints require the gateway to forward `X-User-Sub`.
 
 ## Local run
 
+The migration script creates the target database if it does not already exist, which helps when reusing an existing Postgres volume.
+
 ```bash
 cp .env.example .env
 uv sync
