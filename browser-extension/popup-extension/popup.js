@@ -14,24 +14,24 @@
 // DOM REFERENCES
 // ===========================
 
-const extensionToggle  = document.getElementById('extension-toggle');
-const toggleStatus     = document.getElementById('toggle-status');
-const savedCount       = document.getElementById('saved-count');
+const extensionToggle = document.getElementById('extension-toggle');
+const toggleStatus = document.getElementById('toggle-status');
+const savedCount = document.getElementById('saved-count');
 const phrasesContainer = document.getElementById('phrases-container');
-const searchInput      = document.getElementById('search-input');
+const searchInput = document.getElementById('search-input');
 
 // Auth elements
 const authLoggedOut = document.getElementById('auth-loggedout');
-const authLoggedIn  = document.getElementById('auth-loggedin');
-const btnLogin      = document.getElementById('btn-login');
-const btnLogout     = document.getElementById('btn-logout');
-const authError     = document.getElementById('auth-error');
+const authLoggedIn = document.getElementById('auth-loggedin');
+const btnLogin = document.getElementById('btn-login');
+const btnLogout = document.getElementById('btn-logout');
+const authError = document.getElementById('auth-error');
 
 // Quick action buttons
 const btnPractice = document.getElementById('btn-practice');
-const btnStats    = document.getElementById('btn-stats');
-const btnShare    = document.getElementById('btn-share');
-const btnLanding  = document.getElementById('btn-landing');
+const btnStats = document.getElementById('btn-stats');
+const btnShare = document.getElementById('btn-share');
+const btnLanding = document.getElementById('btn-landing');
 
 // ===========================
 // QUICK ACTION URLS
@@ -39,10 +39,10 @@ const btnLanding  = document.getElementById('btn-landing');
 // ===========================
 
 const URLS = {
-  practice: 'https://app.parla.com/practice',
-  stats:    'https://app.parla.com/stats',
-  share:    'https://app.parla.com/achievements',
-  landing:  'https://parla.com'
+  practice: 'http://localhost:3000/dictionary',
+  stats: 'http://localhost:3000/stats',
+  share: 'http://localhost:3000/forum',
+  landing: 'http://localhost:3000/home'
 };
 
 // ===========================
@@ -77,7 +77,7 @@ async function loadAuthState() {
 
 function updateAuthUI(isLoggedIn) {
   if (authLoggedOut) authLoggedOut.style.display = isLoggedIn ? 'none' : 'flex';
-  if (authLoggedIn)  authLoggedIn.style.display  = isLoggedIn ? 'flex' : 'none';
+  if (authLoggedIn) authLoggedIn.style.display = isLoggedIn ? 'flex' : 'none';
   showAuthError('');
 }
 
@@ -106,8 +106,13 @@ function setupAuthListeners() {
       if (res?.success) updateAuthUI(true);
       else {
         const msg = res?.error || 'No se pudo iniciar sesion';
-        showAuthError(msg);
-        console.error('Login failed:', msg);
+        if (msg.includes('Redirigiendo')) {
+          btnLogin.textContent = 'Redirigiendo...';
+          setTimeout(() => window.close(), 1000);
+        } else {
+          showAuthError(msg);
+          console.error('Login failed:', msg);
+        }
       }
     });
   });
@@ -141,9 +146,9 @@ function openTab(url) {
  */
 function setupQuickActions() {
   btnPractice?.addEventListener('click', () => openTab(URLS.practice));
-  btnStats?.addEventListener('click',    () => openTab(URLS.stats));
-  btnShare?.addEventListener('click',    () => openTab(URLS.share));
-  btnLanding?.addEventListener('click',  () => openTab(URLS.landing));
+  btnStats?.addEventListener('click', () => openTab(URLS.stats));
+  btnShare?.addEventListener('click', () => openTab(URLS.share));
+  btnLanding?.addEventListener('click', () => openTab(URLS.landing));
 }
 
 // ===========================
@@ -151,7 +156,7 @@ function setupQuickActions() {
 // ===========================
 
 async function loadToggleState() {
-  const result   = await chrome.storage.local.get(['parla_extension_active']);
+  const result = await chrome.storage.local.get(['parla_extension_active']);
 
   const isActive = result.parla_extension_active !== false;
   extensionToggle.checked = isActive;
@@ -173,8 +178,8 @@ function setupToggleListener() {
 }
 
 function updateToggleStatus(isActive) {
-  toggleStatus.textContent  = isActive ? 'Activa' : 'Inactiva';
-  toggleStatus.style.color  = isActive
+  toggleStatus.textContent = isActive ? 'Activa' : 'Inactiva';
+  toggleStatus.style.color = isActive
     ? 'rgba(255,255,255,0.9)'
     : 'rgba(255,255,255,0.4)';
 }
@@ -289,10 +294,10 @@ function filterPhrases(query) {
 function setupTabListeners() {
   document.querySelectorAll('.tab-trigger').forEach(trigger => {
     trigger.addEventListener('click', () => {
-      const tabName  = trigger.dataset.tab;
+      const tabName = trigger.dataset.tab;
       const collapse = document.getElementById(`${tabName}-collapse`);
-      const arrow    = trigger.querySelector('.tab-arrow');
-      const isOpen   = collapse?.classList.contains('open');
+      const arrow = trigger.querySelector('.tab-arrow');
+      const isOpen = collapse?.classList.contains('open');
 
       document.querySelectorAll('.tab-collapse').forEach(c => c.classList.remove('open'));
       document.querySelectorAll('.tab-arrow').forEach(a => a.classList.remove('open'));

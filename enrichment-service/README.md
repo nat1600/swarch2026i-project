@@ -404,6 +404,23 @@ language = english
 
 ---
 
+
+## Running the Tests
+
+```bash
+uv run pytest tests/ -v
+```
+
+Unit tests cover the core enrichment logic without requiring any external services (no RabbitMQ, MongoDB, or Anthropic API needed).
+
+| Module | What is tested |
+|---|---|
+| `consumer.py` | Stop word filtering, enrichment workflow |
+| `llm_client.py` | LLM response parsing and error handling |
+| `models.py` | Pydantic model validation and defaults |
+
+---
+
 ## Tech Stack
 
 - Python 3.13
