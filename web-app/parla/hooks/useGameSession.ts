@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { saveGameSession, registerUserActivity } from '@/lib/api/gamificationService';
+import { saveGameSession, registerUserActivity, incrementScore } from '@/lib/api/gamificationService';
 
 interface GameSessionPayload {
   gamePlayed: string;
@@ -29,10 +29,11 @@ export function useGameSession() {
         return;
       }
 
-      // Fire both requests concurrently; errors are swallowed inside each helper
+      // Fire all three concurrently; errors are swallowed inside each helper
       await Promise.all([
         saveGameSession({ userName, gamePlayed, points }),
         registerUserActivity(userName),
+        incrementScore(userName, points),
       ]);
     },
     [user]
