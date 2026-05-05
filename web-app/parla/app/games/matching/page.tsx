@@ -8,36 +8,11 @@ import { useGameSession } from '@/hooks/useGameSession';
 import { phrasesService } from '@/lib/services/phrasesService';
 import { Phrase } from '@/lib/types/phrases';
 
+import { shuffle, buildMatchCards, MatchCard } from '@/lib/games/gameUtils';
+
 const PAIR_COUNT = 6;
 const POINTS_CORRECT = 75;
 const POINTS_WRONG = -25;
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-interface MatchCard {
-  id: string;
-  phraseId: number;
-  text: string;
-  side: 'original' | 'translation';
-  matched: boolean;
-}
-
-function buildCards(pairs: Phrase[]): { originals: MatchCard[]; translations: MatchCard[] } {
-  const originals: MatchCard[] = shuffle(
-    pairs.map((p) => ({ id: `o-${p.id}`, phraseId: p.id, text: p.original_text, side: 'original' as const, matched: false }))
-  );
-  const translations: MatchCard[] = shuffle(
-    pairs.map((p) => ({ id: `t-${p.id}`, phraseId: p.id, text: p.translated_text, side: 'translation' as const, matched: false }))
-  );
-  return { originals, translations };
-}
 
 export default function MatchingGame() {
   const { t } = useTranslation();
@@ -66,7 +41,7 @@ export default function MatchingGame() {
   const initGame = useCallback((pool: Phrase[]) => {
     const pairs = shuffle(pool).slice(0, PAIR_COUNT);
     setActivePairs(pairs);
-    const { originals: o, translations: tr } = buildCards(pairs);
+    const { originals: o, translations: tr } = buildMatchCards(pairs);
     setOriginals(o);
     setTranslations(tr);
     setSelectedOriginal(null);
