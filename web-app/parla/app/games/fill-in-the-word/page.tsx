@@ -1,21 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Lightbulb } from 'lucide-react';
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { useTranslation } from '@/components/games/useTranslation';
 import { useGameSession } from '@/hooks/useGameSession';
 import { phrasesService } from '@/lib/services/phrasesService';
 import { Phrase } from '@/lib/types/phrases';
-
 import { shuffle, buildFillRound, FillRound } from '@/lib/games/gameUtils';
+import { getEnrichedPhrases, EnrichedPhrase } from '@/lib/services/phrasesService';
 
 const POINTS_CORRECT = 100;
-const POINTS_HINT = 60;
-const POINTS_WRONG = -10;
+const POINTS_WRONG = -15;
 const TOTAL_ROUNDS = 8;
-
-type RoundState = FillRound;
 
 export default function FillInTheWordGame() {
   const { t } = useTranslation();
@@ -23,41 +20,67 @@ export default function FillInTheWordGame() {
 
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rounds, setRounds] = useState<RoundState[]>([]);
+  const [rounds, setRounds] = useState<FillRound[]>([]);
   const [roundIdx, setRoundIdx] = useState(0);
-  const [input, setInput] = useState('');
+  const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
-  const [usedHint, setUsedHint] = useState(false);
-  const [showHint, setShowHint] = useState(false);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [enrichedMap, setEnrichedMap] = useState<Map<number, EnrichedPhrase[]>>(new Map());
 
   useEffect(() => {
-    phrasesService.getAllPhrases().then((data) => {
-      setPhrases(data.filter((p) => p.active));
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    phrasesService.getAllPhrases()
+      .then(async (data) => {
+        const valid = data.filter((p) => p.active && p.original_text?.trim() && p.translated_text?.trim());
+        setPhrases(valid);
+
+        // Fetch enrichment data for all phrase IDs in parallel
+        const enriched = await getEnrichedPhrases(valid.map((p) => p.id));
+        const map = new Map<number, EnrichedPhrase[]>();
+        for (const e of enriched) {
+          const list = map.get(e.phrase_id) ?? [];
+          list.push(e);
+          map.set(e.phrase_id, list);
+        }
+        setEnrichedMap(map);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const buildGame = useCallback((pool: Phrase[]) => {
-    const shuffled = shuffle(pool);
-    const built: RoundState[] = [];
-    for (const p of shuffled) {
+  const buildGame = useCallback((pool: Phrase[], eMap: Map<number, EnrichedPhrase[]>) => {
+    const built: FillRound[] = [];
+    for (const p of shuffle(pool)) {
       if (built.length >= TOTAL_ROUNDS) break;
-      const r = buildFillRound(p);
-      if (r) built.push(r as RoundState);
+
+      // Prefer enriched data from the enrichment-service (LLM-generated)
+      // Filter out proper nouns (capitalized words like names, countries, cities)
+      const rawList = eMap.get(p.id) ?? [];
+      const enrichedList = rawList.filter((e) => e.word && /^[a-z]/.test(e.word));
+      if (enrichedList.length > 0) {
+        const e = enrichedList[Math.floor(Math.random() * enrichedList.length)];
+        built.push({
+          display: e.sentence,
+          answer: e.correct_answer,
+          choices: shuffle([e.correct_answer, ...e.distractors]).slice(0, 4),
+          phrase: p,
+        });
+        continue;
+      }
+
+      // Fallback: local word-picking
+      const r = buildFillRound(p, pool);
+      if (r) built.push(r);
     }
     return built;
   }, []);
 
   useEffect(() => {
-    if (phrases.length >= 4) {
-      setRounds(buildGame(phrases));
-    }
-  }, [phrases, buildGame]);
+    if (phrases.length >= 4) setRounds(buildGame(phrases, enrichedMap));
+  }, [phrases, enrichedMap, buildGame]);
 
   useEffect(() => {
     if (isGameOver) {
@@ -67,12 +90,12 @@ export default function FillInTheWordGame() {
 
   const currentRound = rounds[roundIdx];
 
-  const handleCheck = useCallback(() => {
-    if (!currentRound || feedback) return;
-    const isCorrect = input.trim().toLowerCase() === currentRound.answer.toLowerCase();
+  const handleChoice = useCallback((choice: string) => {
+    if (feedback) return;
+    setSelected(choice);
+    const isCorrect = choice.toLowerCase() === currentRound.answer.toLowerCase();
     if (isCorrect) {
-      const pts = usedHint ? POINTS_HINT : POINTS_CORRECT;
-      setScore((s) => s + pts);
+      setScore((s) => s + POINTS_CORRECT);
       setCorrectCount((c) => c + 1);
       setFeedback('correct');
     } else {
@@ -80,7 +103,7 @@ export default function FillInTheWordGame() {
       setWrongCount((c) => c + 1);
       setFeedback('wrong');
     }
-  }, [currentRound, feedback, input, usedHint]);
+  }, [currentRound, feedback]);
 
   const handleNext = useCallback(() => {
     const next = roundIdx + 1;
@@ -88,31 +111,21 @@ export default function FillInTheWordGame() {
       setIsGameOver(true);
     } else {
       setRoundIdx(next);
-      setInput('');
+      setSelected(null);
       setFeedback(null);
-      setUsedHint(false);
-      setShowHint(false);
-      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [roundIdx, rounds.length]);
 
-  const handleHint = () => {
-    setUsedHint(true);
-    setShowHint(true);
-  };
-
   const restartGame = useCallback(() => {
-    setRounds(buildGame(phrases));
+    setRounds(buildGame(phrases, enrichedMap));
     setRoundIdx(0);
-    setInput('');
+    setSelected(null);
     setFeedback(null);
-    setUsedHint(false);
-    setShowHint(false);
     setScore(0);
     setCorrectCount(0);
     setWrongCount(0);
     setIsGameOver(false);
-  }, [buildGame, phrases]);
+  }, [buildGame, phrases, enrichedMap]);
 
   if (loading) {
     return (
@@ -188,72 +201,95 @@ export default function FillInTheWordGame() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full gap-8">
-        {/* Translation hint */}
-        <div className="bg-white rounded-2xl border-4 border-parla-dark shadow-[0_6px_0_0_#254159] p-5 w-full text-center">
-          <p className="text-xs font-black text-parla-dark/50 uppercase tracking-widest mb-2">
-            {currentRound.phrase.target_language?.name ?? 'Traducción'}
+      <main className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full gap-6">
+        {/* Original phrase context — no highlight to avoid giving away the answer */}
+        <div className="bg-parla-mist rounded-2xl border-4 border-parla-dark/30 p-4 w-full text-center space-y-1">
+          <p className="text-xs font-black text-parla-dark/50 uppercase tracking-widest">
+            {t.fillInTheWord.phraseContext ?? 'Tu frase guardada'}
           </p>
-          <p className="text-2xl font-black text-parla-blue">{currentRound.phrase.translated_text}</p>
+          <p className="text-sm font-semibold text-parla-dark/70 italic leading-relaxed">
+            &ldquo;{currentRound.phrase.original_text}&rdquo;
+          </p>
+          <p className="text-xs text-parla-dark/40 font-semibold">
+            ↓ La palabra que falta en el ejercicio proviene de esta frase
+          </p>
         </div>
 
         {/* Phrase with blank */}
         <div className="bg-white rounded-3xl border-8 border-parla-dark shadow-[0_12px_0_0_#254159] p-8 w-full text-center">
-          <p className="text-xs font-black text-parla-dark/50 uppercase tracking-widest mb-4">{t.fillInTheWord.instruction}</p>
+          <p className="text-xs font-black text-parla-dark/50 uppercase tracking-widest mb-4">
+            {t.fillInTheWord.instruction}
+          </p>
           <p className="text-3xl md:text-4xl font-brand text-parla-dark leading-relaxed tracking-wide">
-            {currentRound.display}
+            {currentRound.display.split('___').map((part, i, arr) => (
+              <span key={i}>
+                {part}
+                {i < arr.length - 1 && (
+                  <span className={`inline-block min-w-[4rem] border-b-4 mx-1 align-bottom transition-colors ${
+                    feedback === 'correct' ? 'border-green-500 text-green-600' :
+                    feedback === 'wrong' ? 'border-red-400 text-red-500' :
+                    'border-parla-blue'
+                  }`}>
+                    {feedback ? (
+                      <span className="font-black text-2xl">{currentRound.answer}</span>
+                    ) : (
+                      <span className="opacity-0 text-2xl">{'_'.repeat(currentRound.answer.length)}</span>
+                    )}
+                  </span>
+                )}
+              </span>
+            ))}
           </p>
         </div>
 
-        {/* Input */}
-        <div className="w-full space-y-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') feedback ? handleNext() : handleCheck(); }}
-            placeholder={t.fillInTheWord.placeholder}
-            disabled={!!feedback}
-            className="w-full text-xl font-black text-center border-4 border-parla-dark rounded-2xl px-6 py-4 shadow-[0_6px_0_0_#254159] focus:outline-none focus:border-parla-blue focus:shadow-[0_6px_0_0_#2563eb] transition-all disabled:opacity-60 bg-white"
-            autoFocus
-          />
+        {/* Feedback banner */}
+        {feedback === 'correct' && (
+          <div className="flex items-center gap-2 text-green-600 font-black text-lg animate-in slide-in-from-bottom duration-200">
+            <CheckCircle className="w-6 h-6" /> {t.common.perfect} +{POINTS_CORRECT} XP
+          </div>
+        )}
+        {feedback === 'wrong' && (
+          <div className="flex items-center gap-2 text-red-500 font-black text-lg animate-in slide-in-from-bottom duration-200">
+            <XCircle className="w-6 h-6" /> La respuesta era &quot;{currentRound.answer}&quot;
+          </div>
+        )}
 
-          {/* Feedback */}
-          {feedback === 'correct' && (
-            <div className="flex items-center justify-center gap-2 text-green-600 font-black text-lg animate-in slide-in-from-bottom duration-200">
-              <CheckCircle className="w-6 h-6" /> {t.common.perfect} +{usedHint ? POINTS_HINT : POINTS_CORRECT} XP
-            </div>
-          )}
-          {feedback === 'wrong' && (
-            <div className="flex items-center justify-center gap-2 text-red-500 font-black text-lg animate-in slide-in-from-bottom duration-200">
-              <XCircle className="w-6 h-6" /> {currentRound.answer}
-            </div>
-          )}
-          {showHint && !feedback && (
-            <p className="text-center font-black text-parla-dark/60">
-              {t.fillInTheWord.hintLabel} &quot;<span className="text-parla-blue">{currentRound.hintLetter}</span>&quot;
-            </p>
-          )}
+        {/* Multiple choice buttons */}
+        <div className="grid grid-cols-2 gap-4 w-full">
+          {currentRound.choices.map((choice) => {
+            const isSelected = selected === choice;
+            const isAnswer = choice.toLowerCase() === currentRound.answer.toLowerCase();
+            let btnClass = 'w-full py-4 px-5 rounded-2xl border-4 font-black text-lg transition-all ';
+
+            if (!feedback) {
+              btnClass += 'border-parla-dark shadow-[0_4px_0_0_#254159] bg-white hover:bg-parla-mist hover:scale-[1.02] cursor-pointer';
+            } else if (isAnswer) {
+              btnClass += 'border-green-500 shadow-[0_4px_0_0_#16a34a] bg-green-50 text-green-700 scale-[1.02]';
+            } else if (isSelected && !isAnswer) {
+              btnClass += 'border-red-400 shadow-[0_4px_0_0_#ef4444] bg-red-50 text-red-600 opacity-80';
+            } else {
+              btnClass += 'border-parla-dark/30 bg-white/60 text-parla-dark/40 opacity-50';
+            }
+
+            return (
+              <button
+                key={choice}
+                onClick={() => handleChoice(choice)}
+                disabled={!!feedback}
+                className={btnClass}
+              >
+                {choice}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-4 w-full">
-          {!feedback && !showHint && (
-            <button onClick={handleHint} className="btn-secondary flex-1 flex items-center justify-center gap-2">
-              <Lightbulb className="w-5 h-5" /> Pista
-            </button>
-          )}
-          {!feedback ? (
-            <button onClick={handleCheck} disabled={!input.trim()} className="btn-primary flex-1 disabled:opacity-40">
-              {t.fillInTheWord.check}
-            </button>
-          ) : (
-            <button onClick={handleNext} className="btn-primary flex-1">
-              {t.fillInTheWord.next} →
-            </button>
-          )}
-        </div>
+        {/* Next button */}
+        {feedback && (
+          <button onClick={handleNext} className="btn-primary w-full animate-in slide-in-from-bottom duration-200">
+            {roundIdx + 1 >= rounds.length ? 'Ver resultados' : `${t.fillInTheWord.next} →`}
+          </button>
+        )}
       </main>
     </div>
   );

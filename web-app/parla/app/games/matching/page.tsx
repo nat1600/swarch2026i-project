@@ -7,10 +7,9 @@ import { useTranslation } from '@/components/games/useTranslation';
 import { useGameSession } from '@/hooks/useGameSession';
 import { phrasesService } from '@/lib/services/phrasesService';
 import { Phrase } from '@/lib/types/phrases';
-
 import { shuffle, buildMatchCards, MatchCard } from '@/lib/games/gameUtils';
 
-const PAIR_COUNT = 6;
+const MAX_PAIRS = 10;
 const POINTS_CORRECT = 75;
 const POINTS_WRONG = -25;
 
@@ -29,18 +28,23 @@ export default function MatchingGame() {
   const [score, setScore] = useState(0);
   const [mismatches, setMismatches] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [activePairs, setActivePairs] = useState<Phrase[]>([]);
+  const [pairCount, setPairCount] = useState(0);
 
   useEffect(() => {
     phrasesService.getAllPhrases().then((data) => {
-      setPhrases(data.filter((p) => p.active));
+      // Only keep phrases with both original and translation
+      const valid = data.filter(
+        (p) => p.active && p.original_text?.trim() && p.translated_text?.trim()
+      );
+      setPhrases(valid);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
   const initGame = useCallback((pool: Phrase[]) => {
-    const pairs = shuffle(pool).slice(0, PAIR_COUNT);
-    setActivePairs(pairs);
+    // Use all available phrases up to MAX_PAIRS
+    const pairs = shuffle(pool).slice(0, MAX_PAIRS);
+    setPairCount(pairs.length);
     const { originals: o, translations: tr } = buildMatchCards(pairs);
     setOriginals(o);
     setTranslations(tr);
@@ -54,7 +58,7 @@ export default function MatchingGame() {
   }, []);
 
   useEffect(() => {
-    if (phrases.length >= 4) initGame(phrases);
+    if (phrases.length >= 1) initGame(phrases);
   }, [phrases, initGame]);
 
   useEffect(() => {
@@ -85,7 +89,7 @@ export default function MatchingGame() {
       setSelectedOriginal(null);
       setSelectedTranslation(null);
 
-      if (newMatchedCount >= Math.min(PAIR_COUNT, activePairs.length)) {
+      if (newMatchedCount >= pairCount) {
         setIsGameOver(true);
       }
     } else {
@@ -96,12 +100,12 @@ export default function MatchingGame() {
         setWrongPair(null);
         setSelectedOriginal(null);
         setSelectedTranslation(null);
-      }, 800);
+      }, 700);
     }
-  }, [selectedOriginal, score, matchedCount, activePairs.length, wrongPair]);
+  }, [selectedOriginal, score, matchedCount, pairCount, wrongPair]);
 
   const getCardClass = (card: MatchCard, isSelected: boolean, isWrong: boolean) => {
-    let cls = 'rounded-2xl border-4 p-3 text-sm font-black cursor-pointer transition-all duration-200 text-center min-h-[72px] flex items-center justify-center leading-tight ';
+    let cls = 'rounded-2xl border-4 p-3 text-sm font-black cursor-pointer transition-all duration-200 text-center min-h-[64px] flex items-center justify-center leading-tight ';
     if (card.matched) {
       cls += 'bg-green-100 border-green-500 text-green-700 opacity-60 pointer-events-none shadow-[0_4px_0_0_#16a34a]';
     } else if (isWrong) {
@@ -122,7 +126,7 @@ export default function MatchingGame() {
     );
   }
 
-  if (phrases.length < 4) {
+  if (phrases.length < 1) {
     return (
       <div className="min-h-screen bg-polka flex items-center justify-center p-6">
         <div className="feat-card max-w-md w-full text-center space-y-6">
@@ -171,7 +175,7 @@ export default function MatchingGame() {
         </Link>
         <div className="flex gap-3">
           <div className="bg-white rounded-xl px-4 py-2 border-4 border-parla-dark shadow-[0_4px_0_0_#254159] font-bold text-parla-dark">
-            {matchedCount} / {Math.min(PAIR_COUNT, activePairs.length)} {t.matching.pairs}
+            {matchedCount} / {pairCount} {t.matching.pairs}
           </div>
           <div className="bg-white rounded-xl px-4 py-2 border-4 border-parla-blue shadow-[0_4px_0_0_#2563eb] font-black text-parla-blue">
             {Math.max(score, 0)} XP
@@ -179,14 +183,14 @@ export default function MatchingGame() {
         </div>
       </header>
 
-      <p className="text-center font-black text-parla-dark/60 mb-6 max-w-4xl mx-auto w-full">
+      <p className="text-center font-black text-parla-dark/60 mb-4 max-w-4xl mx-auto w-full text-sm">
         {selectedOriginal
-          ? `"${selectedOriginal.text}" → ${t.matching.translation}?`
+          ? `"${selectedOriginal.text}" → ¿cuál es la traducción?`
           : t.matching.instruction}
       </p>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full">
-        <div className="grid grid-cols-2 gap-6">
+      <main className="flex-1 max-w-4xl mx-auto w-full overflow-y-auto">
+        <div className="grid grid-cols-2 gap-4">
           {/* Originals column */}
           <div className="space-y-3">
             <p className="text-xs font-black text-parla-dark/50 uppercase tracking-widest text-center mb-2">
@@ -196,7 +200,11 @@ export default function MatchingGame() {
               const isSelected = selectedOriginal?.id === card.id;
               const isWrong = wrongPair?.[0] === card.id;
               return (
-                <div key={card.id} onClick={() => handleOriginalClick(card)} className={getCardClass(card, isSelected, !!isWrong)}>
+                <div
+                  key={card.id}
+                  onClick={() => handleOriginalClick(card)}
+                  className={getCardClass(card, isSelected, !!isWrong)}
+                >
                   {card.text}
                 </div>
               );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
 import HomeNavBar from "@/components/core/HomeNavBar";
@@ -12,6 +13,12 @@ import {
   Gamepad2,
   Trophy,
 } from "lucide-react";
+import {
+  getUserStreak,
+  getAllUserGameSessions,
+  computeTotalXP,
+} from "@/lib/api/gamificationService";
+import { getThreads } from "@/lib/forum/api";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -21,10 +28,35 @@ interface HomeUser {
   picture?: string;
   displayName: string;
   initials: string;
+  sub: string;
 }
 
 interface HomeContentProps {
   user: HomeUser;
+}
+
+interface LiveStats {
+  streak: number;
+  threadCount: number;
+  xp: number;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+function xpLevel(xp: number): string {
+  if (xp >= 5000) return "Nivel experto";
+  if (xp >= 2000) return "Nivel avanzado";
+  if (xp >= 500)  return "Nivel intermedio";
+  return "Nivel principiante";
+}
+
+function streakSub(days: number): string {
+  if (days === 0) return "¡Empieza hoy!";
+  if (days === 1) return "¡Así se hace!";
+  if (days < 7)  return "¡No te detengas!";
+  return "¡Racha épica! 🔥";
 }
 
 /* ------------------------------------------------------------------ */
@@ -70,13 +102,11 @@ const QUICK_ACTIONS = [
   },
 ];
 
-const STATS = [
+const STAT_STYLES = [
   {
     icon: Flame,
-    value: "5",
     unit: "días",
     label: "Racha actual",
-    sub: "¡No te detengas!",
     accentHex: "#E85D04",
     bgTint: "#FFF4ED",
     borderHex: "#E85D04",
@@ -84,10 +114,8 @@ const STATS = [
   },
   {
     icon: MessageSquare,
-    value: "12",
     unit: "",
-    label: "Comentarios",
-    sub: "En el foro global",
+    label: "Publicaciones",
     accentHex: "#BF0436",
     bgTint: "#FFF0F3",
     borderHex: "#BF0436",
@@ -95,10 +123,8 @@ const STATS = [
   },
   {
     icon: Zap,
-    value: "120",
     unit: "XP",
     label: "Experiencia",
-    sub: "Nivel principiante",
     accentHex: "#2D83A6",
     bgTint: "#E6F0F4",
     borderHex: "#2D83A6",
@@ -111,6 +137,31 @@ const STATS = [
 /* ------------------------------------------------------------------ */
 
 export function HomeContent({ user }: HomeContentProps) {
+  const [stats, setStats] = useState<LiveStats | null>(null);
+
+  useEffect(() => {
+    const sub = user.sub;
+    Promise.all([
+      getUserStreak(sub).catch(() => null),
+      getAllUserGameSessions(sub).catch(() => []),
+      getThreads({ user_id: sub, limit: 100 }).catch(() => ({ items: [] })),
+    ]).then(([streakData, sessions, threadsRes]) => {
+      setStats({
+        streak: streakData?.currentStreak ?? 0,
+        xp: computeTotalXP(Array.isArray(sessions) ? sessions : []),
+        threadCount: threadsRes?.items?.length ?? 0,
+      });
+    });
+  }, [user.sub]);
+
+  const liveStats = stats
+    ? [
+        { value: String(stats.streak), sub: streakSub(stats.streak) },
+        { value: String(stats.threadCount), sub: "En el foro global" },
+        { value: String(stats.xp), sub: xpLevel(stats.xp) },
+      ]
+    : null;
+
   return (
     <div className="font-app min-h-screen w-full bg-polka overflow-x-hidden selection:bg-parla-blue selection:text-white">
 
@@ -257,59 +308,57 @@ export function HomeContent({ user }: HomeContentProps) {
           </ScrollReveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {STATS.map((stat, i) => {
-              const Icon = stat.icon;
+            {STAT_STYLES.map((style, i) => {
+              const Icon = style.icon;
+              const live = liveStats?.[i];
               return (
                 <ScrollReveal
-                  key={stat.label}
+                  key={style.label}
                   animation="animate-fade-in-up"
                   delay={`${i * 120}ms`}
                 >
-                  <Link href="/stats" className="block h-full group">
+                  <Link href={i === 1 ? "/forum/my-posts" : i === 2 ? "/leaderboard" : "/games"} className="block h-full group">
                     <div
                       className="bg-white border-4 rounded-3xl p-6 flex items-center gap-4 group-hover:-translate-y-1 transition-all h-full"
                       style={{
-                        borderColor: stat.borderHex,
-                        boxShadow: `0 6px 0 0 ${stat.shadowHex}`,
+                        borderColor: style.borderHex,
+                        boxShadow: `0 6px 0 0 ${style.shadowHex}`,
                       }}
                     >
                       {/* Icon */}
                       <div
                         className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-transform group-hover:scale-110"
                         style={{
-                          backgroundColor: stat.bgTint,
-                          borderColor: stat.borderHex,
+                          backgroundColor: style.bgTint,
+                          borderColor: style.borderHex,
                         }}
                       >
-                        <Icon
-                          className="w-7 h-7"
-                          style={{ color: stat.accentHex }}
-                        />
+                        <Icon className="w-7 h-7" style={{ color: style.accentHex }} />
                       </div>
 
                       {/* Text */}
                       <div>
                         <div className="flex items-baseline gap-1">
-                          <span
-                            className="font-brand text-3xl leading-none"
-                            style={{ color: stat.accentHex }}
-                          >
-                            {stat.value}
-                          </span>
-                          {stat.unit && (
+                          {live ? (
+                            <span className="font-brand text-3xl leading-none" style={{ color: style.accentHex }}>
+                              {live.value}
+                            </span>
+                          ) : (
+                            <span className="font-brand text-3xl leading-none text-parla-dark/20 animate-pulse">
+                              —
+                            </span>
+                          )}
+                          {style.unit && live && (
                             <span className="font-extrabold text-sm text-parla-dark/60">
-                              {stat.unit}
+                              {style.unit}
                             </span>
                           )}
                         </div>
                         <p className="font-extrabold text-parla-dark text-sm mt-0.5">
-                          {stat.label}
+                          {style.label}
                         </p>
-                        <p
-                          className="font-bold text-xs"
-                          style={{ color: stat.accentHex }}
-                        >
-                          {stat.sub}
+                        <p className="font-bold text-xs" style={{ color: style.accentHex }}>
+                          {live ? live.sub : "Cargando..."}
                         </p>
                       </div>
                     </div>

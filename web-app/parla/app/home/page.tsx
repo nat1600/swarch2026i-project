@@ -26,6 +26,7 @@ export default async function HomePage() {
         picture: session?.user.picture as string,
         displayName: displayName,
         initials: getInitials(displayName),
+        sub: session.user.sub,
       }}
     />
   );

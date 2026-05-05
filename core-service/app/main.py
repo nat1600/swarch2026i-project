@@ -9,6 +9,7 @@ from app.routes import anki
 from app.routes import phrases
 from app.routes import translate
 from app.routes import review_history
+from app.routes import enriched_phrases
 from app.core.config import get_settings
 
 
@@ -44,9 +45,11 @@ def get_app() -> FastAPI:
     app.include_router(review_history.router)
     app.include_router(anki.router)
 
+
     @app.get("/health", tags=["Health"])
     async def health_check():
         return {"status": "ok", "service": "core-service"}
+
 
     return app
 

@@ -71,31 +71,43 @@ describe('buildFillRound', () => {
   });
 
   it('returns a round with one blank for multi-word phrases', () => {
+    const pool = makePhrasePool(5);
     const phrase = makePhrase({ original_text: 'The quick brown fox' });
-    const round = buildFillRound(phrase);
+    const round = buildFillRound(phrase, pool);
     expect(round).not.toBeNull();
     expect(round!.display).toContain('___');
     expect(round!.display.split(' ').filter((w) => w === '___')).toHaveLength(1);
   });
 
   it('blanked word is part of the original text', () => {
+    const pool = makePhrasePool(5);
     const words = ['The', 'quick', 'brown', 'fox'];
     const phrase = makePhrase({ original_text: words.join(' ') });
-    const round = buildFillRound(phrase);
+    const round = buildFillRound(phrase, pool);
     expect(round).not.toBeNull();
     expect(words).toContain(round!.answer);
   });
 
-  it('hintLetter is the first letter of the answer', () => {
-    const phrase = makePhrase({ original_text: 'Hello world' });
-    const round = buildFillRound(phrase);
+  it('choices array contains the correct answer', () => {
+    const pool = makePhrasePool(5);
+    const phrase = makePhrase({ original_text: 'Hello world today again' });
+    const round = buildFillRound(phrase, pool);
     expect(round).not.toBeNull();
-    expect(round!.answer[0]).toBe(round!.hintLetter);
+    expect(round!.choices).toContain(round!.answer);
+  });
+
+  it('choices array has exactly 4 options when pool is large enough', () => {
+    const pool = makePhrasePool(8);
+    const phrase = makePhrase({ id: 99, original_text: 'Hello world today again' });
+    const round = buildFillRound(phrase, pool);
+    expect(round).not.toBeNull();
+    expect(round!.choices).toHaveLength(4);
   });
 
   it('display replaces exactly the blanked word with ___', () => {
+    const pool = makePhrasePool(5);
     const phrase = makePhrase({ original_text: 'Hello world today' });
-    const round = buildFillRound(phrase);
+    const round = buildFillRound(phrase, pool);
     expect(round).not.toBeNull();
     const parts = round!.display.split(' ');
     const blankIdx = parts.indexOf('___');
@@ -106,14 +118,16 @@ describe('buildFillRound', () => {
   });
 
   it('phrase reference is preserved in the round', () => {
-    const phrase = makePhrase({ id: 42, original_text: 'Learn something new' });
-    const round = buildFillRound(phrase);
+    const pool = makePhrasePool(5);
+    const phrase = makePhrase({ id: 42, original_text: 'Learn something new today' });
+    const round = buildFillRound(phrase, pool);
     expect(round!.phrase.id).toBe(42);
   });
 
   it('handles phrases with leading/trailing spaces', () => {
-    const phrase = makePhrase({ original_text: '  hello world  ' });
-    const round = buildFillRound(phrase);
+    const pool = makePhrasePool(5);
+    const phrase = makePhrase({ original_text: '  hello world today  ' });
+    const round = buildFillRound(phrase, pool);
     expect(round).not.toBeNull();
   });
 });

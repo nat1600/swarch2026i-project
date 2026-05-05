@@ -191,6 +191,34 @@ class PhrasesService {
   }
 }
 
+// ─── Enriched phrases (from enrichment-service via MongoDB) ──────────────────
+
+export interface EnrichedPhrase {
+  phrase_id: number;
+  word: string;
+  /** Full sentence with the target word already blanked (e.g. "The ___ runs fast.") */
+  sentence: string;
+  correct_answer: string;
+  distractors: string[];
+  level: string;
+  language: string;
+}
+
+/**
+ * Fetch LLM-generated fill-in-the-blank data for a list of phrase IDs.
+ * Returns an empty array if none are enriched yet.
+ */
+export async function getEnrichedPhrases(phraseIds: number[]): Promise<EnrichedPhrase[]> {
+  if (phraseIds.length === 0) return [];
+  try {
+    const params = phraseIds.map((id) => `phrase_ids=${id}`).join('&');
+    const response = await coreApiClient.get<EnrichedPhrase[]>(`/enriched-phrases/?${params}`);
+    return response.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 // Export singleton instance
 export const phrasesService = new PhrasesService();
 
