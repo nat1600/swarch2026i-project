@@ -132,7 +132,7 @@ services:
       - ./api-gateway/.env
     environment:
       PORT: 8080
-      ALLOWED_ORIGINS: https://localhost
+      ALLOWED_ORIGINS: http://localhost
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
