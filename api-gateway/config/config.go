@@ -73,10 +73,11 @@ func Load(path string) (*GeneralConfig, error) {
 	// Add routes URL
 	for i := range config.Routes {
 		envKey := "SERVICE_" + strings.ToUpper(config.Routes[i].ServiceName) + "_URL"
-		config.Routes[i].TargetURL = os.Getenv(envKey)
-		if config.Routes[i].TargetURL == "" {
-			return nil, fmt.Errorf("missing env key %s for service name %s", envKey, config.Routes[i].ServiceName)
+		envValue, err := getEnvVariable(envKey)
+		if err != nil {
+			return nil, err
 		}
+		config.Routes[i].TargetURL = envValue
 	}
 	return &config, nil
 }
