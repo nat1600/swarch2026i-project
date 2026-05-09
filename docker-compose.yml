@@ -122,8 +122,9 @@ services:
       - "8080:8080"
     env_file:
       - ./api-gateway/.env
-   
     environment:
+      PORT: 8080
+      ALLOWED_ORIGINS: http://localhost:3000
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
@@ -167,7 +168,6 @@ services:
       MONGO_URL: mongodb://mongo:27017
       MONGO_DB: core_db
       DEBUG: "true"
-      DEEPL_API_KEY: "dummy"
       LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:

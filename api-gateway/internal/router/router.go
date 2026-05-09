@@ -26,7 +26,7 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		middleware.Security(cfg.InProduction()),
 		middleware.RequestID,
 		middleware.Logging,
-		middleware.CORS("http://localhost:3000"),
+		middleware.CORS(cfg.AllowedOrigins),
 		middleware.RateLimit(10, 20),
 	}
 	middlewaresWithAuth := append(baseMiddlewares, authMiddleware)

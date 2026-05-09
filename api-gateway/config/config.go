@@ -21,10 +21,11 @@ type ServiceRoute struct {
 }
 
 type GeneralConfig struct {
-	Port        string         `json:"-"` // Populate at runtime
-	Environment string         `json:"-"` // Populate at runtime
-	Auth        AuthConfig     `json:"-"` // Populate at runtime
-	Routes      []ServiceRoute `json:"routes"`
+	Port           string         `json:"-"` // Populate at runtime
+	Environment    string         `json:"-"` // Populate at runtime
+	AllowedOrigins string         `json:"-"` // Populate at runtime
+	Auth           AuthConfig     `json:"-"` // Populate at runtime
+	Routes         []ServiceRoute `json:"routes"`
 }
 
 func (cfg *GeneralConfig) InProduction() bool {
@@ -69,6 +70,13 @@ func Load(path string) (*GeneralConfig, error) {
 	config.Auth = AuthConfig{
 		Audience: authAudience, Domain: authDomain,
 	}
+
+	// Add the allowed origins (for CORS)
+	allowedOrigins, err := getEnvVariable("ALLOWED_ORIGINS")
+	if err != nil {
+		return nil, err
+	}
+	config.AllowedOrigins = allowedOrigins
 
 	// Add routes URL
 	for i := range config.Routes {
