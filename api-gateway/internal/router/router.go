@@ -6,6 +6,7 @@ import (
 	"api-gateway/internal/proxy"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -14,8 +15,47 @@ import (
 func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 
+	// Create auth middleware
+	authMiddleware, err := middleware.Auth(cfg.Auth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auth middleware %w", err)
+	}
+
+	// Middlewares
+	baseMiddlewares := []middleware.Middleware{
+		middleware.Security(cfg.InProduction()),
+		middleware.RequestID,
+		middleware.Logging,
+		middleware.CORS("http://localhost:3000"),
+		middleware.RateLimit(10, 20),
+	}
+	middlewaresWithAuth := append(baseMiddlewares, authMiddleware)
+	middlewaresWithoutAuth := baseMiddlewares
+
+	// Register a proxy for each route
+	for _, route := range cfg.Routes {
+		prx, err := proxy.New(route.TargetURL, route.PathPrefix)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create proxy for %s: %w", route.PathPrefix, err)
+		}
+		handler := middleware.Chain(prx, middlewaresWithAuth...)
+		mux.Handle(route.PathPrefix+"/", handler)
+	}
+
 	// General health check: includes this api gateway and the microservices
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+	healthProxy := middleware.Chain(getHealthHandler(cfg), middlewaresWithoutAuth...)
+	mux.Handle("GET /health", healthProxy)
+
+	// Add base handler for / , used when the given route does not match with any on the mux table
+	notFoundHandler := middleware.Chain(getNotFoundHandler(), middlewaresWithoutAuth...)
+	mux.Handle("/", notFoundHandler)
+
+	return mux, nil
+}
+
+func getHealthHandler(cfg *config.GeneralConfig) http.Handler {
+	// General health check: includes this api gateway and the microservices
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		status := map[string]string{}
 		allHealthy := true
 
@@ -32,55 +72,20 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		if !allHealthy {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
-		json.NewEncoder(w).Encode(status)
-	})
-
-	// Create auth middleware
-	authMiddleware, err := middleware.Auth(cfg.Auth)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create auth middleware %w", err)
-	}
-
-	// Middlewares
-	baseMiddlewares := []middleware.Middleware{
-		middleware.Security(cfg.InProduction()),
-		middleware.RequestID,
-		middleware.Logging,
-		middleware.CORS("http://localhost:3000"),
-		middleware.RateLimit(10, 20),
-	}
-
-	// Register a proxy for each route
-	for _, route := range cfg.Routes {
-		prx, err := proxy.New(route.TargetURL, route.PathPrefix)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create proxy for %s: %w", route.PathPrefix, err)
+		if err := json.NewEncoder(w).Encode(status); err != nil {
+			slog.Error("failed to encode response", "error", err)
 		}
-
-		authMiddlewares := append(append([]middleware.Middleware{}, baseMiddlewares...), authMiddleware)
-		handlerWithAuth := middleware.Chain(prx, authMiddlewares...)
-		handlerWithoutAuth := middleware.Chain(prx, baseMiddlewares...)
-
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if isAuthExempt(route, r.URL.Path) {
-				handlerWithoutAuth.ServeHTTP(w, r)
-				return
-			}
-			handlerWithAuth.ServeHTTP(w, r)
-		})
-		mux.Handle(route.PathPrefix+"/", handler)
-	}
-
-	return mux, nil
+	})
 }
 
-func isAuthExempt(route config.ServiceRoute, requestPath string) bool {
-	for _, exemptPath := range route.AuthExemptPaths {
-		if requestPath == route.PathPrefix+exemptPath || strings.HasPrefix(requestPath, route.PathPrefix+exemptPath+"/") {
-			return true
+func getNotFoundHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode("Not found"); err != nil {
+			slog.Error("failed to encode response", "error", err)
 		}
-	}
-	return false
+	})
 }
 
 func CheckService(url string) bool {
