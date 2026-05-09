@@ -6,6 +6,7 @@ import (
 	"api-gateway/internal/proxy"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -60,10 +61,12 @@ func getHealthHandler(cfg *config.GeneralConfig) http.Handler {
 		allHealthy := true
 
 		for _, route := range cfg.Routes {
-			if CheckService(route.TargetURL + "/health") {
+			serviceOk, serviceError := CheckService(route.TargetURL + "/health")
+			if serviceOk {
 				status[route.ServiceName] = "OK"
 			} else {
 				status[route.ServiceName] = "NOT OK"
+				slog.Error("failed health check", "service", route.ServiceName, "error", serviceError)
 				allHealthy = false
 			}
 		}
@@ -88,13 +91,16 @@ func getNotFoundHandler() http.Handler {
 	})
 }
 
-func CheckService(url string) bool {
+func CheckService(url string) (bool, string) {
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		return false
+		return false, err.Error()
 	}
 	defer resp.Body.Close()
-	return resp.StatusCode < 500
-
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		body = []byte("failed to read response body: " + err.Error())
+	}
+	return resp.StatusCode < 500, string(body)
 }

@@ -74,7 +74,7 @@ func logInitialStatus(server *http.Server, cfg *config.GeneralConfig) {
 	log.Printf("  %-10s %-15s   %s  %21s", "SERVICE", "PATH", "TARGET", "HEALTH")
 	log.Printf("  %-10s %-15s   %s  %21s", "───────", "────", "──────", "──────")
 	for _, route := range cfg.Routes {
-		isHealthy := router.CheckService(route.TargetURL + "/health")
+		isHealthy, _ := router.CheckService(route.TargetURL + "/health")
 		status := "OK"
 		if !isHealthy {
 			status = "NOT OK"
