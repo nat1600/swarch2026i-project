@@ -1,7 +1,9 @@
 package proxy
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -58,7 +60,11 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !cb.allow() {
-			http.Error(w, fmt.Sprintf("service %s is unavailable", target.Host), http.StatusServiceUnavailable)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			if err := json.NewEncoder(w).Encode(fmt.Sprintf("service %s is unavailable", target.Host)); err != nil {
+				slog.Error("failed to encode response", "error", err, "host", target.Host)
+			}
 			return
 		}
 
