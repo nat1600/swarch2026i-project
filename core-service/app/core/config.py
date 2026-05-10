@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     mongo_db: str
 
     rabbitmq_url: str = "amqp://guest:guest@rabbitmq/"
+    enrichment_service_url: str = "http://enrichment-service:8006"
     @property
     def database_url(self) -> str:
         return (
