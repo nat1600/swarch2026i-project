@@ -13,3 +13,6 @@ auth-service/tmp
 
 # vscode
 .vscode/
+
+# Nginx certificates
+nginx/certs/
