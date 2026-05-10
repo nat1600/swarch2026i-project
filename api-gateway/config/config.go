@@ -13,9 +13,10 @@ type AuthConfig struct {
 }
 
 type ServiceRoute struct {
-	PathPrefix  string `json:"path_prefix"`
-	ServiceName string `json:"service_name"`
-	TargetURL   string `json:"-"` // Populate at runtime
+	PathPrefix      string   `json:"path_prefix"`
+	ServiceName     string   `json:"service_name"`
+	AuthExemptPaths []string `json:"auth_exempt_paths,omitempty"`
+	TargetURL       string   `json:"-"` // Populate at runtime
 
 }
 

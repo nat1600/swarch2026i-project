@@ -88,6 +88,18 @@ services:
       postgres:
         condition: service_healthy
 
+  payment_migration:
+    container_name: payment_migration
+    build: ./payment-service/
+    command: bash scripts/migrate.sh
+    env_file:
+      - ./payment-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   forum_seed:
     container_name: forum_seed
     build: ./forum-service/api/
@@ -175,6 +187,22 @@ services:
       forum_seed:
         condition: service_completed_successfully
 
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    env_file:
+      - ./payment-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
+      AUTH_SERVICE_URL: http://auth-service:8000
+    ports:
+      - "8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      payment_migration:
+        condition: service_completed_successfully
+
   gamification-service:
     build:
       context: ./gamification-service/GamificationService
@@ -223,6 +251,7 @@ services:
       SERVER_FORUM_URL: http://api-gateway:8080/api/forum
       SERVER_GAME_URL: http://api-gateway:8080/api/game
       SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
+      SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
     depends_on:
       - api-gateway
       - redis

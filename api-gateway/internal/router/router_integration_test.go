@@ -182,6 +182,31 @@ func TestCORSPreflightShortCircuitsBeforeAuth(t *testing.T) {
 	}
 }
 
+func TestAuthExemptPathBypassesAuth(t *testing.T) {
+	upstreamReached := false
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamReached = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer upstream.Close()
+
+	routes := []config.ServiceRoute{
+		{PathPrefix: "/api/payments", ServiceName: "payment", TargetURL: upstream.URL, AuthExemptPaths: []string{"/webhook"}},
+	}
+	mux := newFullMux(t, routes)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/api/payments/webhook", strings.NewReader(`{"data":{"id":"123"}}`))
+	mux.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 from webhook path, got %d", w.Code)
+	}
+	if !upstreamReached {
+		t.Error("upstream should have been reached for the auth-exempt webhook path")
+	}
+}
+
 // ── Test 4: Security headers always present ───────────────────────────────────
 
 func TestSecurityHeadersAlwaysPresent(t *testing.T) {
