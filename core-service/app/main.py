@@ -43,6 +43,11 @@ def get_app() -> FastAPI:
     app.include_router(translate.router)
     app.include_router(review_history.router)
     app.include_router(anki.router)
+
+    @app.get("/health", tags=["Health"])
+    async def health_check():
+        return {"status": "ok", "service": "core-service"}
+
     return app
 
 app = get_app()

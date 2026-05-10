@@ -131,10 +131,14 @@ services:
       SERVICE_GAME_URL: http://gamification-service:8080
       SERVICE_PAYMENT_URL: http://payment-service:8005
     depends_on:
-      - auth-service
-      - core-service
-      - forum-service
-#      - gamification-service
+      auth-service:
+        condition: service_healthy
+      core-service:
+        condition: service_healthy
+      forum-service:
+        condition: service_healthy
+#      gamification-service:
+#        condition: service_healthy
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
@@ -148,6 +152,11 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]  
+      interval: 5s
+      timeout: 3s
+      retries: 5
     depends_on:
       postgres:
         condition: service_healthy
@@ -170,6 +179,11 @@ services:
       DEBUG: "true"
       LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]  
+      interval: 5s
+      timeout: 3s
+      retries: 5
     depends_on:
       postgres:
         condition: service_healthy
@@ -185,6 +199,11 @@ services:
       ATLAS_USER: dummy
       ATLAS_PASS: dummy
       ATLAS_CLUSTER: dummy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]  
+      interval: 5s
+      timeout: 3s
+      retries: 5
     depends_on:
       mongo:
         condition: service_healthy
@@ -228,8 +247,6 @@ services:
 #      redis:
 #        condition: service_healthy
 
-
-
   enrichment-service:
     build: ./enrichment-service
     container_name: enrichment-service
@@ -246,7 +263,6 @@ services:
     container_name: web-app
     ports:
       - "3000:3000"
-  
     env_file: ./web-app/parla/.env
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
@@ -259,6 +275,7 @@ services:
     depends_on:
       - api-gateway
       - redis
+
 volumes:
   postgres_data:
   forum_mongo_database:
