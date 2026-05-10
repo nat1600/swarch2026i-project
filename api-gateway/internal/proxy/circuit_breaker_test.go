@@ -6,14 +6,14 @@ import (
 )
 
 func TestCircuitBreaker_StartsClosedAndAllowsRequests(t *testing.T) {
-	cb := NewCircuitBreaker(3, time.Second)
+	cb := newCircuitBreaker(3, time.Second)
 	if !cb.allow() {
 		t.Error("new circuit breaker should be closed and allow requests")
 	}
 }
 
 func TestCircuitBreaker_OpensAfterMaxFailures(t *testing.T) {
-	cb := NewCircuitBreaker(3, time.Second)
+	cb := newCircuitBreaker(3, time.Second)
 	for i := 0; i < 3; i++ {
 		cb.recordFailure()
 	}
@@ -23,7 +23,7 @@ func TestCircuitBreaker_OpensAfterMaxFailures(t *testing.T) {
 }
 
 func TestCircuitBreaker_HalfOpenAfterResetTimeout(t *testing.T) {
-	cb := NewCircuitBreaker(1, 50*time.Millisecond)
+	cb := newCircuitBreaker(1, 50*time.Millisecond)
 	cb.recordFailure()
 
 	if cb.allow() {
@@ -38,7 +38,7 @@ func TestCircuitBreaker_HalfOpenAfterResetTimeout(t *testing.T) {
 }
 
 func TestCircuitBreaker_SuccessInHalfOpenResetsToClose(t *testing.T) {
-	cb := NewCircuitBreaker(1, 50*time.Millisecond)
+	cb := newCircuitBreaker(1, 50*time.Millisecond)
 	cb.recordFailure()
 	time.Sleep(60 * time.Millisecond)
 	cb.allow()
@@ -51,7 +51,7 @@ func TestCircuitBreaker_SuccessInHalfOpenResetsToClose(t *testing.T) {
 }
 
 func TestCircuitBreaker_FailureInHalfOpenGoesBackToOpen(t *testing.T) {
-	cb := NewCircuitBreaker(1, 50*time.Millisecond)
+	cb := newCircuitBreaker(1, 50*time.Millisecond)
 	cb.recordFailure()
 	time.Sleep(60 * time.Millisecond)
 	cb.allow()
@@ -64,7 +64,7 @@ func TestCircuitBreaker_FailureInHalfOpenGoesBackToOpen(t *testing.T) {
 }
 
 func TestCircuitBreaker_RecordSuccessResetFailureCount(t *testing.T) {
-	cb := NewCircuitBreaker(3, time.Second)
+	cb := newCircuitBreaker(3, time.Second)
 	cb.recordFailure()
 	cb.recordFailure()
 	cb.recordSuccess()
@@ -75,7 +75,7 @@ func TestCircuitBreaker_RecordSuccessResetFailureCount(t *testing.T) {
 }
 
 func TestCircuitBreaker_DoesNotOpenBeforeMaxFailures(t *testing.T) {
-	cb := NewCircuitBreaker(3, time.Second)
+	cb := newCircuitBreaker(3, time.Second)
 	cb.recordFailure()
 	cb.recordFailure()
 
@@ -85,7 +85,7 @@ func TestCircuitBreaker_DoesNotOpenBeforeMaxFailures(t *testing.T) {
 }
 
 func TestCircuitBreaker_HalfOpenBlocksSecondConcurrentRequest(t *testing.T) {
-	cb := NewCircuitBreaker(1, 50*time.Millisecond)
+	cb := newCircuitBreaker(1, 50*time.Millisecond)
 	cb.recordFailure()
 	time.Sleep(60 * time.Millisecond)
 

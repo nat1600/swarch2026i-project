@@ -11,7 +11,7 @@ import (
 type ipLimiter struct {
 	limiters map[string]*rate.Limiter
 	mu       sync.Mutex
-	rate     rate.Limit // how many tokens are added per second
+	rate     rate.Limit // how many tokens are added per second (float64)
 	burst    int        // maximum capacity of the bucket
 }
 

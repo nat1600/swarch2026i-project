@@ -15,8 +15,8 @@ func RequestID(next http.Handler) http.Handler {
 		}
 
 		// Propagate it to the microservice and also add it to the response
-		w.Header().Set("X-Request-ID", id)
-		r.Header.Set("X-Request-ID", id)
+		w.Header().Set("X-Request-ID", id) // back to the client
+		r.Header.Set("X-Request-ID", id)   // forward to microservice
 
 		next.ServeHTTP(w, r)
 	})

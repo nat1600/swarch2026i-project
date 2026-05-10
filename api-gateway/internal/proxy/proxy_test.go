@@ -141,7 +141,7 @@ func TestNew_CircuitBreakerResetAfterTimeout(t *testing.T) {
 	// Because we are in the same package (package proxy) we can instantiate
 	// CircuitBreaker directly and verify its state machine independently of
 	// the HTTP layer.
-	cb := NewCircuitBreaker(5, 50*time.Millisecond)
+	cb := newCircuitBreaker(5, 50*time.Millisecond)
 
 	// Trip the breaker.
 	for i := 0; i < 5; i++ {

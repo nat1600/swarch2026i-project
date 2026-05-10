@@ -56,7 +56,7 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 		},
 	}
 
-	cb := NewCircuitBreaker(5, 30*time.Second)
+	cb := newCircuitBreaker(5, 30*time.Second)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !cb.allow() {

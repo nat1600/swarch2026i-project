@@ -22,7 +22,7 @@ type CircuitBreaker struct {
 	lastFailure  time.Time
 }
 
-func NewCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBreaker {
+func newCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBreaker {
 	return &CircuitBreaker{
 		state:        closed,
 		maxFailures:  maxFailures,
