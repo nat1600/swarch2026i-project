@@ -28,14 +28,17 @@
 
 | Feature | Description |
 |---|---|
-|  **Browser Extension** | Captures words and phrases from subtitles while watching |
-|  **Authentication** | Register, login, and manage sessions with JWT |
-|  **Vocabulary CRUD** | Save words with context, definitions, and media source |
-|  **Flashcards** | Spaced repetition using the SM-2 algorithm + Anki export |
-|  **Solo Games** | Fill-in-the-blank, word match, and typing challenges |
-|  **Streaks** | Daily study tracking to keep you motivated |
-|  **Leaderboard** | Weekly top-10 ranking with automatic reset |
-|  **Forum** | Community discussion and vocabulary sharing |
+| **Browser Extension** | Captures words and phrases from subtitles while watching |
+| **Authentication** | Register, login, and manage sessions via Auth0 + JWT |
+| **Vocabulary CRUD** | Save phrases with context, translations, and media source |
+| **Flashcards** | Spaced repetition using the SM-2 algorithm + Anki export |
+| **Fill in the Word** | LLM-generated fill-in-the-blank exercises using your saved phrases |
+| **Stopwatch** | Choose the correct translation before time runs out |
+| **Matching** | Connect your saved phrases with their translations on a board |
+| **Phrase Enrichment** | Anthropic Claude automatically generates vocabulary exercises for every saved phrase via RabbitMQ |
+| **XP & Streaks** | Earn XP on every game session; daily streak tracking |
+| **Leaderboard** | Real-time ranking backed by Redis sorted sets |
+| **Forum** | Community discussion and vocabulary sharing |
 
 ---
 
@@ -54,13 +57,16 @@ The platform follows a **microservices architecture** with an API Gateway as the
 |---|---|
 | **Web App** | Next.js / React (TypeScript) |
 | **Browser Extension** | JavaScript / TypeScript |
-| **API Gateway** | Node.js / TypeScript |
+| **API Gateway** | Go |
 | **Auth Service** | Python (FastAPI) |
 | **Payment Service** | Python (FastAPI) |
 | **Core Service** | Python (FastAPI) |
 | **Gamification Service** | Java (Spring Boot) |
+| **Enrichment Service** | Python (FastAPI + aio-pika) |
 | **Forum Service** | Java (Spring Boot) |
-| **Databases** | PostgreSQL 16 + MongoDB 7 |
+| **Databases** | PostgreSQL 16 + MongoDB 7 + Redis 7 |
+| **Messaging** | RabbitMQ |
+| **LLM** | Anthropic Claude (phrase enrichment) |
 | **Containerization** | Docker / Docker Compose |
 ---
 
@@ -68,13 +74,14 @@ The platform follows a **microservices architecture** with an API Gateway as the
 
 ```
 swarch2026i-project/
-├── api-gateway/          # Entry point — routes requests to microservices
-├── auth-service/         # Authentication & user management
+├── api-gateway/          # Entry point — routes requests to microservices (Go)
+├── auth-service/         # Authentication & user management (FastAPI)
 ├── browser-extension/    # Chrome/Firefox extension for subtitle capture
-├── core-service/         # Vocabulary, flashcards, and core learning logic
+├── core-service/         # Vocabulary, flashcards, and core learning logic (FastAPI)
+├── enrichment-service/   # Consumes RabbitMQ queue, calls Claude LLM, stores exercises in MongoDB
 ├── payment-service/      # MercadoPago checkout and payment tracking
-├── forum-service/        # Community discussions
-├── gamification-service/ # Games, streaks, and leaderboard
+├── forum-service/        # Community discussions (Spring Boot)
+├── gamification-service/ # XP, streaks, and Redis leaderboard (Spring Boot)
 ├── web-app/              # Frontend — Next.js application (parla/)
 ├── docs/                 # Architecture diagrams and documentation
 ├── docker-compose.yml    # Full stack orchestration
@@ -147,12 +154,32 @@ CORE_SERVICE_URL=http://core-service:8000
 PORT=8080
 ```
 
+**`gamification-service/.env`**
+```env
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+**`enrichment-service/.env`**
+```env
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+QUEUE_NAME=word.enrichment
+MONGO_URL=mongodb://mongo:27017
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
 **`web-app/parla/.env`**
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080
+AUTH0_SECRET=your_auth0_secret
+AUTH0_BASE_URL=http://localhost:3000
+AUTH0_ISSUER_BASE_URL=https://your-tenant.us.auth0.com
+AUTH0_CLIENT_ID=your_auth0_client_id
+AUTH0_CLIENT_SECRET=your_auth0_client_secret
+AUTH0_AUDIENCE=https://parla.com
 ```
 
-> **Note:** Never commit `.env` files to version control. The `DEEPL_API_KEY` above is a placeholder — replace it with your own key from [DeepL API](https://www.deepl.com/pro-api).
+> **Note:** Never commit `.env` files to version control. Replace placeholder values with real keys. Get an Anthropic API key at [console.anthropic.com](https://console.anthropic.com) and Auth0 credentials from your [Auth0 dashboard](https://manage.auth0.com).
 
 ### 3. Start all services
 
@@ -187,8 +214,11 @@ Creates MercadoPago checkout preferences for VIP plans, tracks payment state, an
 ###  API Gateway
 Single entry point for all client requests. Routes traffic to the appropriate microservice, handles CORS, and can enforce authentication middleware.
 
+### Enrichment Service
+Listens on the `word.enrichment` RabbitMQ queue. For each phrase published by the core service, it calls **Anthropic Claude** to generate multiple fill-in-the-blank exercises (sentence + correct answer + 3 distractors) and persists them in the `enrichment_db` MongoDB collection. New phrases are enriched automatically as users save them.
+
 ### Gamification Service
-Manages solo games (fill-in-the-blank, word match, typing), daily streaks, and the weekly leaderboard (top 10 with automatic reset).
+Manages XP scoring and the real-time leaderboard backed by **Redis sorted sets**. XP is incremented after every game session. Exposes endpoints for fetching the top leaderboard and a user's current rank and score.
 
 ### Forum Service
 Community-driven discussions, word sharing, and collaborative vocabulary building.

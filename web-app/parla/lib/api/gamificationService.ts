@@ -103,6 +103,64 @@ export async function getAllUserGameSessions(userName: string): Promise<UserGame
   }
 }
 
+// ─── Leaderboard endpoints ────────────────────────────────────────────────────
+
+export interface UserScoreRankDTO {
+  userName: string;
+  score: number;
+  rank: number;
+}
+
+/**
+ * Increment a user's weekly XP score in Redis.
+ * POST /leaderBoard/incrementScore
+ * Header: userId — Body param: newExp
+ */
+export async function incrementScore(userId: string, newExp: number): Promise<void> {
+  try {
+    await gamificationApiClient.post('/leaderBoard/incrementScore', null, {
+      params: { newExp },
+      headers: { userId },
+    });
+  } catch (error) {
+    console.error('incrementScore failed:', error);
+  }
+}
+
+/**
+ * Get the weekly leaderboard from Redis (top N users).
+ * GET /leaderBoard/getLeaderBoard
+ */
+export async function getLeaderBoard(): Promise<UserScoreRankDTO[]> {
+  try {
+    const response = await gamificationApiClient.get<UserScoreRankDTO[]>(
+      '/leaderBoard/getLeaderBoard'
+    );
+    return response.data ?? [];
+  } catch (error) {
+    console.error('getLeaderBoard failed:', error);
+    return [];
+  }
+}
+
+/**
+ * Get rank and score for a specific user.
+ * GET /leaderBoard/getUserRank
+ * Header: userName
+ */
+export async function getUserRank(userName: string): Promise<UserScoreRankDTO | null> {
+  try {
+    const response = await gamificationApiClient.get<UserScoreRankDTO>(
+      '/leaderBoard/getUserRank',
+      { headers: { userName, userId: userName } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('getUserRank failed:', error);
+    return null;
+  }
+}
+
 // ─── Derived helpers ──────────────────────────────────────────────────────────
 
 /**

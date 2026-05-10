@@ -122,18 +122,11 @@ services:
       - "8080:8080"
     env_file:
       - ./api-gateway/.env
-   
-    environment:
-      SERVICE_AUTH_URL: http://auth-service:8000
-      SERVICE_CORE_URL: http://core-service:8000
-      SERVICE_FORUM_URL: http://forum-service:8003
-      SERVICE_GAME_URL: http://gamification-service:8080
-      SERVICE_PAYMENT_URL: http://payment-service:8005
     depends_on:
       - auth-service
       - core-service
       - forum-service
-#      - gamification-service
+      - gamification-service
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
@@ -170,11 +163,14 @@ services:
       DEEPL_API_KEY: "dummy"
       LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+      ENRICHMENT_SERVICE_URL: http://enrichment-service:8006
     depends_on:
       postgres:
         condition: service_healthy
       core_migration:
         condition: service_completed_successfully
+      enrichment-service:
+        condition: service_started
 
   forum-service:
     build: ./forum-service/api
@@ -198,10 +194,6 @@ services:
       - ./payment-service/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
-      # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_PUBLIC_KEY and JWT_SECRET are
-      # provided via the service env_file (payment-service/.env). Avoid using
-      # ${VAR} interpolation here so Compose does not require them in the host
-      # environment and the file values are used inside the container.
       AUTH_SERVICE_URL: http://auth-service:8000
     ports:
       - "8005:8005"
@@ -211,22 +203,26 @@ services:
       payment_migration:
         condition: service_completed_successfully
 
-#  gamification-service:
-#    build: ./gamification-service/GamificationService
-#    container_name: gamification-service
-#    environment:
-#      LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
-#      LOCAL_DB_USERNAME: root
-#      LOCAL_DB_PASSWORD: password
-#      JPA_DDL_AUTO: update
-#      JPA_SHOW_SQL: "true"
-#      REDIS_HOST: redis
-#      REDIS_PORT: 6379
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
+  gamification-service:
+    build:
+      context: ./gamification-service/GamificationService
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
+    container_name: gamification-service
+    environment:
+      LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
+      LOCAL_DB_USERNAME: root
+      LOCAL_DB_PASSWORD: password
+      JPA_DDL_AUTO: update
+      JPA_SHOW_SQL: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 
 
