@@ -151,11 +151,14 @@ services:
       DEEPL_API_KEY: "dummy"
       LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+      ENRICHMENT_SERVICE_URL: http://enrichment-service:8006
     depends_on:
       postgres:
         condition: service_healthy
       core_migration:
         condition: service_completed_successfully
+      enrichment-service:
+        condition: service_started
 
   forum-service:
     build: ./forum-service/api

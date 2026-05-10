@@ -82,7 +82,10 @@ async def main() -> None:
 
         logger.info(f"Escuchando cola '{settings.queue_name}'...")
         await queue.consume(on_message)
-        await asyncio.Future()
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError:
+            logger.info("Consumer detenido.")
 
 
 if __name__ == "__main__":
