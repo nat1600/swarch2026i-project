@@ -2,8 +2,8 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const baseURL = typeof window === 'undefined'
-  ? process.env.SERVER_GAMIFICATION_URL || process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:8080/api/game'
-  : process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:8080/api/game';
+  ? process.env.SERVER_GAMIFICATION_URL || process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:3000/api/game'
+  : process.env.NEXT_PUBLIC_GAMIFICATION_API_URL || 'http://localhost:3000/api/game';
 
 const gamificationApiClient: AxiosInstance = axios.create({
   baseURL,

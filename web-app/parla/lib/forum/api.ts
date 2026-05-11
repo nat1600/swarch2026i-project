@@ -17,7 +17,7 @@ const api = axios.create({
   baseURL:
     process.env.SERVER_FORUM_URL ??
     process.env.NEXT_PUBLIC_FORUM_URL ??
-    "http://localhost:8080/api/forum",
+    "http://localhost:3000/api/forum",
 });
 
 api.interceptors.request.use(async (config) => {

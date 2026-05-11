@@ -20,8 +20,8 @@ export const { getClient, query, PreloadQuery } = registerApolloClient(() => {
     cache: new InMemoryCache(),
     link: new HttpLink({
       uri: typeof window === 'undefined' 
-        ? (process.env.SERVER_GRAPHQL_URL ?? process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8080/api/auth/graphql")
-        : (process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8080/api/auth/graphql"),
+        ? (process.env.SERVER_GRAPHQL_URL ?? process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:3000/api/auth/graphql")
+        : (process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:3000/api/auth/graphql"),
       // El fetch nativo de Node.js / Next.js se usa por defecto en el servidor.
       fetchOptions: { cache: "no-store" },
     }),

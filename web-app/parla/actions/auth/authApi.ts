@@ -5,7 +5,7 @@ import { auth0 } from "@/lib/auth0";
 
 const baseURL = typeof window === 'undefined' 
   ? process.env.SERVER_AUTH_URL || process.env.NEXT_PUBLIC_AUTH_URL 
-  : process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:8080/api/auth';
+  : process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:3000/api/auth';
 
 const authApi = axios.create({
   baseURL,

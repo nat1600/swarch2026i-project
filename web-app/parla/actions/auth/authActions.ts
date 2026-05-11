@@ -27,7 +27,7 @@ export interface UserData {
 const AUTH_GRAPHQL_URL =
   (process.env.SERVER_AUTH_URL ??
     process.env.NEXT_PUBLIC_AUTH_URL ??
-    "http://localhost:8080/api/auth") + "/graphql";
+    "http://localhost:3000/api/auth") + "/graphql";
 
 async function authGraphqlFetch(
   query: string,

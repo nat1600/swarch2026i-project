@@ -28,7 +28,7 @@ export function VIPCheckoutForm() {
       // Call payment service to create checkout
       const paymentBaseUrl =
         process.env.NEXT_PUBLIC_PAYMENT_SERVICE_URL ??
-        "http://localhost:8080/api/payments";
+        "http://localhost:3000/api/payments";
 
       const checkoutResponse = await axios.post(
         `${paymentBaseUrl}/checkout`,

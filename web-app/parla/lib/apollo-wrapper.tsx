@@ -11,8 +11,8 @@ export function ApolloWrapper({ children }: { children: React.ReactNode }) {
   const makeClient = () => {
     const httpLink = new HttpLink({
       uri: typeof window === 'undefined' 
-        ? (process.env.SERVER_GRAPHQL_URL ?? process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8080/api/core/graphql")
-        : (process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:8080/api/core/graphql"),
+        ? (process.env.SERVER_GRAPHQL_URL ?? process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:3000/api/core/graphql")
+        : (process.env.NEXT_PUBLIC_GRAPHQL_URL ?? "http://localhost:3000/api/core/graphql"),
     });
 
     const authLink = new SetContextLink(async ({ headers }) => {

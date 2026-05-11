@@ -174,7 +174,7 @@ bash scripts/migrate.sh
 uvicorn app.main:app --reload
 ```
 
-The extension connects to `http://localhost:8000` by default. To change the backend URL, edit `config/config.js`.
+The extension connects to `http://localhost:3000` by default (edge reverse proxy). To change the backend URL, edit `config/config.js`.
 
 ## Reloading After Changes
 
@@ -184,5 +184,5 @@ After editing any extension file, go to `chrome://extensions` and click the **re
 
 - `user_id` is hardcoded to `1` — auth integration pending
 - PDF module is a stub — text selection works via global `mouseup` handler
-- Translation requires core-service running locally — no cloud fallback in extension
+- Translation requires the stack running (reverse proxy + gateway + core-service) — no cloud fallback in extension
 - Netflix subtitle selector (`.player-timedtext-text-container`) may break on Netflix DOM updates

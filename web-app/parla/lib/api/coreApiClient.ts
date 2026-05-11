@@ -2,8 +2,8 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const baseURL = typeof window === 'undefined' 
-  ? process.env.SERVER_CORE_URL || process.env.NEXT_PUBLIC_CORE_URL || 'http://localhost:8080/api/core'
-  : process.env.NEXT_PUBLIC_CORE_URL || 'http://localhost:8080/api/core';
+  ? process.env.SERVER_CORE_URL || process.env.NEXT_PUBLIC_CORE_URL || 'http://localhost:3000/api/core'
+  : process.env.NEXT_PUBLIC_CORE_URL || 'http://localhost:3000/api/core';
 
 // Create axios instance with base configuration
 const coreApiClient: AxiosInstance = axios.create({

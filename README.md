@@ -164,8 +164,9 @@ docker compose up --build
 
 | Service | URL |
 |---|---|
-| Web App | http://localhost:3000 |
-| API Gateway | http://localhost:8080 |
+| Reverse Proxy (public entrypoint) | http://localhost:3000 |
+| Web App (direct, debug only) | http://localhost:3001 |
+| API Gateway (internal via proxy) | http://api-gateway:8080 |
 | Core Service (direct) | http://localhost:8000 |
 | Auth DB (Postgres) | localhost:5433 |
 | Core DB (Postgres) | localhost:5434 |
