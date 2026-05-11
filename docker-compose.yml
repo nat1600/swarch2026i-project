@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - internal-net
 
   mongo:
     container_name: mongo
@@ -29,6 +31,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - internal-net
 
   redis:
     image: redis:7-alpine
@@ -40,6 +44,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - internal-net
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -52,6 +58,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal-net
 
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
@@ -69,6 +77,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - internal-net
 
   core_migration:
     container_name: core_migration
@@ -87,6 +97,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - internal-net
 
   payment_migration:
     container_name: payment_migration
@@ -99,6 +111,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - internal-net
 
   forum_seed:
     container_name: forum_seed
@@ -113,23 +127,44 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    networks:
+      - internal-net
+
+  # ─── REVERSE PROXY ──────────────────────────────────────────────────────────
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: parla-reverse-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./reverse-proxy/conf.d:/etc/nginx/conf.d:ro
+      - ./reverse-proxy/certs:/etc/nginx/certs:ro
+    networks:
+      - public-net
+      - internal-net
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
 
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
-    ports:
-      - "8080:8080"
+    # ports eliminados — solo accesible via reverse-proxy
     env_file:
       - ./api-gateway/.env
     environment:
       PORT: 8080
-      ALLOWED_ORIGINS: http://localhost:3000
+      ALLOWED_ORIGINS: https://localhost
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
       SERVICE_GAME_URL: http://gamification-service:8080
       SERVICE_PAYMENT_URL: http://payment-service:8005
+    networks:
+      - internal-net
     depends_on:
       auth-service:
         condition: service_healthy
@@ -153,7 +188,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]  
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -162,6 +197,8 @@ services:
         condition: service_healthy
       auth_migration:
         condition: service_completed_successfully
+    networks:
+      - internal-net
 
   core-service:
     build: ./core-service
@@ -180,7 +217,7 @@ services:
       LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]  
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -189,6 +226,8 @@ services:
         condition: service_healthy
       core_migration:
         condition: service_completed_successfully
+    networks:
+      - internal-net
 
   forum-service:
     build: ./forum-service/api
@@ -200,7 +239,7 @@ services:
       ATLAS_PASS: dummy
       ATLAS_CLUSTER: dummy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]  
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -209,6 +248,8 @@ services:
         condition: service_healthy
       forum_seed:
         condition: service_completed_successfully
+    networks:
+      - internal-net
 
   payment-service:
     build: ./payment-service
@@ -217,18 +258,16 @@ services:
       - ./payment-service/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
-      # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_PUBLIC_KEY and JWT_SECRET are
-      # provided via the service env_file (payment-service/.env). Avoid using
-      # ${VAR} interpolation here so Compose does not require them in the host
-      # environment and the file values are used inside the container.
       AUTH_SERVICE_URL: http://auth-service:8000
     ports:
       - "8005:8005"
     depends_on:
       postgres:
         condition: service_healthy
-      payment_migration:
-        condition: service_completed_successfully
+      #payment_migration:
+      #  condition: service_completed_successfully
+    networks:
+      - internal-net
 
 #  gamification-service:
 #    build: ./gamification-service/GamificationService
@@ -246,6 +285,8 @@ services:
 #        condition: service_healthy
 #      redis:
 #        condition: service_healthy
+#    networks:
+#      - internal-net
 
   enrichment-service:
     build: ./enrichment-service
@@ -256,7 +297,9 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
-        
+    networks:
+      - internal-net
+
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
   web-app:
     build: ./web-app/parla
@@ -275,7 +318,15 @@ services:
     depends_on:
       - api-gateway
       - redis
+    networks:
+      - internal-net
 
 volumes:
   postgres_data:
   forum_mongo_database:
+
+networks:
+  public-net:
+    driver: bridge
+  internal-net:
+    driver: bridge
