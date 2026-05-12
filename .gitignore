@@ -13,3 +13,6 @@ auth-service/tmp
 
 # vscode
 .vscode/
+
+# Nginx TLS certificates (generated locally, never committed)
+nginx/certs/*.pem

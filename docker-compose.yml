@@ -114,12 +114,24 @@ services:
       mongo:
         condition: service_healthy
 
+  # ─── REVERSE PROXY (Nginx) ──────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api-gateway
+
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
-    ports:
-      - "8080:8080"
+    # Port NOT exposed to the host — only reachable by Nginx inside Docker network
     env_file:
       - ./api-gateway/.env
    
@@ -249,13 +261,13 @@ services:
   
     env_file: ./web-app/parla/.env
     environment:
-      SERVER_AUTH_URL: http://api-gateway:8080/api/auth
-      SERVER_CORE_URL: http://api-gateway:8080/api/core
-      SERVER_GRAPHQL_URL: http://api-gateway:8080/api/auth/graphql
-      SERVER_FORUM_URL: http://api-gateway:8080/api/forum
-      SERVER_GAME_URL: http://api-gateway:8080/api/game
-      SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
-      SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
+      SERVER_AUTH_URL: https://nginx/api/auth
+      SERVER_CORE_URL: https://nginx/api/core
+      SERVER_GRAPHQL_URL: https://nginx/api/auth/graphql
+      SERVER_FORUM_URL: https://nginx/api/forum
+      SERVER_GAME_URL: https://nginx/api/game
+      SERVER_GAMIFICATION_URL: https://nginx/api/gamification
+      SERVER_PAYMENT_URL: https://nginx/api/payments
     depends_on:
       - api-gateway
       - redis
