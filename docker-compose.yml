@@ -118,18 +118,22 @@ services:
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
-    ports:
-      - "8080:8080"
     env_file:
       - ./api-gateway/.env
     environment:
       PORT: 8080
-      ALLOWED_ORIGINS: http://localhost:3000
+      ALLOWED_ORIGINS: http://localhost
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
       SERVICE_GAME_URL: http://gamification-service:8080
       SERVICE_PAYMENT_URL: http://payment-service:8005
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     depends_on:
       auth-service:
         condition: service_healthy
@@ -261,8 +265,6 @@ services:
   web-app:
     build: ./web-app/parla
     container_name: web-app
-    ports:
-      - "3000:3000"
     env_file: ./web-app/parla/.env
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
@@ -272,9 +274,30 @@ services:
       SERVER_GAME_URL: http://api-gateway:8080/api/game
       SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
       SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       - api-gateway
       - redis
+
+  # ─── REVERSE PROXY ──────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      web-app:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
