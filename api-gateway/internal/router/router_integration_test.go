@@ -77,9 +77,26 @@ func fakeUpstream(t *testing.T, statusCode int, receivedPath *string) *httptest.
 	}))
 }
 
-// ── Test 1: Health endpoint – all upstreams healthy ───────────────────────────
+// ── Test 1: Simple health endpoint – gateway liveness ─────────────────────────
 
-func TestHealthAllHealthy(t *testing.T) {
+// The /health endpoint is a gateway-only liveness probe: no upstream calls,
+// no auth required, just confirms the gateway process can serve requests.
+// It must work even when no routes are configured.
+func TestSimpleHealthReturns200WithoutAuth(t *testing.T) {
+	mux := newHealthOnlyMux(t, nil)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/health", nil)
+	mux.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+// ── Test 2: Detailed health endpoint – all upstreams healthy ──────────────────
+
+func TestDetailedHealthAllHealthy(t *testing.T) {
 	svcA := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -97,7 +114,7 @@ func TestHealthAllHealthy(t *testing.T) {
 	mux := newHealthOnlyMux(t, routes)
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/health", nil)
+	r := httptest.NewRequest(http.MethodGet, "/health/detailed", nil)
 	mux.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
@@ -115,9 +132,9 @@ func TestHealthAllHealthy(t *testing.T) {
 	}
 }
 
-// ── Test 2: Health endpoint – one upstream unhealthy ──────────────────────────
+// ── Test 3: Detailed health endpoint – one upstream unhealthy ─────────────────
 
-func TestHealthOneUnhealthy(t *testing.T) {
+func TestDetailedHealthOneUnhealthy(t *testing.T) {
 	svcOK := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -135,7 +152,7 @@ func TestHealthOneUnhealthy(t *testing.T) {
 	mux := newHealthOnlyMux(t, routes)
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/health", nil)
+	r := httptest.NewRequest(http.MethodGet, "/health/detailed", nil)
 	mux.ServeHTTP(w, r)
 
 	if w.Code != http.StatusServiceUnavailable {
@@ -154,7 +171,7 @@ func TestHealthOneUnhealthy(t *testing.T) {
 	}
 }
 
-// ── Test 3: CORS preflight short-circuits before auth ─────────────────────────
+// ── Test 4: CORS preflight short-circuits before auth ─────────────────────────
 
 func TestCORSPreflightShortCircuitsBeforeAuth(t *testing.T) {
 	upstreamReached := false
@@ -182,7 +199,7 @@ func TestCORSPreflightShortCircuitsBeforeAuth(t *testing.T) {
 	}
 }
 
-// ── Test 4: Security headers always present ───────────────────────────────────
+// ── Test 5: Security headers always present ───────────────────────────────────
 
 func TestSecurityHeadersAlwaysPresent(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -211,7 +228,7 @@ func TestSecurityHeadersAlwaysPresent(t *testing.T) {
 	}
 }
 
-// ── Test 5: Request-ID generated when absent ──────────────────────────────────
+// ── Test 6: Request-ID generated when absent ──────────────────────────────────
 
 func TestRequestIDGeneratedWhenAbsent(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +253,7 @@ func TestRequestIDGeneratedWhenAbsent(t *testing.T) {
 	}
 }
 
-// ── Test 6: Request-ID propagated when present ────────────────────────────────
+// ── Test 7: Request-ID propagated when present ────────────────────────────────
 
 func TestRequestIDPropagatedWhenPresent(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +277,7 @@ func TestRequestIDPropagatedWhenPresent(t *testing.T) {
 	}
 }
 
-// ── Test 7: Rate limiting returns 429 after burst ─────────────────────────────
+// ── Test 8: Rate limiting returns 429 after burst ─────────────────────────────
 
 func TestRateLimitReturns429AfterBurst(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -488,7 +505,7 @@ func buildJWTTestMux(
 	return mux
 }
 
-// ── Test 8: Valid JWT routes request to upstream with prefix stripped ──────────
+// ── Test 9: Valid JWT routes request to upstream with prefix stripped ──────────
 
 func TestValidJWTRoutesToUpstreamWithPrefixStripped(t *testing.T) {
 	var receivedPath string
@@ -529,7 +546,7 @@ func TestValidJWTRoutesToUpstreamWithPrefixStripped(t *testing.T) {
 	}
 }
 
-// ── Test 9: Invalid JWT returns 401 ───────────────────────────────────────────
+// ── Test 10: Invalid JWT returns 401 ──────────────────────────────────────────
 
 func TestInvalidJWTReturns401(t *testing.T) {
 	upstreamReached := false
@@ -562,5 +579,42 @@ func TestInvalidJWTReturns401(t *testing.T) {
 	}
 	if upstreamReached {
 		t.Error("upstream should not be reached with an invalid JWT")
+	}
+}
+
+// ── Test 11: Unknown routes fall through to the JSON 404 handler ──────────────
+
+// Verifies the mux wiring: any path that doesn't match a registered prefix
+// must be served by getNotFoundHandler() — not Go's default text/plain
+// "404 page not found" response — and must traverse the full middleware
+// chain without requiring auth.
+func TestUnknownRouteFallsThroughToNotFoundHandler(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer upstream.Close()
+
+	routes := []config.ServiceRoute{
+		{PathPrefix: "/api/auth", ServiceName: "auth", TargetURL: upstream.URL},
+	}
+	mux := newFullMux(t, routes)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/this/route/does/not/exist", nil)
+	mux.ServeHTTP(w, r)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+	if got := w.Header().Get("Content-Type"); got != "application/json" {
+		t.Errorf("Content-Type = %q, want %q", got, "application/json")
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatalf("response is not valid JSON: %v", err)
+	}
+	if got := body["error"]; got != "Not found" {
+		t.Errorf(`body["error"] = %q, want %q`, got, "Not found")
 	}
 }

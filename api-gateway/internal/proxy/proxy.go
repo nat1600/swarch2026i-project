@@ -1,3 +1,6 @@
+// Package proxy builds the per-route reverse-proxy handler that
+// forwards requests to an upstream microservice, with timeouts and a
+// circuit breaker.
 package proxy
 
 import (
@@ -12,6 +15,19 @@ import (
 	"time"
 )
 
+const (
+	dialTimeout           = 5 * time.Second
+	responseHeaderTimeout = 10 * time.Second
+	maxIdleConns          = 10
+	maxIdleConnsPerHost   = 5
+	idleConnTimeout       = 90 * time.Second
+
+	cbMaxFailures  = 5
+	cbResetTimeout = 30 * time.Second
+)
+
+// responseRecorder captures the upstream's status code so the proxy
+// handler can feed it into the circuit breaker.
 type responseRecorder struct {
 	http.ResponseWriter
 	statusCode int
@@ -22,6 +38,9 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.ResponseWriter.WriteHeader(code)
 }
 
+// New returns an http.Handler that reverse-proxies requests to targetURL,
+// stripping pathPrefix from the incoming path. Transport errors and
+// open-circuit rejections are returned as JSON 503 responses.
 func New(targetURL string, pathPrefix string) (http.Handler, error) {
 	target, err := url.Parse(targetURL)
 	if err != nil {
@@ -30,12 +49,12 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
-			Timeout: 5 * time.Second, // Timeout for establishing the TCP connection
+			Timeout: dialTimeout,
 		}).DialContext,
-		ResponseHeaderTimeout: 10 * time.Second, // Timeout waiting for the first response
-		MaxIdleConns:          10,               // Maximum of IDLE connections
-		MaxIdleConnsPerHost:   5,
-		IdleConnTimeout:       90 * time.Second, // Close IDLE connections after 90 seconds
+		ResponseHeaderTimeout: responseHeaderTimeout,
+		MaxIdleConns:          maxIdleConns,
+		MaxIdleConnsPerHost:   maxIdleConnsPerHost,
+		IdleConnTimeout:       idleConnTimeout,
 	}
 
 	proxy := &httputil.ReverseProxy{
@@ -43,28 +62,25 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(target)
 			pr.SetXForwarded()
-
-			// Remove original prefix
-			originalPath := pr.In.URL.Path
-			pr.Out.URL.Path = strings.TrimPrefix(originalPath, pathPrefix)
+			pr.Out.URL.Path = strings.TrimPrefix(pr.In.URL.Path, pathPrefix)
 		},
 		ModifyResponse: func(resp *http.Response) error {
+			// CORS is owned by the gateway; drop upstream duplicates.
 			resp.Header.Del("Access-Control-Allow-Origin")
 			resp.Header.Del("Access-Control-Allow-Methods")
 			resp.Header.Del("Access-Control-Allow-Headers")
 			return nil
 		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			writeError(w, target, err)
+		},
 	}
 
-	cb := newCircuitBreaker(5, 30*time.Second)
+	cb := newCircuitBreaker(cbMaxFailures, cbResetTimeout)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !cb.allow() {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			if err := json.NewEncoder(w).Encode(fmt.Sprintf("service %s is unavailable", target.Host)); err != nil {
-				slog.Error("failed to encode response", "error", err, "host", target.Host)
-			}
+			writeError(w, target, fmt.Errorf("service %s is unavailable", target.Host))
 			return
 		}
 
@@ -79,6 +95,13 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 		} else {
 			cb.recordSuccess()
 		}
-
 	}), nil
+}
+
+func writeError(w http.ResponseWriter, target *url.URL, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusServiceUnavailable)
+	if encErr := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); encErr != nil {
+		slog.Error("failed to encode response", "error", encErr, "host", target.Host)
+	}
 }

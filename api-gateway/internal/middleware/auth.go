@@ -14,13 +14,16 @@ import (
 	"api-gateway/config"
 )
 
+// Auth returns a middleware that validates an Auth0-issued RS256 JWT
+// against cfg's issuer and audience, and forwards the token's subject
+// to upstream services in the X-User-Sub header. Requests with an
+// invalid or missing token are rejected with 401.
 func Auth(cfg config.AuthConfig) (Middleware, error) {
 	issuerURL, err := url.Parse("https://" + cfg.Domain + "/")
 	if err != nil {
 		return nil, err
 	}
 
-	// Initialize JWKS provider
 	provider, err := jwks.NewCachingProvider(
 		jwks.WithIssuerURL(issuerURL),
 		jwks.WithCacheTTL(5*time.Minute),
@@ -29,26 +32,24 @@ func Auth(cfg config.AuthConfig) (Middleware, error) {
 		return nil, err
 	}
 
-	// Create validator
 	jwtValidator, err := validator.New(
-		validator.WithKeyFunc(provider.KeyFunc),        // Provides public keys for RS256
-		validator.WithAlgorithm(validator.RS256),       // Algorithm (prevents confusion attacks)
-		validator.WithAllowedClockSkew(30*time.Second), // Allows 30s clock drift
-		validator.WithIssuer(issuerURL.String()),       // Validates 'iss' claim
-		validator.WithAudience(cfg.Audience),           // Validates 'aud' claim
+		validator.WithKeyFunc(provider.KeyFunc),
+		validator.WithAlgorithm(validator.RS256),
+		validator.WithAllowedClockSkew(30*time.Second),
+		validator.WithIssuer(issuerURL.String()),
+		validator.WithAudience(cfg.Audience),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Wraps it into an actual HTTP middleware with custom error handler
 	jwtMiddleware, err := jwtmiddleware.New(
 		jwtmiddleware.WithValidator(jwtValidator),
 		jwtmiddleware.WithErrorHandler(func(w http.ResponseWriter, r *http.Request, err error) {
 			slog.Error("JWT validation failed", "error", err, "path", r.URL.Path)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			if err := json.NewEncoder(w).Encode("Failed to validate JWT"); err != nil {
+			if err := json.NewEncoder(w).Encode(map[string]string{"error": "Failed to validate JWT"}); err != nil {
 				slog.Error("failed to encode response", "error", err)
 			}
 		}),
@@ -58,17 +59,14 @@ func Auth(cfg config.AuthConfig) (Middleware, error) {
 	}
 
 	return func(next http.Handler) http.Handler {
-
-		// CheckJWT extracts and validates the token, and put the validated claims
 		return jwtMiddleware.CheckJWT(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			// Set the user-sub header from the claims
 			claims, err := jwtmiddleware.GetClaims[*validator.ValidatedClaims](r.Context())
-			if err != nil { // should never happen - CheckJWT guarantees claims are set
+			if err != nil {
+				// CheckJWT should guarantee claims are present; fail closed if not.
 				slog.Error("missing claims", "error", err)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				if err := json.NewEncoder(w).Encode("Error during authentication"); err != nil {
+				if err := json.NewEncoder(w).Encode(map[string]string{"error": "Error during authentication"}); err != nil {
 					slog.Error("failed to encode response", "error", err)
 				}
 				return

@@ -1,3 +1,5 @@
+// Package router builds the gateway's http.ServeMux, registering one
+// reverse-proxy handler per configured route plus health and 404 handlers.
 package router
 
 import (
@@ -9,30 +11,37 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 )
 
+const (
+	defaultRPS         = 10.0
+	defaultBurst       = 20
+	healthProbeTimeout = 2 * time.Second
+)
+
+// New builds the gateway's HTTP handler: a reverse proxy per route in
+// cfg.Routes (authenticated), plus /health, /health/detailed and a JSON
+// 404 fallback (all unauthenticated).
 func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 
-	// Create auth middleware
 	authMiddleware, err := middleware.Auth(cfg.Auth)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create auth middleware %w", err)
+		return nil, fmt.Errorf("failed to create auth middleware: %w", err)
 	}
 
-	// Middlewares
 	baseMiddlewares := []middleware.Middleware{
 		middleware.Security(cfg.InProduction()),
 		middleware.RequestID,
 		middleware.Logging,
 		middleware.CORS(cfg.AllowedOrigins),
-		middleware.RateLimit(10, 20),
+		middleware.RateLimit(defaultRPS, defaultBurst),
 	}
 	middlewaresWithAuth := append(baseMiddlewares, authMiddleware)
 	middlewaresWithoutAuth := baseMiddlewares
 
-	// Register a proxy for each route
 	for _, route := range cfg.Routes {
 		prx, err := proxy.New(route.TargetURL, route.PathPrefix)
 		if err != nil {
@@ -42,33 +51,47 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		mux.Handle(route.PathPrefix+"/", handler)
 	}
 
-	// General health check: includes this api gateway and the microservices
-	healthProxy := middleware.Chain(getHealthHandler(cfg), middlewaresWithoutAuth...)
-	mux.Handle("GET /health", healthProxy)
+	mux.Handle("GET /health", middleware.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}), middlewaresWithoutAuth...))
 
-	// Add base handler for / , used when the given route does not match with any on the mux table
+	detailedHealthHandler := middleware.Chain(getDetailedHealthHandler(cfg), middlewaresWithoutAuth...)
+	mux.Handle("GET /health/detailed", detailedHealthHandler)
+
 	notFoundHandler := middleware.Chain(getNotFoundHandler(), middlewaresWithoutAuth...)
 	mux.Handle("/", notFoundHandler)
 
 	return mux, nil
 }
 
-func getHealthHandler(cfg *config.GeneralConfig) http.Handler {
-	// General health check: includes this api gateway and the microservices
+// getDetailedHealthHandler probes every upstream's /health concurrently
+// and returns a JSON map of {service: "OK" | "NOT OK"}. Responds with
+// 503 if any probe fails.
+func getDetailedHealthHandler(cfg *config.GeneralConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		status := map[string]string{}
 		allHealthy := true
+		var wg sync.WaitGroup
+		var mu sync.Mutex
 
 		for _, route := range cfg.Routes {
-			serviceOk, serviceError := CheckService(route.TargetURL + "/health")
-			if serviceOk {
-				status[route.ServiceName] = "OK"
-			} else {
-				status[route.ServiceName] = "NOT OK"
-				slog.Error("failed health check", "service", route.ServiceName, "error", serviceError)
-				allHealthy = false
-			}
+			wg.Add(1)
+			go func(r config.ServiceRoute) {
+				defer wg.Done()
+				serviceOk, serviceError := checkService(r.TargetURL + "/health")
+				mu.Lock()
+				defer mu.Unlock()
+
+				if serviceOk {
+					status[r.ServiceName] = "OK"
+				} else {
+					status[r.ServiceName] = "NOT OK"
+					slog.Error("failed health check", "service", r.ServiceName, "error", serviceError)
+					allHealthy = false
+				}
+			}(route)
 		}
+		wg.Wait()
 
 		w.Header().Set("Content-Type", "application/json")
 		if !allHealthy {
@@ -84,14 +107,16 @@ func getNotFoundHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode("Not found"); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]string{"error": "Not found"}); err != nil {
 			slog.Error("failed to encode response", "error", err)
 		}
 	})
 }
 
-func CheckService(url string) (bool, string) {
-	client := &http.Client{Timeout: 2 * time.Second}
+// checkService issues a short-timeout GET to a service's /health URL.
+// A service is considered healthy when the response status is below 500.
+func checkService(url string) (bool, string) {
+	client := &http.Client{Timeout: healthProbeTimeout}
 	resp, err := client.Get(url)
 	if err != nil {
 		return false, err.Error()
