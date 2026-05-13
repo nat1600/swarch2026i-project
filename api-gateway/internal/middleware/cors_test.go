@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestCORS_SetsHeadersOnEveryRequest(t *testing.T) {
-	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions}
+func TestCORS_SetsHeadersOnNonOptionsRequest(t *testing.T) {
+	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(method, "/", nil)
@@ -16,14 +16,42 @@ func TestCORS_SetsHeadersOnEveryRequest(t *testing.T) {
 		if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
 			t.Errorf("method=%s: Access-Control-Allow-Origin = %q, want %q", method, got, "https://example.com")
 		}
-		if got := w.Header().Get("Access-Control-Allow-Methods"); got == "" {
+		if got := w.Header().Get("Access-Control-Allow-Methods"); got != "" {
+			t.Errorf("method=%s: Access-Control-Allow-Methods should be empty", method)
+		}
+		if got := w.Header().Get("Access-Control-Allow-Headers"); got != "" {
+			t.Errorf("method=%s: Access-Control-Allow-Headers should be empty", method)
+		}
+		if got := w.Header().Get("Access-Control-Max-Age"); got != "" {
+			t.Errorf("method=%s: Access-Control-Max-Age should be empty", method)
+		}
+		if got := w.Header().Get("Access-Control-Expose-Headers"); got != "X-Request-ID" {
+			t.Errorf("method=%s: Access-Control-Expose-Headers should not be empty", method)
+		}
+	}
+}
+
+func TestCORS_SetsHeadersOnOptionsRequest(t *testing.T) {
+	methods := []string{http.MethodOptions}
+	for _, method := range methods {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(method, "/", nil)
+		CORS("https://example.com")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).ServeHTTP(w, r)
+
+		if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+			t.Errorf("method=%s: Access-Control-Allow-Origin = %q, want %q", method, got, "https://example.com")
+		}
+		if got := w.Header().Get("Access-Control-Allow-Methods"); got != "GET, POST, PUT, DELETE, OPTIONS" {
 			t.Errorf("method=%s: Access-Control-Allow-Methods should not be empty", method)
 		}
-		if got := w.Header().Get("Access-Control-Allow-Headers"); got == "" {
+		if got := w.Header().Get("Access-Control-Allow-Headers"); got != "Authorization, Content-Type" {
 			t.Errorf("method=%s: Access-Control-Allow-Headers should not be empty", method)
 		}
-		if got := w.Header().Get("Access-Control-Max-Age"); got == "" {
+		if got := w.Header().Get("Access-Control-Max-Age"); got != "86400" {
 			t.Errorf("method=%s: Access-Control-Max-Age should not be empty", method)
+		}
+		if got := w.Header().Get("Access-Control-Expose-Headers"); got == "X-Request-ID" {
+			t.Errorf("method=%s: Access-Control-Expose-Headers should empty", method)
 		}
 	}
 }

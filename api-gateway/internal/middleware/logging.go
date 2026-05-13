@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// responseRecorder captures the status code written by the inner
+// handler so it can be logged after the handler returns.
 type responseRecorder struct {
 	http.ResponseWriter
 	statusCode int
@@ -16,6 +18,8 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.ResponseWriter.WriteHeader(code)
 }
 
+// Logging emits one structured log line per request including method,
+// path, status, duration, and request ID.
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -27,7 +31,6 @@ func Logging(next http.Handler) http.Handler {
 
 		next.ServeHTTP(rr, r)
 
-		// Structure logging
 		slog.Info(
 			"REQUEST",
 			"method", r.Method,

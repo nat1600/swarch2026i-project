@@ -24,6 +24,7 @@ func setRequiredEnvVars(t *testing.T) {
 	t.Setenv("ENVIRONMENT", "staging")
 	t.Setenv("AUTH0_AUDIENCE", "test-audience")
 	t.Setenv("AUTH0_DOMAIN", "test.auth0.com")
+	t.Setenv("ALLOWED_ORIGINS", "*")
 }
 
 // --- Load() ---
@@ -44,6 +45,9 @@ func TestLoad_ValidConfig(t *testing.T) {
 	}
 	if cfg.Environment != "staging" {
 		t.Errorf("Environment: want %q, got %q", "staging", cfg.Environment)
+	}
+	if cfg.AllowedOrigins != "*" {
+		t.Errorf("AllowedOrigins: want %q, got %q", "*", cfg.AllowedOrigins)
 	}
 	if cfg.Auth.Audience != "test-audience" {
 		t.Errorf("Auth.Audience: want %q, got %q", "test-audience", cfg.Auth.Audience)
