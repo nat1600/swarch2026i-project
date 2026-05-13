@@ -5,14 +5,22 @@ import (
 	"time"
 )
 
+// State transitions:
+//
+//	closed   --failures >= maxFailures--> open
+//	open     --resetTimeout elapsed-----> halfOpen
+//	halfOpen --success------------------> closed
+//	halfOpen --failure------------------> open
 type state int
 
 const (
-	closed   state = iota // normal, requests pass
-	halfOpen              // testing if the microservice recovered
-	open                  // cut, request are not forwarded
+	closed   state = iota // requests pass through
+	halfOpen              // a single probe is allowed to test recovery
+	open                  // requests are rejected
 )
 
+// CircuitBreaker is a goroutine-safe breaker that trips after a
+// configurable number of consecutive failures.
 type CircuitBreaker struct {
 	mu           sync.Mutex
 	state        state
@@ -22,7 +30,7 @@ type CircuitBreaker struct {
 	lastFailure  time.Time
 }
 
-func NewCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBreaker {
+func newCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBreaker {
 	return &CircuitBreaker{
 		state:        closed,
 		maxFailures:  maxFailures,
@@ -30,6 +38,9 @@ func NewCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBrea
 	}
 }
 
+// allow reports whether a request may be sent to the upstream. When the
+// breaker is open and the reset timeout has elapsed, the next caller is
+// promoted to a half-open probe.
 func (cb *CircuitBreaker) allow() bool {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
@@ -43,7 +54,7 @@ func (cb *CircuitBreaker) allow() bool {
 			return true
 		}
 	case halfOpen:
-		return false // another request is testing
+		return false
 	}
 	return false
 }

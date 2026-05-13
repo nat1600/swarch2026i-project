@@ -6,15 +6,19 @@ import (
 	"net/http"
 )
 
+const requestIDByteLen = 16 // 128 bits
+
+// RequestID propagates the X-Request-ID header end-to-end, generating
+// a new one when the incoming request does not already carry it. The
+// value is written to both the request (for upstream) and the response
+// (for the client).
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Use X-Request-ID if available
 		id := r.Header.Get("X-Request-ID")
 		if id == "" {
 			id = generateID()
 		}
 
-		// Propagate it to the microservice and also add it to the response
 		w.Header().Set("X-Request-ID", id)
 		r.Header.Set("X-Request-ID", id)
 
@@ -23,7 +27,7 @@ func RequestID(next http.Handler) http.Handler {
 }
 
 func generateID() string {
-	bytes := make([]byte, 16)
+	bytes := make([]byte, requestIDByteLen)
 	rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }

@@ -8,11 +8,12 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// ipLimiter holds one token-bucket rate limiter per client IP.
 type ipLimiter struct {
 	limiters map[string]*rate.Limiter
 	mu       sync.Mutex
-	rate     rate.Limit // how many tokens are added per second
-	burst    int        // maximum capacity of the bucket
+	rate     rate.Limit
+	burst    int
 }
 
 func newIPLimiter(rps float64, burst int) *ipLimiter {
@@ -36,6 +37,9 @@ func (l *ipLimiter) getLimiter(ip string) *rate.Limiter {
 	return limiter
 }
 
+// RateLimit returns a middleware that throttles requests per client IP
+// using a token bucket of rps requests/second with the given burst
+// capacity. Requests over budget are rejected with 429.
 func RateLimit(rps float64, burst int) Middleware {
 	limiter := newIPLimiter(rps, burst)
 

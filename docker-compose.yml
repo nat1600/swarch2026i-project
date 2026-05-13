@@ -13,9 +13,11 @@ services:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U root"]
-      interval: 5s
+      start_period: 30s
+      start_interval: 2s
+      interval: 30s
       timeout: 3s
-      retries: 10
+      retries: 5
 
   mongo:
     container_name: mongo
@@ -26,8 +28,10 @@ services:
       - forum_mongo_database:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
       retries: 5
 
   redis:
@@ -37,7 +41,9 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
       timeout: 3s
       retries: 5
 
@@ -46,11 +52,13 @@ services:
     container_name: rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15673"
+      - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 5s
-      timeout: 5s
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
       retries: 5
 
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
@@ -82,8 +90,6 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      MONGO_URL: mongodb://mongo:27018
-      MONGO_DB: core_db
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,18 +128,28 @@ services:
       - "8080:8080"
     env_file:
       - ./api-gateway/.env
-   
     environment:
+      PORT: 8080
+      ALLOWED_ORIGINS: http://localhost:3000
       SERVICE_AUTH_URL: http://auth-service:8000
       SERVICE_CORE_URL: http://core-service:8000
       SERVICE_FORUM_URL: http://forum-service:8003
       SERVICE_GAME_URL: http://gamification-service:8080
       SERVICE_PAYMENT_URL: http://payment-service:8005
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
+      retries: 5
     depends_on:
-      - auth-service
-      - core-service
-      - forum-service
-#      - gamification-service
+      auth-service:
+        condition: service_healthy
+      core-service:
+        condition: service_healthy
+      forum-service:
+        condition: service_healthy
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
@@ -147,9 +163,15 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
+      DEBUG: "true"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
+      retries: 5
     depends_on:
-      postgres:
-        condition: service_healthy
       auth_migration:
         condition: service_completed_successfully
 
@@ -167,12 +189,16 @@ services:
       MONGO_URL: mongodb://mongo:27017
       MONGO_DB: core_db
       DEBUG: "true"
-      DEEPL_API_KEY: "dummy"
       LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
+      retries: 5
     depends_on:
-      postgres:
-        condition: service_healthy
       core_migration:
         condition: service_completed_successfully
 
@@ -185,31 +211,36 @@ services:
       ATLAS_USER: dummy
       ATLAS_PASS: dummy
       ATLAS_CLUSTER: dummy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      start_period: 10s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
+      retries: 5
     depends_on:
-      mongo:
-        condition: service_healthy
       forum_seed:
         condition: service_completed_successfully
 
-  payment-service:
-    build: ./payment-service
-    container_name: payment-service
-    env_file:
-      - ./payment-service/.env
-    environment:
-      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
-      # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_PUBLIC_KEY and JWT_SECRET are
-      # provided via the service env_file (payment-service/.env). Avoid using
-      # ${VAR} interpolation here so Compose does not require them in the host
-      # environment and the file values are used inside the container.
-      AUTH_SERVICE_URL: http://auth-service:8000
-    ports:
-      - "8005:8005"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      payment_migration:
-        condition: service_completed_successfully
+#  payment-service:
+#    build: ./payment-service
+#    container_name: payment-service
+#    env_file:
+#      - ./payment-service/.env
+#    environment:
+#      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
+#      # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_PUBLIC_KEY and JWT_SECRET are
+#      # provided via the service env_file (payment-service/.env). Avoid using
+#      # ${VAR} interpolation here so Compose does not require them in the host
+#      # environment and the file values are used inside the container.
+#      AUTH_SERVICE_URL: http://auth-service:8000
+#    ports:
+#      - "8005:8005"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      payment_migration:
+#        condition: service_completed_successfully
 
 #  gamification-service:
 #    build: ./gamification-service/GamificationService
@@ -228,8 +259,6 @@ services:
 #      redis:
 #        condition: service_healthy
 
-
-
   enrichment-service:
     build: ./enrichment-service
     container_name: enrichment-service
@@ -246,7 +275,6 @@ services:
     container_name: web-app
     ports:
       - "3000:3000"
-  
     env_file: ./web-app/parla/.env
     environment:
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
@@ -257,8 +285,9 @@ services:
       SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
       SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
     depends_on:
-      - api-gateway
-      - redis
+      api-gateway:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   forum_mongo_database:

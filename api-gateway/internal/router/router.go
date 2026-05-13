@@ -1,3 +1,5 @@
+// Package router builds the gateway's http.ServeMux, registering one
+// reverse-proxy handler per configured route plus health and 404 handlers.
 package router
 
 import (
@@ -6,90 +8,123 @@ import (
 	"api-gateway/internal/proxy"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
-	"strings"
+	"sync"
 	"time"
 )
 
+const (
+	defaultRPS         = 10.0
+	defaultBurst       = 20
+	healthProbeTimeout = 2 * time.Second
+)
+
+// New builds the gateway's HTTP handler: a reverse proxy per route in
+// cfg.Routes (authenticated), plus /health, /health/detailed and a JSON
+// 404 fallback (all unauthenticated).
 func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 
-	// General health check: includes this api gateway and the microservices
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		status := map[string]string{}
-		allHealthy := true
-
-		for _, route := range cfg.Routes {
-			if CheckService(route.TargetURL + "/health") {
-				status[route.ServiceName] = "OK"
-			} else {
-				status[route.ServiceName] = "NOT OK"
-				allHealthy = false
-			}
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if !allHealthy {
-			w.WriteHeader(http.StatusServiceUnavailable)
-		}
-		json.NewEncoder(w).Encode(status)
-	})
-
-	// Create auth middleware
 	authMiddleware, err := middleware.Auth(cfg.Auth)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create auth middleware %w", err)
+		return nil, fmt.Errorf("failed to create auth middleware: %w", err)
 	}
 
-	// Middlewares
 	baseMiddlewares := []middleware.Middleware{
 		middleware.Security(cfg.InProduction()),
 		middleware.RequestID,
 		middleware.Logging,
-		middleware.CORS("http://localhost:3000"),
-		middleware.RateLimit(10, 20),
+		middleware.CORS(cfg.AllowedOrigins),
+		middleware.RateLimit(defaultRPS, defaultBurst),
 	}
+	middlewaresWithAuth := append(baseMiddlewares, authMiddleware)
+	middlewaresWithoutAuth := baseMiddlewares
 
-	// Register a proxy for each route
 	for _, route := range cfg.Routes {
 		prx, err := proxy.New(route.TargetURL, route.PathPrefix)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create proxy for %s: %w", route.PathPrefix, err)
 		}
-
-		authMiddlewares := append(append([]middleware.Middleware{}, baseMiddlewares...), authMiddleware)
-		handlerWithAuth := middleware.Chain(prx, authMiddlewares...)
-		handlerWithoutAuth := middleware.Chain(prx, baseMiddlewares...)
-
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if isAuthExempt(route, r.URL.Path) {
-				handlerWithoutAuth.ServeHTTP(w, r)
-				return
-			}
-			handlerWithAuth.ServeHTTP(w, r)
-		})
+		handler := middleware.Chain(prx, middlewaresWithAuth...)
 		mux.Handle(route.PathPrefix+"/", handler)
 	}
+
+	mux.Handle("GET /health", middleware.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}), middlewaresWithoutAuth...))
+
+	detailedHealthHandler := middleware.Chain(getDetailedHealthHandler(cfg), middlewaresWithoutAuth...)
+	mux.Handle("GET /health/detailed", detailedHealthHandler)
+
+	notFoundHandler := middleware.Chain(getNotFoundHandler(), middlewaresWithoutAuth...)
+	mux.Handle("/", notFoundHandler)
 
 	return mux, nil
 }
 
-func isAuthExempt(route config.ServiceRoute, requestPath string) bool {
-	for _, exemptPath := range route.AuthExemptPaths {
-		if requestPath == route.PathPrefix+exemptPath || strings.HasPrefix(requestPath, route.PathPrefix+exemptPath+"/") {
-			return true
+// getDetailedHealthHandler probes every upstream's /health concurrently
+// and returns a JSON map of {service: "OK" | "NOT OK"}. Responds with
+// 503 if any probe fails.
+func getDetailedHealthHandler(cfg *config.GeneralConfig) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		status := map[string]string{}
+		allHealthy := true
+		var wg sync.WaitGroup
+		var mu sync.Mutex
+
+		for _, route := range cfg.Routes {
+			wg.Add(1)
+			go func(r config.ServiceRoute) {
+				defer wg.Done()
+				serviceOk, serviceError := checkService(r.TargetURL + "/health")
+				mu.Lock()
+				defer mu.Unlock()
+
+				if serviceOk {
+					status[r.ServiceName] = "OK"
+				} else {
+					status[r.ServiceName] = "NOT OK"
+					slog.Error("failed health check", "service", r.ServiceName, "error", serviceError)
+					allHealthy = false
+				}
+			}(route)
 		}
-	}
-	return false
+		wg.Wait()
+
+		w.Header().Set("Content-Type", "application/json")
+		if !allHealthy {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+		if err := json.NewEncoder(w).Encode(status); err != nil {
+			slog.Error("failed to encode response", "error", err)
+		}
+	})
 }
 
-func CheckService(url string) bool {
-	client := &http.Client{Timeout: 2 * time.Second}
+func getNotFoundHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(map[string]string{"error": "Not found"}); err != nil {
+			slog.Error("failed to encode response", "error", err)
+		}
+	})
+}
+
+// checkService issues a short-timeout GET to a service's /health URL.
+// A service is considered healthy when the response status is below 500.
+func checkService(url string) (bool, string) {
+	client := &http.Client{Timeout: healthProbeTimeout}
 	resp, err := client.Get(url)
 	if err != nil {
-		return false
+		return false, err.Error()
 	}
 	defer resp.Body.Close()
-	return resp.StatusCode < 500
-
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		body = []byte("failed to read response body: " + err.Error())
+	}
+	return resp.StatusCode < 500, string(body)
 }
