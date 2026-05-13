@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -42,9 +43,14 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		mux.Handle(route.PathPrefix+"/", handler)
 	}
 
-	// General health check: includes this api gateway and the microservices
-	healthProxy := middleware.Chain(getHealthHandler(cfg), middlewaresWithoutAuth...)
-	mux.Handle("GET /health", healthProxy)
+	// General health check: only this api gateway
+	mux.Handle("GET /health", middleware.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}), middlewaresWithoutAuth...))
+
+	// Detailed health check: includes this api gateway and the microservices
+	detailedHealthHandler := middleware.Chain(getDetailedHealthHandler(cfg), middlewaresWithoutAuth...)
+	mux.Handle("GET /health/detailed", detailedHealthHandler)
 
 	// Add base handler for / , used when the given route does not match with any on the mux table
 	notFoundHandler := middleware.Chain(getNotFoundHandler(), middlewaresWithoutAuth...)
@@ -53,22 +59,33 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 	return mux, nil
 }
 
-func getHealthHandler(cfg *config.GeneralConfig) http.Handler {
+func getDetailedHealthHandler(cfg *config.GeneralConfig) http.Handler {
 	// General health check: includes this api gateway and the microservices
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		status := map[string]string{}
 		allHealthy := true
+		var wg sync.WaitGroup
+		var mu sync.Mutex
 
 		for _, route := range cfg.Routes {
-			serviceOk, serviceError := CheckService(route.TargetURL + "/health")
-			if serviceOk {
-				status[route.ServiceName] = "OK"
-			} else {
-				status[route.ServiceName] = "NOT OK"
-				slog.Error("failed health check", "service", route.ServiceName, "error", serviceError)
-				allHealthy = false
-			}
+
+			wg.Add(1)
+			go func(r config.ServiceRoute) {
+				defer wg.Done()
+				serviceOk, serviceError := checkService(r.TargetURL + "/health")
+				mu.Lock()
+				defer mu.Unlock()
+
+				if serviceOk {
+					status[r.ServiceName] = "OK"
+				} else {
+					status[r.ServiceName] = "NOT OK"
+					slog.Error("failed health check", "service", r.ServiceName, "error", serviceError)
+					allHealthy = false
+				}
+			}(route)
 		}
+		wg.Wait()
 
 		w.Header().Set("Content-Type", "application/json")
 		if !allHealthy {
@@ -84,13 +101,13 @@ func getNotFoundHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode("Not found"); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]string{"error": "Not found"}); err != nil {
 			slog.Error("failed to encode response", "error", err)
 		}
 	})
 }
 
-func CheckService(url string) (bool, string) {
+func checkService(url string) (bool, string) {
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {

@@ -54,17 +54,16 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 			resp.Header.Del("Access-Control-Allow-Headers")
 			return nil
 		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			writeError(w, target, err)
+		},
 	}
 
 	cb := newCircuitBreaker(5, 30*time.Second)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !cb.allow() {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			if err := json.NewEncoder(w).Encode(fmt.Sprintf("service %s is unavailable", target.Host)); err != nil {
-				slog.Error("failed to encode response", "error", err, "host", target.Host)
-			}
+			writeError(w, target, fmt.Errorf("service %s is unavailable", target.Host))
 			return
 		}
 
@@ -81,4 +80,13 @@ func New(targetURL string, pathPrefix string) (http.Handler, error) {
 		}
 
 	}), nil
+}
+
+func writeError(w http.ResponseWriter, target *url.URL, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusServiceUnavailable)
+	if err := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
+		slog.Error("failed to encode response", "error", err, "host", target.Host)
+	}
+	return
 }

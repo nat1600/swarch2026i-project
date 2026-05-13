@@ -48,7 +48,7 @@ func Auth(cfg config.AuthConfig) (Middleware, error) {
 			slog.Error("JWT validation failed", "error", err, "path", r.URL.Path)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			if err := json.NewEncoder(w).Encode("Failed to validate JWT"); err != nil {
+			if err := json.NewEncoder(w).Encode(map[string]string{"error": "Failed to validate JWT"}); err != nil {
 				slog.Error("failed to encode response", "error", err)
 			}
 		}),
@@ -68,7 +68,7 @@ func Auth(cfg config.AuthConfig) (Middleware, error) {
 				slog.Error("missing claims", "error", err)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				if err := json.NewEncoder(w).Encode("Error during authentication"); err != nil {
+				if err := json.NewEncoder(w).Encode(map[string]string{"error": "Error during authentication"}); err != nil {
 					slog.Error("failed to encode response", "error", err)
 				}
 				return
