@@ -64,22 +64,16 @@ func main() {
 		log.Fatalf("forced shutdown: %v", err)
 	}
 	log.Println("server stopped")
-
 }
 
 func logInitialStatus(server *http.Server, cfg *config.GeneralConfig) {
 	log.Printf("────────────────────────────────────────────────────────────────")
 	log.Println("API Gateway listening on", server.Addr)
 	log.Println("Registered services:")
-	log.Printf("  %-10s %-15s   %s  %21s", "SERVICE", "PATH", "TARGET", "HEALTH")
-	log.Printf("  %-10s %-15s   %s  %21s", "───────", "────", "──────", "──────")
+	log.Printf("  %-10s %-15s   %s", "SERVICE", "PATH", "TARGET")
+	log.Printf("  %-10s %-15s   %s", "───────", "────", "──────")
 	for _, route := range cfg.Routes {
-		isHealthy, _ := router.CheckService(route.TargetURL + "/health")
-		status := "OK"
-		if !isHealthy {
-			status = "NOT OK"
-		}
-		log.Printf("  %-10s %-15s → %s  %s", route.ServiceName, route.PathPrefix, route.TargetURL, status)
+		log.Printf("  %-10s %-15s → %s", route.ServiceName, route.PathPrefix, route.TargetURL)
 	}
 	log.Printf("────────────────────────────────────────────────────────────────")
 }
