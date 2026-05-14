@@ -288,12 +288,12 @@ services:
       SERVER_GAME_URL: http://api-gateway:8080/api/game
       SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
       SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
-#    healthcheck:
-#      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#      start_period: 30s
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     depends_on:
       api-gateway:
         condition: service_healthy
@@ -309,8 +309,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
-#      web-app:
-#        condition: service_healthy
+      web-app:
+        condition: service_healthy
       api-gateway:
         condition: service_healthy
     restart: unless-stopped
