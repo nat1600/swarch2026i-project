@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.services.sm2 import apply_sm2
 from app.core.config import get_settings
-from app.schemas.phrases import PhraseCreate
+from app.schemas.phrases import PhraseCreate, PhraseUpdate
 from app.models.phrase import Phrase, ReviewData
 
 
@@ -53,6 +53,23 @@ class PhraseService:
             await self._publish_enrichment(phrase)
             return phrase
 
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def update_phrase(self, phrase_id: int, data: PhraseUpdate) -> Phrase:
+        phrase = self.get_phrase(phrase_id)
+        if not phrase:
+            raise ValueError("Phrase not found")
+
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(phrase, key, value)
+
+        try:
+            self.db.commit()
+            self.db.refresh(phrase)
+            return phrase
         except Exception:
             self.db.rollback()
             raise
