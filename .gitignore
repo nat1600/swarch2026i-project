@@ -13,3 +13,12 @@ auth-service/tmp
 
 # vscode
 .vscode/
+
+claude.md
+gemini.md
+*.png
+*.pdf
+web-app/parla/.*
+web-app/parla/skills-lock.json
+
+nginx/certs/

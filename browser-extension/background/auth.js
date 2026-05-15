@@ -209,7 +209,7 @@ async function login() {
   try {
     return await authLogin(false);
   } catch (error) {
-    chrome.tabs.create({ url: 'http://localhost:3000/login' });
+    chrome.tabs.create({ url: 'https://localhost/login' });
     throw new Error('Redirigiendo a la web-app para iniciar sesión...');
   }
 }

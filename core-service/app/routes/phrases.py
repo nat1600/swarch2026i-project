@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.services.phrase_service import PhraseService
 from app.core.dependencies import get_db, get_current_user_sub
 from app.schemas.phrases import (
-    PhraseResponse, PhraseCreate, ReviewRequest, ReviewResponse
+    PhraseResponse, PhraseCreate, ReviewRequest, ReviewResponse, PhraseUpdate
 )
 
 
@@ -114,5 +114,25 @@ def review_phrase(
     service = PhraseService(db_session=db)
     try:
         return service.review_phrase(phrase_id, body.quality)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.put('/{phrase_id}', response_model=PhraseResponse)
+def update_phrase(
+        phrase_id: int,
+        body: PhraseUpdate,
+        db: Session = Depends(get_db)
+):
+    """
+    Update a phrase
+    PUT /phrases/{phrase_id}
+    Response Codes:
+        - 200: Phrase successfully updated
+        - 400: Invalid input data
+        - 404: Phrase not found
+    """
+    service = PhraseService(db_session=db)
+    try:
+        return service.update_phrase(phrase_id, body)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
