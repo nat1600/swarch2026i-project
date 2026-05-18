@@ -35,8 +35,8 @@
   ],
 
   "host_permissions": [
-    "https://127.0.0.1/*",
-    "https://localhost/*",
+    "https://127.0.0.1:8443/*",
+    "https://localhost:8443/*",
     "https://dev-pzxsxsfqc2je00n4.us.auth0.com/*"
   ],
 
