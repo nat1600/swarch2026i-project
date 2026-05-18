@@ -8,11 +8,7 @@ import (
 	"unicode"
 )
 
-const maxBodyBytes = 1 * 1024 * 1024
-
-// maxStringValueLength limits individual string values in the payload.
-// A real vocabulary word should never exceed 45 characters (longest English word).
-const maxStringValueLength = 45
+const maxBodyBytes = 1 * 1024 * 1024 // 1 MB
 
 var forbiddenPatterns = []string{
 	"ignore previous instructions",
@@ -55,31 +51,10 @@ func normalizeInput(s string) string {
 	return strings.Join(strings.Fields(result.String()), " ")
 }
 
-// containsLongStringValue checks if any string value in the raw body
-// exceeds maxStringValueLength characters.
-// This is a lightweight heuristic — it looks for quoted strings.
-func containsLongStringValue(body string) bool {
-	inString := false
-	length := 0
-	for i := 0; i < len(body); i++ {
-		c := body[i]
-		if c == '"' && (i == 0 || body[i-1] != '\\') {
-			if inString {
-				if length > maxStringValueLength {
-					return true
-				}
-				length = 0
-			}
-			inString = !inString
-			continue
-		}
-		if inString {
-			length++
-		}
-	}
-	return false
-}
-
+// InputValidator is a middleware that rejects requests whose payload
+// exceeds maxBodyBytes or contains a known injection pattern.
+// Only POST, PUT, and PATCH requests are inspected — GET and DELETE
+// carry no body and are forwarded immediately.
 var InputValidator Middleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 1. Only validate mutating methods
@@ -103,16 +78,8 @@ var InputValidator Middleware = func(next http.Handler) http.Handler {
 			return
 		}
 
-		bodyStr := string(body)
-
-		// 4. Reject payloads with suspiciously long string values
-		if containsLongStringValue(bodyStr) {
-			http.Error(w, "invalid input", http.StatusBadRequest)
-			return
-		}
-
-		// 5. Normalize and check forbidden patterns
-		normalized := normalizeInput(bodyStr)
+		// 4. Normalize and check forbidden patterns
+		normalized := normalizeInput(string(body))
 		for _, pattern := range forbiddenPatterns {
 			if strings.Contains(normalized, pattern) {
 				http.Error(w, "invalid input", http.StatusBadRequest)
@@ -120,7 +87,7 @@ var InputValidator Middleware = func(next http.Handler) http.Handler {
 			}
 		}
 
-		// 6. Restore body and continue
+		// 5. Restore body and continue
 		r.Body = io.NopCloser(bytes.NewReader(body))
 		next.ServeHTTP(w, r)
 	})
