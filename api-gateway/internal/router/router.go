@@ -33,7 +33,6 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 	}
 
 	baseMiddlewares := []middleware.Middleware{
-		middleware.Security(cfg.InProduction()),
 		middleware.RequestID,
 		middleware.Logging,
 		middleware.CORS(cfg.AllowedOrigins),
