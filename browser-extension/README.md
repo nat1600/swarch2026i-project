@@ -174,7 +174,7 @@ bash scripts/migrate.sh
 uvicorn app.main:app --reload
 ```
 
-The extension connects to `http://localhost:8000` by default. To change the backend URL, edit `config/config.js`.
+The extension connects to `https://localhost:8443` by default. To change the backend URL, edit `config/config.js`.
 
 ## Reloading After Changes
 
