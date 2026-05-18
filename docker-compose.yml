@@ -281,6 +281,7 @@ services:
     container_name: web-app
     env_file: ./web-app/parla/.env
     environment:
+      API_GATEWAY_URL: http://api-gateway:8080
       SERVER_AUTH_URL: http://api-gateway:8080/api/auth
       SERVER_CORE_URL: http://api-gateway:8080/api/core
       SERVER_GRAPHQL_URL: http://api-gateway:8080/api/auth/graphql
