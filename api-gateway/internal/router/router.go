@@ -38,7 +38,7 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		middleware.CORS(cfg.AllowedOrigins),
 		middleware.RateLimit(defaultRPS, defaultBurst),
 	}
-	middlewaresWithAuth := append(baseMiddlewares, authMiddleware)
+	middlewaresWithAuth := append(baseMiddlewares, authMiddleware, middleware.InputValidator)
 	middlewaresWithoutAuth := baseMiddlewares
 
 	for _, route := range cfg.Routes {
