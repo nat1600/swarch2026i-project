@@ -1,3 +1,9 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Non-interactive approvals for packages that require running build scripts during install
+allowBuilds:
+  msw: true
+  sharp: true
+  unrs-resolver: true
