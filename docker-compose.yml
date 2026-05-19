@@ -102,10 +102,12 @@ services:
     container_name: payment_migration
     build: ./payment-service/
     command: bash scripts/migrate.sh
-    env_file:
-      - ./payment-service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: root
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
     depends_on:
       postgres:
         condition: service_healthy
@@ -151,6 +153,8 @@ services:
       core-service:
         condition: service_healthy
       forum-service:
+        condition: service_healthy
+      payment-service:
         condition: service_healthy
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
@@ -228,25 +232,30 @@ services:
       forum_seed:
         condition: service_completed_successfully
 
-#  payment-service:
-#    build: ./payment-service
-#    container_name: payment-service
-#    env_file:
-#      - ./payment-service/.env
-#    environment:
-#      DATABASE_URL: postgresql+asyncpg://root:password@postgres:5432/payment_db
-#      # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_PUBLIC_KEY and JWT_SECRET are
-#      # provided via the service env_file (payment-service/.env). Avoid using
-#      # ${VAR} interpolation here so Compose does not require them in the host
-#      # environment and the file values are used inside the container.
-#      AUTH_SERVICE_URL: http://auth-service:8000
-#    ports:
-#      - "8005:8005"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      payment_migration:
-#        condition: service_completed_successfully
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    env_file:
+      - ./payment-service/.env
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: root
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
+    ports:
+      - "8005:8005"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8005/health/check"]
+      start_period: 15s
+      start_interval: 2s
+      interval: 30s
+      timeout: 3s
+      retries: 5
+    depends_on:
+      payment_migration:
+        condition: service_completed_successfully
+
 
 #  gamification-service:
 #    build: ./gamification-service/GamificationService
@@ -288,7 +297,6 @@ services:
       SERVER_FORUM_URL: http://api-gateway:8080/api/forum
       SERVER_GAME_URL: http://api-gateway:8080/api/game
       SERVER_GAMIFICATION_URL: http://api-gateway:8080/api/gamification
-      SERVER_PAYMENT_URL: http://api-gateway:8080/api/payments
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s

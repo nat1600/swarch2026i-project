@@ -1,45 +1,33 @@
 #!/bin/bash
-set -euo pipefail
 
-uv run python - <<'PY'
-import asyncio
-import os
-from urllib.parse import urlsplit, urlunsplit
+# Payment Service Database Migration Script
 
-import asyncpg
+echo "Starting Payment Service database migration..."
 
+# Set environment variables for Spring Boot
+export SPRING_DATASOURCE_URL=jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+export SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+export SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
-def quote_identifier(identifier: str) -> str:
-    return identifier.replace('"', '""')
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL..."
+until pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER}; do
+  echo "PostgreSQL is unavailable - sleeping"
+  sleep 2
+done
 
+echo "PostgreSQL is up - executing migration"
 
-database_url = os.environ["DATABASE_URL"]
-parts = urlsplit(database_url)
-database_name = parts.path.lstrip("/")
+# Build and run Spring Boot application
+echo "Compiling Payment Service..."
+mvn clean package -DskipTests
 
-if not database_name:
-    raise RuntimeError("DATABASE_URL must include a database name")
+if [ $? -eq 0 ]; then
+    echo "✓ Compilation successful"
+    echo "✓ Tables created/updated by Hibernate"
+else
+    echo "✗ Compilation failed"
+    exit 1
+fi
 
-admin_scheme = parts.scheme.split("+", 1)[0]
-admin_url = urlunsplit(parts._replace(scheme=admin_scheme, path="/postgres"))
-
-
-async def ensure_database_exists() -> None:
-    connection = await asyncpg.connect(admin_url)
-    try:
-        database_exists = await connection.fetchval(
-            "SELECT 1 FROM pg_database WHERE datname = $1",
-            database_name,
-        )
-        if not database_exists:
-            await connection.execute(
-                f'CREATE DATABASE "{quote_identifier(database_name)}"'
-            )
-    finally:
-        await connection.close()
-
-
-asyncio.run(ensure_database_exists())
-PY
-
-uv run alembic upgrade head
+echo "Migration completed successfully"

@@ -84,9 +84,6 @@ export default function LandingPage() {
 
         {/* Botones nav */}
         <div className="flex items-center gap-3">
-          <Link href="/payment" className="btn-primary py-3! px-7 text-sm! bg-parla-red hover:shadow-[0_4px_0_0_#8B0228]">
-            👑 Consigue VIP
-          </Link>
           <Link href="/login" className="btn-secondary py-3! px-7 text-sm!">
             Iniciar sesión →
           </Link>
@@ -328,7 +325,7 @@ export default function LandingPage() {
             </div>
 
             <Link
-              href="/payment"
+              href="/home"
               className="inline-block bg-white text-parla-red font-brand text-lg font-bold px-10 py-4 rounded-xl border-3 border-white shadow-[0_4px_0_0_rgba(255,255,255,0.4)] hover:shadow-[0_6px_0_0_rgba(255,255,255,0.4)] transition-all"
             >
               Comienza tu prueba gratuita de 7 días →

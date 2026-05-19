@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ScrollReveal } from "@/components/core/ScrollReveal";
 import HomeNavBar from "@/components/core/HomeNavBar";
+import { VIPCheckoutForm } from "@/components/payment/VIPCheckoutForm";
 import {
   Sparkles,
   MessageSquare,
@@ -318,6 +319,55 @@ export function HomeContent({ user }: HomeContentProps) {
               );
             })}
           </div>
+        </section>
+
+        {/* ---------- VIP ---------- */}
+        <section>
+          <ScrollReveal className="relative overflow-hidden rounded-4xl border-4 border-parla-dark bg-gradient-to-br from-parla-red to-[#8B0228] shadow-[0_12px_0_0_#254159] p-8 md:p-10 text-white">
+            <div className="absolute top-0 right-0 text-8xl opacity-10 translate-x-6 -translate-y-6 pointer-events-none">
+              👑
+            </div>
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8 items-start">
+              <div>
+                <div className="inline-block bg-white text-parla-red font-brand text-sm px-4 py-2 rounded-full border-2 border-white mb-4 font-bold">
+                  ⭐ PREMIUM
+                </div>
+
+                <h2 className="font-brand text-[clamp(2rem,5vw,3.4rem)] leading-tight mb-4">
+                  Desbloquea Parla VIP
+                </h2>
+
+                <p className="text-white/90 font-semibold text-lg mb-6 max-w-xl">
+                  Lecciones ilimitadas, estadísticas avanzadas y acceso a todos
+                  los desafíos premium desde tu home.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">⚡</span>
+                    <span className="font-bold">Lecciones ilimitadas</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🔥</span>
+                    <span className="font-bold">Sin publicidad</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📊</span>
+                    <span className="font-bold">Estadísticas avanzadas</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🏆</span>
+                    <span className="font-bold">Desafíos premium</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative z-10">
+                <VIPCheckoutForm />
+              </div>
+            </div>
+          </ScrollReveal>
         </section>
 
         {/* ---------- MOTIVATIONAL FOOTER ---------- */}

@@ -25,17 +25,33 @@ export function VIPCheckoutForm() {
       const response = await fetch("/api/auth/token");
       const { accessToken } = await response.json();
 
-      // Call payment service to create checkout
+      // Call payment service through API Gateway
       const paymentBaseUrl =
         process.env.NEXT_PUBLIC_PAYMENT_SERVICE_URL ??
-        "http://localhost:8080/api/payments";
+        "/api/payments";
 
+      // Build the payment request according to PaymentRequestDTO structure
       const checkoutResponse = await axios.post(
-        `${paymentBaseUrl}/checkout`,
+        `${paymentBaseUrl}/create`,
         {
-          plan_type: "vip",
-          success_url: `${window.location.origin}/payment/success`,
-          failure_url: `${window.location.origin}/payment/failure`,
+          external_reference: `vip-${user?.sub}-${Date.now()}`,
+          payer_email: user?.email,
+          items: [
+            {
+              id: "vip-plan",
+              title: "Parla VIP - Plan Mensual",
+              description: "Acceso ilimitado a todas las features premium de Parla",
+              quantity: 1,
+              unit_price: 9.99,
+              currency: "USD",
+            },
+          ],
+          back_urls: {
+            success: `${window.location.origin}/payment/success`,
+            failure: `${window.location.origin}/payment/failure`,
+            pending: `${window.location.origin}/payment/success`,
+          },
+          notification_url: `${window.location.origin}/api/payments/webhook`,
         },
         {
           headers: {
@@ -44,15 +60,22 @@ export function VIPCheckoutForm() {
         }
       );
 
-      // Redirect to MercadoPago checkout
-      if (checkoutResponse.data.checkout_url) {
-        window.location.href = checkoutResponse.data.checkout_url;
+      // Redirect to MercadoPago checkout (support both snake_case and camelCase)
+      const initPoint = checkoutResponse.data.initPoint || checkoutResponse.data.init_point;
+      const sandboxPoint = checkoutResponse.data.sandboxInitPoint || checkoutResponse.data.sandbox_init_point;
+
+      if (initPoint) {
+        window.location.href = initPoint;
+      } else if (sandboxPoint) {
+        window.location.href = sandboxPoint;
+      } else {
+        setError("No se recibió URL de checkout desde el servicio de pagos");
       }
     } catch (err) {
-      console.error("Checkout error:", err);
+      console.error("Payment error:", err);
       setError(
         axios.isAxiosError(err)
-          ? err.response?.data?.detail || "Error al procesar el pago"
+          ? err.response?.data?.message || "Error al procesar el pago"
           : "Error al procesar el pago"
       );
     } finally {

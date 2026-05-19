@@ -19,6 +19,10 @@
     {
       "path_prefix": "/api/gamification",
       "service_name": "game"
+    },
+    {
+      "path_prefix": "/api/payments",
+      "service_name": "payment"
     }
   ]
 }
