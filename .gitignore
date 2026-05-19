@@ -22,3 +22,5 @@ web-app/parla/.*
 web-app/parla/skills-lock.json
 
 nginx/certs/
+
+performance-analysis/results
