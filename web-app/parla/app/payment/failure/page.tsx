@@ -31,10 +31,10 @@ export default function FailurePage() {
         </div>
 
         <Link
-          href="/payment"
+          href="/home"
           className="inline-block bg-parla-red text-white font-brand text-lg px-8 py-3 rounded-xl border-3 border-parla-dark shadow-[0_4px_0_0_#254159] hover:shadow-[0_6px_0_0_#254159] transition-all"
         >
-          Intentar de nuevo →
+          Volver al home →
         </Link>
 
         <p className="text-parla-blue text-sm font-bold mt-6">

@@ -1,12 +1,20 @@
 package com.arquisoft.payment.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "payments")
@@ -17,32 +25,50 @@ import java.time.LocalDateTime;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, nullable = false, updatable = false)
+    private String id;
 
-    @Column(unique = true, nullable = false)
-    private String preferenceId;
+    @Column(name = "user_sub", nullable = false)
+    private String userSub;
+
+    @Column(name = "plan_type", nullable = false)
+    private String planType;
 
     @Column(nullable = false)
+    private Integer amount;
+
+    @Column(name = "currency_id", nullable = false, length = 8)
+    private String currencyId;
+
+    @Column(name = "preference_id", unique = true, length = 128)
+    private String preferenceId;
+
+    @Column(name = "external_reference", unique = true, nullable = false, length = 36)
     private String externalReference;
 
     @Column(nullable = false)
     private String payerEmail;
 
-    @Column(nullable = false)
+    @Column(name = "total_amount", nullable = false)
     private Double totalAmount;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    @Column(name = "checkout_url", columnDefinition = "TEXT")
+    private String checkoutUrl;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "mercadopago_payment_id")
+    @Column(name = "mercadopago_payment_id", unique = true, length = 64)
     private String mercadopagoPaymentId;
 
     @Column(name = "payment_method")
@@ -53,6 +79,9 @@ public class Payment {
 
     @PrePersist
     protected void onCreate() {
+        if (this.id == null || this.id.isBlank()) {
+            this.id = UUID.randomUUID().toString();
+        }
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         if (this.status == null) {
@@ -66,12 +95,12 @@ public class Payment {
     }
 
     public enum PaymentStatus {
-        PENDING,      // Pendiente de confirmación
-        APPROVED,     // Aprobado
-        FAILED,       // Rechazado
-        CANCELLED,    // Cancelado
-        REFUNDED,     // Reembolsado
-        IN_PROCESS,   // En proceso
-        CHARGEBACK    // Contracargo
+        PENDING,
+        APPROVED,
+        FAILED,
+        CANCELLED,
+        REFUNDED,
+        IN_PROCESS,
+        CHARGEBACK
     }
 }

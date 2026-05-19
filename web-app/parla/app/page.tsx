@@ -325,7 +325,7 @@ export default function LandingPage() {
             </div>
 
             <Link
-              href="/dashboard"
+              href="/home"
               className="inline-block bg-white text-parla-red font-brand text-lg font-bold px-10 py-4 rounded-xl border-3 border-white shadow-[0_4px_0_0_rgba(255,255,255,0.4)] hover:shadow-[0_6px_0_0_rgba(255,255,255,0.4)] transition-all"
             >
               Comienza tu prueba gratuita de 7 días →

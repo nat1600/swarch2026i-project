@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/payments")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class PaymentController {
@@ -23,14 +22,23 @@ public class PaymentController {
 
     /**
      * Crear preferencia de pago
-     * POST /api/payments/create
+    * POST /create
      */
     @PostMapping("/create")
-    public ResponseEntity<PaymentResponseDTO> createPayment(@RequestBody PaymentRequestDTO paymentRequest) {
+    public ResponseEntity<PaymentResponseDTO> createPayment(
+            @RequestHeader(value = "X-User-Sub", required = false) String userSub,
+            @RequestBody PaymentRequestDTO paymentRequest) {
         log.info("Solicitud de creación de pago: {}", paymentRequest.getExternalReference());
 
+        if (userSub == null || userSub.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(PaymentResponseDTO.builder()
+                    .status("ERROR")
+                    .message("Missing X-User-Sub header")
+                    .build());
+        }
+
         try {
-            PaymentResponseDTO response = mercadoPagoService.createPaymentPreference(paymentRequest);
+            PaymentResponseDTO response = mercadoPagoService.createPaymentPreference(paymentRequest, userSub);
 
             if ("ERROR".equals(response.getStatus())) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -49,7 +57,7 @@ public class PaymentController {
 
     /**
      * Obtener estado de un pago
-     * GET /api/payments/{preferenceId}
+    * GET /{preferenceId}
      */
     @GetMapping("/{preferenceId}")
     public ResponseEntity<Payment> getPaymentStatus(@PathVariable String preferenceId) {
@@ -69,7 +77,7 @@ public class PaymentController {
 
     /**
      * Health check
-     * GET /api/payments/health
+    * GET /health/check
      */
     @GetMapping("/health/check")
     public ResponseEntity<String> health() {

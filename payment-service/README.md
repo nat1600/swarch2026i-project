@@ -73,7 +73,7 @@ cp payment-service/.env.example payment-service/.env
 docker-compose up -d payment-service
 
 # Verificar que está corriendo
-curl http://localhost:8005/api/payments/health/check
+curl http://localhost:8005/health/check
 ```
 
 ### Opción B: Ejecución Local
@@ -109,19 +109,19 @@ El servicio estará disponible en: **http://localhost:8005**
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/payments/create` | Crear preferencia de pago |
-| GET | `/api/payments/{preferenceId}` | Obtener estado de pago |
-| POST | `/api/payments/webhook` | Webhook de MercadoPago (IPN) |
-| GET | `/api/payments/health/check` | Health check |
+| POST | `/create` | Crear preferencia de pago |
+| GET | `/{preferenceId}` | Obtener estado de pago |
+| POST | `/webhook` | Webhook de MercadoPago (IPN) |
+| GET | `/health/check` | Health check |
 
 ## Flujo de Pago
 
 ```
-1. Cliente solicita crear pago → POST /api/payments/create
+1. Cliente solicita crear pago → POST /api/payments/create (gateway) → /create (payment-service)
 2. Backend retorna init_point (URL MercadoPago)
 3. Cliente redirige a URL de checkout
 4. Usuario completa pago en MercadoPago
-5. MercadoPago notifica → POST /api/payments/webhook
+5. MercadoPago notifica → POST /api/payments/webhook (gateway) → /webhook (payment-service)
 6. Backend actualiza estado en BD
 7. Usuario redirigido a back_url (success/failure/pending)
 ```

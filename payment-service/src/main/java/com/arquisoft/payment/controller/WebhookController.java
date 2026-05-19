@@ -1,6 +1,5 @@
 package com.arquisoft.payment.controller;
 
-import com.arquisoft.payment.config.MercadoPagoConfiguration;
 import com.arquisoft.payment.dto.WebhookPayloadDTO;
 import com.arquisoft.payment.model.Payment;
 import com.arquisoft.payment.service.MercadoPagoService;
@@ -13,22 +12,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/payments/webhook")
 @Slf4j
 public class WebhookController {
 
     private final MercadoPagoService mercadoPagoService;
-    private final MercadoPagoConfiguration mercadoPagoConfiguration;
 
-    public WebhookController(MercadoPagoService mercadoPagoService,
-                              MercadoPagoConfiguration mercadoPagoConfiguration) {
+    public WebhookController(MercadoPagoService mercadoPagoService) {
         this.mercadoPagoService = mercadoPagoService;
-        this.mercadoPagoConfiguration = mercadoPagoConfiguration;
     }
 
     /**
      * Webhook para notificaciones de MercadoPago (IPN)
-     * POST /api/payments/webhook
+    * POST /webhook
      *
      * Documentación: https://developers.mercadopago.com/es/docs/checkout-api-reference#ipn-webhooks
      */

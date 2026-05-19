@@ -1,9 +1,9 @@
 package com.arquisoft.payment.config;
 
 import com.mercadopago.MercadoPagoConfig;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -20,7 +20,7 @@ public class MercadoPagoConfiguration {
         log.info("Inicializando configuración de MercadoPago...");
     }
 
-    @Bean
+    @PostConstruct
     public void initMercadoPago() {
         if (accessToken == null || accessToken.isEmpty()) {
             log.warn("MERCADOPAGO_ACCESS_TOKEN no configurado. Usar variable de entorno.");

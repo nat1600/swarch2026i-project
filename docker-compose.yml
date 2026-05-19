@@ -108,8 +108,6 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
-      MERCADOPAGO_WEBHOOK_TOKEN: ${MERCADOPAGO_WEBHOOK_TOKEN}
     depends_on:
       postgres:
         condition: service_healthy
@@ -245,12 +243,10 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
-      MERCADOPAGO_WEBHOOK_TOKEN: ${MERCADOPAGO_WEBHOOK_TOKEN}
     ports:
       - "8005:8005"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8005/api/payments/health/check"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8005/health/check"]
       start_period: 15s
       start_interval: 2s
       interval: 30s
