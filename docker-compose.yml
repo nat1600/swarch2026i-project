@@ -18,6 +18,8 @@ services:
       interval: 30s
       timeout: 3s
       retries: 5
+    networks:
+      - backend_network
 
   mongo:
     container_name: mongo
@@ -33,6 +35,8 @@ services:
       interval: 30s
       timeout: 3s
       retries: 5
+    networks:
+      - backend_network
 
   redis:
     image: redis:7-alpine
@@ -46,6 +50,8 @@ services:
       interval: 30s
       timeout: 3s
       retries: 5
+    networks:
+      - backend_network
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -62,6 +68,8 @@ services:
       retries: 5
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend_network
 
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
@@ -79,6 +87,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - backend_network
 
   core_migration:
     container_name: core_migration
@@ -97,6 +107,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - backend_network
 
   payment_migration:
     container_name: payment_migration
@@ -109,6 +121,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - backend_network
 
   forum_seed:
     container_name: forum_seed
@@ -123,6 +137,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    networks:
+      - backend_network
 
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
@@ -152,6 +168,9 @@ services:
         condition: service_healthy
       forum-service:
         condition: service_healthy
+    networks:
+      - frontend_network  
+      - backend_network
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
@@ -176,6 +195,8 @@ services:
     depends_on:
       auth_migration:
         condition: service_completed_successfully
+    networks:
+      - backend_network
 
   core-service:
     build: ./core-service
@@ -207,6 +228,8 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
+    networks:
+      - backend_network
 
   forum-service:
     build: ./forum-service/api
@@ -227,6 +250,8 @@ services:
     depends_on:
       forum_seed:
         condition: service_completed_successfully
+    networks:
+      - backend_network
 
 #  payment-service:
 #    build: ./payment-service
@@ -274,6 +299,8 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
+    networks:
+      - backend_network
         
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
   web-app:
@@ -298,6 +325,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_healthy
+    networks:
+      - frontend_network
 
   # ─── REVERSE PROXY ──────────────────────────────────────────────────────────
   nginx-web-app:
@@ -314,6 +343,8 @@ services:
       web-app:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - frontend_network
 
   nginx-extension:
     image: nginx:1.27-alpine
@@ -328,8 +359,27 @@ services:
       api-gateway:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - frontend_network
 
 volumes:
   postgres_data:
   forum_mongo_database:
   rabbitmq_data:
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NETWORK SEGMENTATION
+# ═══════════════════════════════════════════════════════════════════════════
+# Segmentación de red en 2 capas:
+# - frontend_network: Capa de presentación (web-app, nginx proxies)
+# - backend_network: Capa de lógica y datos (microservicios, bases de datos)
+#
+# Los proxies NGINX están en ambas redes para actuar como puente seguro
+# entre frontend y backend.
+networks:
+  frontend_network:
+    driver: bridge
+    name: parla_frontend
+  backend_network:
+    driver: bridge
+    name: parla_backend
