@@ -11,14 +11,49 @@ import (
 const maxBodyBytes = 1 * 1024 * 1024 // 1 MB
 
 var forbiddenPatterns = []string{
-	"ignore previous instructions",
-	"ignore all instructions",
-	"you are now",
-	"or 1=1",
-	"drop table",
-	"$where",
-	"$gt",
-	"$ne",
+    // — Prompt injection: variantes de "ignorar instrucciones" —
+    "ignore previous",
+    "ignore all",
+    "ignore the above",
+    "ignore your",
+    "disregard previous",
+    "disregard all",
+    "disregard your",
+    "forget previous",
+    "forget all",
+    "override instructions",
+    "override your",
+    "system rules",
+    "system prompt",
+    "system instructions",
+    "new instructions",
+    "instead of generating",   
+    "return a list of",        // instrucción de tarea alternativa
+    "do not mention this",     
+    "only output valid",      
+    "controlled security",     
+    "academic project",
+    "you are now",
+    "act as if",
+    "pretend you are",
+    "pretend to be",
+    "your new role",
+    "jailbreak",
+    "dan mode",
+    "do anything now",
+    // — SQL injection —
+    "or 1 1",
+    "drop table",
+    "union select",
+    "insert into",
+    "delete from",
+    // — NoSQL injection —
+    "$where",
+    "$gt",
+    "$ne",
+    "$or",
+    "$and",
+    "$regex",
 }
 
 // normalizeInput converts any obfuscated input to a comparable plain string.
