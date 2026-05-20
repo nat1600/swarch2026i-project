@@ -19,7 +19,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - backend_network
+      - private-subnet
 
   mongo:
     container_name: mongo
@@ -36,7 +36,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - backend_network
+      - private-subnet
 
   redis:
     image: redis:7-alpine
@@ -51,7 +51,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - backend_network
+      - private-subnet
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -69,7 +69,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - backend_network
+      - private-subnet
 
   # ─── DB MIGRATIONS / SEEDERS ───────────────────────────────────────────────
   auth_migration:
@@ -88,7 +88,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend_network
+      - private-subnet
 
   core_migration:
     container_name: core_migration
@@ -108,7 +108,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend_network
+      - private-subnet
 
   payment_migration:
     container_name: payment_migration
@@ -122,7 +122,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend_network
+      - private-subnet
 
   forum_seed:
     container_name: forum_seed
@@ -138,7 +138,7 @@ services:
       mongo:
         condition: service_healthy
     networks:
-      - backend_network
+      - private-subnet
 
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
@@ -169,8 +169,7 @@ services:
       forum-service:
         condition: service_healthy
     networks:
-      - frontend_network  
-      - backend_network
+      - private-subnet
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
@@ -196,7 +195,7 @@ services:
       auth_migration:
         condition: service_completed_successfully
     networks:
-      - backend_network
+      - private-subnet
 
   core-service:
     build: ./core-service
@@ -229,7 +228,7 @@ services:
       mongo:
         condition: service_healthy
     networks:
-      - backend_network
+      - private-subnet
 
   forum-service:
     build: ./forum-service/api
@@ -251,7 +250,7 @@ services:
       forum_seed:
         condition: service_completed_successfully
     networks:
-      - backend_network
+      - private-subnet
 
 #  payment-service:
 #    build: ./payment-service
@@ -300,7 +299,7 @@ services:
       mongo:
         condition: service_healthy
     networks:
-      - backend_network
+      - private-subnet
         
   # ─── FRONTEND WEB APP ───────────────────────────────────────────────────────
   web-app:
@@ -326,7 +325,7 @@ services:
       api-gateway:
         condition: service_healthy
     networks:
-      - frontend_network
+      - public-subnet
 
   # ─── REVERSE PROXY ──────────────────────────────────────────────────────────
   nginx-web-app:
@@ -344,7 +343,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - frontend_network
+      - private-subnet
+      - public-subnet
 
   nginx-extension:
     image: nginx:1.27-alpine
@@ -360,7 +360,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - frontend_network
+      - private-subnet
+      - public-subnet
 
 volumes:
   postgres_data:
@@ -368,18 +369,17 @@ volumes:
   rabbitmq_data:
 
 # ═══════════════════════════════════════════════════════════════════════════
-# NETWORK SEGMENTATION
+#                                NETWORK SEGMENTATION
 # ═══════════════════════════════════════════════════════════════════════════
 # Segmentación de red en 2 capas:
-# - frontend_network: Capa de presentación (web-app, nginx proxies)
-# - backend_network: Capa de lógica y datos (microservicios, bases de datos)
+# - public-subnet: Capa de presentación (web-app, nginx proxies)
+# - private-subnet: Capa de lógica y datos (microservicios, bases de datos)
 #
-# Los proxies NGINX están en ambas redes para actuar como puente seguro
-# entre frontend y backend.
+# Los proxies NGINX están en ambas redes para actuar como puente seguro entre frontend y backend.
 networks:
-  frontend_network:
+  public-subnet:
     driver: bridge
-    name: parla_frontend
-  backend_network:
+    name: parla_public
+  private-subnet:
     driver: bridge
-    name: parla_backend
+    name: parla_private
