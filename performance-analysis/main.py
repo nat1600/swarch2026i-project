@@ -37,7 +37,7 @@ def main() -> None:
         return
 
     # Parse results
-    data: dict[int, float] = {}
+    data: dict[int, tuple[float, float]] = {}
     for vus, result in tqdm(json_files.items(), "Extracting data from the json files"):
         if "metrics" not in result:
             print(f"  [!] Skipping VUs={vus}: missing 'metrics' key")
@@ -48,18 +48,40 @@ def main() -> None:
         if "avg" not in result["metrics"]["http_req_duration"]:
             print(f"  [!] Skipping VUs={vus}: missing 'avg' in http_req_duration")
             continue
-        data[vus] = result["metrics"]["http_req_duration"]["avg"]
+        if "http_req_failed" not in result['metrics']:
+            print(f"  [!] Skipping VUs={vus}: missing 'http_req_failed' in metrics")
+            continue
+        if "value" not in result['metrics']['http_req_failed']:
+            print(f"  [!] Skipping VUs={vus}: missing 'value' in http_req_failed")
+            continue
+        data[vus] = (
+            float(result["metrics"]["http_req_duration"]["avg"]),
+            float(result["metrics"]["http_req_failed"]["value"]) * 100
+        )
     if not data:
         print("No data could be extracted from results. All VU runs were skipped.")
         return
 
     # Sort by VUs
     sorted_data = sorted(data.items())
-    vus, avgs = zip(*sorted_data)
+    vus_list = [item[0] for item in sorted_data]
+    avg_durations = [item[1][0] for item in sorted_data]
+    error_rates = [item[1][1] for item in sorted_data]
+
+    # Plot
     plt.figure(figsize=(10, 6))
-    x_positions = range(len(vus))
-    plt.plot(x_positions, avgs, marker="o", linewidth=2.5, markersize=8)
-    plt.xticks(x_positions, [str(v) for v in vus])  # evenly spaced labels
+    plt.plot(vus_list, avg_durations, marker="o", linewidth=2.5, markersize=8)
+
+    # Annotate each dot with error %
+    for vu, dur, err in zip(vus_list, avg_durations, error_rates):
+        plt.annotate(
+            f"{err:.2f}%",
+            xy=(vu, dur),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha="center", fontsize=8, color="#dc2626", fontweight="bold",
+        )
+
     plt.xlabel("Concurrent Users (VUs)")
     plt.ylabel("Avg Response Time (ms)")
     plt.title("Performance Curve")

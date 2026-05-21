@@ -15,6 +15,6 @@ echo "Running with URL: $URL..."
 for vus in "$@"; do
     echo "Running with $vus VUs..."
     k6 run -e VUS=$vus -e URL=$URL --summary-export=results/jsons/"${vus}.json" --log-output=none performance_test.js
-    echo "Finished $vus VUs. Resting 15 minutes"
-    sleep 900
+    echo "Finished $vus VUs. Resting 10 minutes"
+    sleep 600
 done

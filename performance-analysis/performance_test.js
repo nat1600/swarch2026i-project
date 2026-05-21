@@ -3,7 +3,7 @@ import { sleep, check } from 'k6';
 
 export const options = {
     vus: parseInt(__ENV.VUS), // number of concurrent virtual users
-    duration: '30s', // test duration
+    duration: '60s', // test duration
 };
 
 export default function () {
