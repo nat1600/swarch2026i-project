@@ -126,6 +126,13 @@ services:
 
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 64M
+    ports:
+      - "9090:8080"
     build: ./api-gateway
     container_name: api-gateway
     env_file:
@@ -328,6 +335,13 @@ services:
       api-gateway:
         condition: service_healthy
     restart: unless-stopped
+
+  legit-user:
+    image: curlimages/curl:latest
+    container_name: legit-user
+    entrypoint: [ "sleep", "infinity" ]
+    depends_on:
+      - nginx-extension
 
 volumes:
   postgres_data:
