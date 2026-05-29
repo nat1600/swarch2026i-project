@@ -24,7 +24,7 @@ public class LeaderBoardController {
     private final LeaderBoardService leaderBoardService;
 
     @PostMapping("/incrementScore")
-    public ResponseEntity<BooleanDTO> postUserXp(@RequestHeader String userId, @RequestParam Integer newExp) {
+    public ResponseEntity<BooleanDTO> postUserXp(@RequestHeader("X-User-Sub") String userId, @RequestParam Integer newExp) {
 
         BooleanDTO result = leaderBoardService.incrementScore(userId, newExp);
 
@@ -57,7 +57,7 @@ public class LeaderBoardController {
     }
 
     @GetMapping("/getUserRank")
-    public ResponseEntity<UserScoreRankDTO> getUserRank(@RequestHeader String userName) {
+    public ResponseEntity<UserScoreRankDTO> getUserRank(@RequestHeader("X-User-Sub") String userName) {
 
         LocalDate currentWeek = LocalDate.now();
 

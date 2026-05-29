@@ -33,7 +33,7 @@ export function useGameSession() {
       await Promise.all([
         saveGameSession({ userName, gamePlayed, points }),
         registerUserActivity(userName),
-        incrementScore(userName, points),
+        incrementScore(points),
       ]);
     },
     [user]

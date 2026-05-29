@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
   useEffect(() => {
     if (!user?.sub) return;
 
-    Promise.all([getLeaderBoard(), getUserRank(user.sub)]).then(
+    Promise.all([getLeaderBoard(), getUserRank()]).then(
       ([board, myRank]: [UserScoreRankDTO[], UserScoreRankDTO | null]) => {
         const myUserId = user.sub!;
         const meOnBoard = board.find((e) => e.userName === myUserId);

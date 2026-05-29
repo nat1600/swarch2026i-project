@@ -8,7 +8,7 @@ import { useGameSession } from '@/hooks/useGameSession';
 import { phrasesService } from '@/lib/services/phrasesService';
 import { Phrase } from '@/lib/types/phrases';
 import { shuffle, buildFillRound, FillRound } from '@/lib/games/gameUtils';
-import { getEnrichedPhrases, EnrichedPhrase } from '@/lib/services/phrasesService';
+import { getEnrichedPhrases, EnrichedPhrase } from '@/lib/api/gamificationService';
 
 const POINTS_CORRECT = 100;
 const POINTS_WRONG = -15;
@@ -28,7 +28,6 @@ export default function FillInTheWordGame() {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
-
   const [enrichedMap, setEnrichedMap] = useState<Map<number, EnrichedPhrase[]>>(new Map());
 
   useEffect(() => {
@@ -37,7 +36,6 @@ export default function FillInTheWordGame() {
         const valid = data.filter((p) => p.active && p.original_text?.trim() && p.translated_text?.trim());
         setPhrases(valid);
 
-        // Fetch enrichment data for all phrase IDs in parallel
         const enriched = await getEnrichedPhrases(valid.map((p) => p.id));
         const map = new Map<number, EnrichedPhrase[]>();
         for (const e of enriched) {

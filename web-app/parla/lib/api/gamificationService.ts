@@ -103,6 +103,29 @@ export async function getAllUserGameSessions(userName: string): Promise<UserGame
   }
 }
 
+// ─── Enriched phrases (served by gamification service, fetched from enrichment service internally) ───
+
+export interface EnrichedPhrase {
+  phrase_id: number;
+  word: string;
+  sentence: string;
+  correct_answer: string;
+  distractors: string[];
+  level: string;
+  language: string;
+}
+
+export async function getEnrichedPhrases(phraseIds: number[]): Promise<EnrichedPhrase[]> {
+  if (phraseIds.length === 0) return [];
+  try {
+    const params = phraseIds.map((id) => `phrase_ids=${id}`).join('&');
+    const response = await gamificationApiClient.get<EnrichedPhrase[]>(`/enriched-phrases?${params}`);
+    return response.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Leaderboard endpoints ────────────────────────────────────────────────────
 
 export interface UserScoreRankDTO {
@@ -112,15 +135,14 @@ export interface UserScoreRankDTO {
 }
 
 /**
- * Increment a user's weekly XP score in Redis.
+ * Increment the authenticated user's weekly XP score in Redis.
  * POST /leaderBoard/incrementScore
- * Header: userId — Body param: newExp
+ * The gateway injects X-User-Sub from the JWT — no userId header needed from the client.
  */
-export async function incrementScore(userId: string, newExp: number): Promise<void> {
+export async function incrementScore(newExp: number): Promise<void> {
   try {
     await gamificationApiClient.post('/leaderBoard/incrementScore', null, {
       params: { newExp },
-      headers: { userId },
     });
   } catch (error) {
     console.error('incrementScore failed:', error);
@@ -144,15 +166,14 @@ export async function getLeaderBoard(): Promise<UserScoreRankDTO[]> {
 }
 
 /**
- * Get rank and score for a specific user.
+ * Get rank and score for the authenticated user.
  * GET /leaderBoard/getUserRank
- * Header: userName
+ * The gateway injects X-User-Sub from the JWT — no identity header needed from the client.
  */
-export async function getUserRank(userName: string): Promise<UserScoreRankDTO | null> {
+export async function getUserRank(): Promise<UserScoreRankDTO | null> {
   try {
     const response = await gamificationApiClient.get<UserScoreRankDTO>(
-      '/leaderBoard/getUserRank',
-      { headers: { userName, userId: userName } }
+      '/leaderBoard/getUserRank'
     );
     return response.data;
   } catch (error) {

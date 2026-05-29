@@ -243,11 +243,14 @@ services:
       JPA_SHOW_SQL: "true"
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      ENRICHMENT_SERVICE_URL: http://enrichment-service:8006
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      enrichment-service:
+        condition: service_started
 
   enrichment-service:
     build: ./enrichment-service

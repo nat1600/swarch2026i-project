@@ -221,25 +221,20 @@ describe('gamificationService', () => {
 
   // ─── getUserRank ──────────────────────────────────────────────────────────
   describe('getUserRank', () => {
-    it('fetches rank for a specific user with correct header', async () => {
+    it('fetches rank for authenticated user without identity headers', async () => {
       const rankData = { userId: 'auth0|testuser', score: 250, rank: 3 };
       mockedClient.get = jest.fn().mockResolvedValue({ data: rankData });
 
-      const result = await getUserRank('auth0|testuser');
+      const result = await getUserRank();
 
-      expect(mockedClient.get).toHaveBeenCalledWith(
-        '/leaderBoard/getUserRank',
-        expect.objectContaining({
-          headers: expect.objectContaining({ userName: 'auth0|testuser' }),
-        })
-      );
+      expect(mockedClient.get).toHaveBeenCalledWith('/leaderBoard/getUserRank');
       expect(result?.score).toBe(250);
       expect(result?.rank).toBe(3);
     });
 
     it('returns null on error', async () => {
       mockedClient.get = jest.fn().mockRejectedValue(new Error('fail'));
-      const result = await getUserRank('auth0|testuser');
+      const result = await getUserRank();
       expect(result).toBeNull();
     });
   });
