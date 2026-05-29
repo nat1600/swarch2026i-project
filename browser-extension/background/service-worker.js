@@ -10,7 +10,7 @@
 
 importScripts('./auth.js');
 
-const BASE_URL = 'http://localhost';
+const BASE_URL = 'https://localhost';
 
 // ===========================
 // API HELPER

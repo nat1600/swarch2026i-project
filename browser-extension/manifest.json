@@ -36,7 +36,7 @@
 
   "host_permissions": [
     "http://127.0.0.1/*",
-    "http://localhost/*",
+    "https://localhost/*",
     "https://dev-pzxsxsfqc2je00n4.us.auth0.com/*"
   ],
 

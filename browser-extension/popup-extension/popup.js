@@ -39,10 +39,10 @@ const btnLanding = document.getElementById('btn-landing');
 // ===========================
 
 const URLS = {
-  practice: 'http://localhost/dictionary',
-  stats: 'http://localhost/stats',
-  share: 'http://localhost/forum',
-  landing: 'http://localhost/home'
+  practice: 'https://localhost/dictionary',
+  stats: 'https://localhost/stats',
+  share: 'https://localhost/forum',
+  landing: 'https://localhost/home'
 };
 
 // ===========================
