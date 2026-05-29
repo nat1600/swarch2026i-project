@@ -12,6 +12,9 @@ import {
   Gamepad2,
   Medal,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getAllUserGameSessions, computeTotalXP } from "@/lib/api/gamificationService";
+import { useUser } from "@auth0/nextjs-auth0";
 
 interface HomeNavBarProps {
   userPicture: string;
@@ -19,6 +22,15 @@ interface HomeNavBarProps {
 }
 
 export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
+  const { user } = useUser();
+  const [totalXP, setTotalXP] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user?.sub) return;
+    getAllUserGameSessions(user.sub).then((sessions) => {
+      setTotalXP(computeTotalXP(sessions));
+    });
+  }, [user?.sub]);
   return (
     <nav className="bg-white border-b-4 border-parla-dark px-4 py-3 sticky top-0 z-50 animate-fade-in-down">
       <div className="max-w-5xl mx-auto flex justify-between items-center">
@@ -42,7 +54,7 @@ export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
             className="hidden sm:flex items-center gap-1.5 bg-parla-mist px-3.5 py-1.5 rounded-full border-2 border-parla-blue/30 font-extrabold text-sm text-parla-blue hover:bg-parla-blue/10 transition-colors"
           >
             <Trophy className="w-4 h-4 text-yellow-500" />
-            <span>120 XP</span>
+            <span>{totalXP !== null ? `${totalXP} XP` : "... XP"}</span>
           </Link>
 
           {/* Leaderboard link */}

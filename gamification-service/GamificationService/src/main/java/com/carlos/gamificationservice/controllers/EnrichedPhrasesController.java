@@ -34,7 +34,7 @@ public class EnrichedPhrasesController {
             @RequestParam List<Integer> phrase_ids
     ) {
         UriComponentsBuilder builder = UriComponentsBuilder
-                .fromHttpUrl(enrichmentServiceUrl + "/enriched-phrases");
+                .fromUriString(enrichmentServiceUrl + "/enriched-phrases");
         for (Integer id : phrase_ids) {
             builder.queryParam("phrase_ids", id);
         }
