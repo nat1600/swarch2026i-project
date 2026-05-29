@@ -106,7 +106,7 @@ export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
             className="inline-block transition-transform hover:-translate-y-1 hover:scale-105 cursor-pointer rounded-full"
           >
             <Avatar className="w-9 h-9 border-2 border-parla-dark shadow-[0_2px_0_0_#254159]">
-              <AvatarImage src={userPicture} />
+              <AvatarImage src={userPicture} referrerPolicy="no-referrer" />
               <AvatarFallback className="font-extrabold text-parla-dark bg-parla-mist text-sm">
                 {initials}
               </AvatarFallback>
