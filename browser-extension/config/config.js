@@ -6,7 +6,7 @@
 const CONFIG = {
 
     backend: {
-      url: 'https://localhost',
+      url: 'https://localhost:8443',
       endpoints: {
         translate: '/api/core/translate',   // POST — translate a text
         phrases:   '/api/core/phrases/',    // GET / POST / DELETE — saved phrases
