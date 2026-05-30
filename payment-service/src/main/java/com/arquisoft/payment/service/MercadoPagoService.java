@@ -11,7 +11,9 @@ import com.mercadopago.client.preference.PreferencePayerRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.resources.preference.Preference;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,6 +58,21 @@ public class MercadoPagoService {
                 return PaymentResponseDTO.builder()
                         .status("ERROR")
                         .message("Payment items are required")
+                        .build();
+            }
+
+            // Bloquear si el usuario ya tiene un pago en curso
+            List<Payment.PaymentStatus> activeStatuses = List.of(
+                    Payment.PaymentStatus.PENDING, Payment.PaymentStatus.IN_PROCESS);
+            Optional<Payment> activePayment = paymentRepository
+                    .findFirstByUserSubAndStatusIn(userSub, activeStatuses);
+            if (activePayment.isPresent()) {
+                log.warn("Usuario {} ya tiene un pago en proceso: {}", userSub,
+                        activePayment.get().getPreferenceId());
+                return PaymentResponseDTO.builder()
+                        .status("PENDING_PAYMENT")
+                        .message("Ya tienes un pago en proceso. Espera a que finalice antes de iniciar uno nuevo.")
+                        .preferenceId(activePayment.get().getPreferenceId())
                         .build();
             }
 
@@ -209,5 +226,24 @@ public class MercadoPagoService {
 
         // Avoid truncation collisions: derive a deterministic UUID from the full string.
         return UUID.nameUUIDFromBytes(externalReference.getBytes()).toString();
+    }
+
+    /** Cada minuto rechaza los pagos PENDING/IN_PROCESS con más de 15 minutos sin notificación. */
+    @Scheduled(fixedRate = 60_000)
+    @Transactional
+    public void rejectExpiredPayments() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
+        List<Payment.PaymentStatus> pendingStatuses = List.of(
+                Payment.PaymentStatus.PENDING, Payment.PaymentStatus.IN_PROCESS);
+        List<Payment> expired = paymentRepository.findByStatusInAndCreatedAtBefore(pendingStatuses, cutoff);
+        if (expired.isEmpty()) return;
+
+        log.info("Expirando {} pagos sin notificación tras 15 minutos", expired.size());
+        for (Payment payment : expired) {
+            payment.setStatus(Payment.PaymentStatus.FAILED);
+            payment.setUpdatedAt(LocalDateTime.now());
+            log.info("Pago {} rechazado por timeout (creado: {})", payment.getPreferenceId(), payment.getCreatedAt());
+        }
+        paymentRepository.saveAll(expired);
     }
 }

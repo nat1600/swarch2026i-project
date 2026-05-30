@@ -154,8 +154,8 @@ services:
         condition: service_healthy
       forum-service:
         condition: service_healthy
-      payment-service:
-        condition: service_healthy
+      # payment-service:
+      #   condition: service_healthy
 
   # ─── BACKEND MICROSERVICES ──────────────────────────────────────────────────
   auth-service:
@@ -243,8 +243,6 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_PORT: 5432
-    ports:
-      - "8005:8005"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8005/health/check"]
       start_period: 15s
