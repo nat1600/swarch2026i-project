@@ -32,7 +32,7 @@ export function useGameSession() {
       // Fire all three concurrently; errors are swallowed inside each helper
       await Promise.all([
         saveGameSession({ userName, gamePlayed, points }),
-        registerUserActivity(userName),
+        registerUserActivity(),
         incrementScore(points),
       ]);
     },

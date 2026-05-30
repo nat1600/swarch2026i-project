@@ -20,15 +20,15 @@ export interface UserGameSessionDTO {
 
 /**
  * Fetch the current streak data for a user.
- * GET /userStreak/getUserStreakData?userName=
+ * GET /userStreak/getUserStreakData
+ * Identity is injected by the API Gateway via X-User-Sub header.
  *
  * Returns null if the user has no activity recorded yet.
  */
-export async function getUserStreak(userName: string): Promise<UserStreakDTO | null> {
+export async function getUserStreak(): Promise<UserStreakDTO | null> {
   try {
     const response = await gamificationApiClient.get<UserStreakDTO>(
-      '/userStreak/getUserStreakData',
-      { params: { userName } }
+      '/userStreak/getUserStreakData'
     );
     return response.data;
   } catch (error) {
@@ -39,16 +39,16 @@ export async function getUserStreak(userName: string): Promise<UserStreakDTO | n
 
 /**
  * Register today's activity for a user (updates streak).
- * POST /userStreak/postUserActivity?userName=
+ * POST /userStreak/postUserActivity
+ * Identity is injected by the API Gateway via X-User-Sub header.
  *
  * Returns the updated streak, or null on failure.
  */
-export async function registerUserActivity(userName: string): Promise<UserStreakDTO | null> {
+export async function registerUserActivity(): Promise<UserStreakDTO | null> {
   try {
     const response = await gamificationApiClient.post<UserStreakDTO>(
       '/userStreak/postUserActivity',
-      null,
-      { params: { userName } }
+      null
     );
     return response.data;
   } catch (error) {
@@ -86,15 +86,15 @@ export async function saveGameSession(
 
 /**
  * Get all game sessions for a user.
- * GET /userGameSession/getAllUserGameSessions?userName=
+ * GET /userGameSession/getAllUserGameSessions
+ * Identity is injected by the API Gateway via X-User-Sub header.
  *
  * Useful to compute total XP and derive weekly activity.
  */
-export async function getAllUserGameSessions(userName: string): Promise<UserGameSessionDTO[]> {
+export async function getAllUserGameSessions(): Promise<UserGameSessionDTO[]> {
   try {
     const response = await gamificationApiClient.get<UserGameSessionDTO[]>(
-      '/userGameSession/getAllUserGameSessions',
-      { params: { userName } }
+      '/userGameSession/getAllUserGameSessions'
     );
     return response.data ?? [];
   } catch (error) {

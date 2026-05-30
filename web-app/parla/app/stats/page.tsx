@@ -27,8 +27,8 @@ export default function StatsPage() {
     const fetchStats = async () => {
       setIsLoadingStats(true);
       const [streakData, sessionData] = await Promise.all([
-        getUserStreak(user.sub!),
-        getAllUserGameSessions(user.sub!),
+        getUserStreak(),
+        getAllUserGameSessions(),
       ]);
       setStreak(streakData);
       setSessions(sessionData);

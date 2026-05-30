@@ -142,8 +142,8 @@ export function HomeContent({ user }: HomeContentProps) {
   useEffect(() => {
     const sub = user.sub;
     Promise.all([
-      getUserStreak(sub).catch(() => null),
-      getAllUserGameSessions(sub).catch(() => []),
+      getUserStreak().catch(() => null),
+      getAllUserGameSessions().catch(() => []),
       getThreads({ user_id: sub, limit: 100 }).catch(() => ({ items: [] })),
     ]).then(([streakData, sessions, threadsRes]) => {
       setStats({

@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAllUserGameSessions, computeTotalXP } from "@/lib/api/gamificationService";
-import { useUser } from "@auth0/nextjs-auth0";
 
 interface HomeNavBarProps {
   userPicture: string;
@@ -22,15 +21,13 @@ interface HomeNavBarProps {
 }
 
 export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
-  const { user } = useUser();
   const [totalXP, setTotalXP] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!user?.sub) return;
-    getAllUserGameSessions(user.sub).then((sessions) => {
+    getAllUserGameSessions().then((sessions) => {
       setTotalXP(computeTotalXP(sessions));
     });
-  }, [user?.sub]);
+  }, []);
   return (
     <nav className="bg-white border-b-4 border-parla-dark px-4 py-3 sticky top-0 z-50 animate-fade-in-down">
       <div className="max-w-5xl mx-auto flex justify-between items-center">
