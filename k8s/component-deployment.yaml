@@ -29,6 +29,6 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: component
-        image: mateoavivas/reliability-component:latest
+        image: mateov/reliability-component:latest
         ports:
         - containerPort: 8000
