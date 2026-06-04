@@ -317,7 +317,7 @@ export function HomeContent({ user }: HomeContentProps) {
                   animation="animate-fade-in-up"
                   delay={`${i * 120}ms`}
                 >
-                  <Link href={i === 1 ? "/forum/my-posts" : i === 2 ? "/leaderboard" : "/games"} className="block h-full group">
+                  <Link href={i === 0 ? "/stats" : i === 1 ? "/forum/my-posts" : "/leaderboard"} className="block h-full group">
                     <div
                       className="bg-white border-4 rounded-3xl p-6 flex items-center gap-4 group-hover:-translate-y-1 transition-all h-full"
                       style={{
