@@ -149,7 +149,7 @@ Parla is decomposed into four core domains:
 
 Parla implements five security scenarios tested in Prototype 3.
 
-### Scenario 1 — Secure Channel (TLS)
+### Scenario 1 : Secure Channel (TLS)
 
 **Vulnerability:** Communication over plain HTTP exposes credentials and payloads to packet sniffing (Wireshark-visible cleartext).
 
@@ -165,7 +165,7 @@ Parla implements five security scenarios tested in Prototype 3.
 
 ---
 
-### Scenario 2 — Network Segmentation
+### Scenario 2 : Network Segmentation
 
 **Vulnerability:** All services on a single flat Docker network expose database ports (5432, 27017, 6379, 5672, 15672) directly on the host, enabling lateral movement from any compromised container.
 
@@ -186,7 +186,7 @@ Parla implements five security scenarios tested in Prototype 3.
 
 ---
 
-### Scenario 3 — Reverse Proxy (DDoS / Rate Limiting)
+### Scenario 3 : Reverse Proxy (DDoS / Rate Limiting)
 
 **Vulnerability:** Direct access to the API Gateway allows a single attacker to exhaust server resources and make the system unavailable for legitimate users.
 
@@ -209,7 +209,7 @@ Parla implements five security scenarios tested in Prototype 3.
 
 ---
 
-### Scenario 4 — Input Validation
+### Scenario 4 : Input Validation
 
 **Vulnerability:** `parla-gw` forwarded raw, unvalidated payloads to internal microservices. Prompt injection reached the LLM (mitigated only by Anthropic's own guards). SQL injection payloads were accepted without filtering.
 
@@ -235,7 +235,7 @@ After: Invalid input error returned before the payload reached any service.
 
 ---
 
-### Scenario 5 — Centralized Audit (Audit Interceptor)
+### Scenario 5 : Centralized Audit (Audit Interceptor)
 
 **Vulnerability:** No centralized monitoring or alerting for suspicious requests, leaving attacks undetected until damage is done.
 
@@ -487,9 +487,6 @@ This project was developed as part of the **Software Architecture (swarch2026i)*
 <div align="center">
   <sub>Built with microservices, caffeine, and a love for language learning.</sub>
 </div>
-READMEEOF
-echo "Done"
-Output
 
 Done
 Done
