@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: component-deployment
+  # Replication: 4 identical instances run simultaneously.
+  # All are hot, none is designated as primary or standby.
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: reliability-component
+  template:
+    metadata:
+      labels:
+        app: reliability-component
+    spec:
+      affinity:
+        podAntiAffinity:
+          # Encourage pods to land on different nodes (Hot Spare across nodes).
+          # 'preferred' does not block scheduling if only one node is available.
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values: ["reliability-component"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: component
+        image: mateoavivas/reliability-component:latest
+        ports:
+        - containerPort: 8000
