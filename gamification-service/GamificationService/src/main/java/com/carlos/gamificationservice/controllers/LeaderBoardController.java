@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+
 import java.time.LocalDate;
 import java.time.temporal.IsoFields;
 import java.util.List;
@@ -22,7 +24,7 @@ public class LeaderBoardController {
     private final LeaderBoardService leaderBoardService;
 
     @PostMapping("/incrementScore")
-    public ResponseEntity<BooleanDTO> postUserXp(@RequestHeader String userId, @RequestParam Integer newExp) {
+    public ResponseEntity<BooleanDTO> postUserXp(@RequestHeader("X-User-Sub") String userId, @RequestParam Integer newExp) {
 
         BooleanDTO result = leaderBoardService.incrementScore(userId, newExp);
 
@@ -34,18 +36,28 @@ public class LeaderBoardController {
     }
 
     @GetMapping("/getLeaderBoard")
-    public ResponseEntity<List<ZSetOperations.TypedTuple<String>>> getPresentWeekLeaderBoard() {
+    public ResponseEntity<List<UserScoreRankDTO>> getPresentWeekLeaderBoard() {
 
         LocalDate currentWeek = LocalDate.now();
 
         int year = currentWeek.get(IsoFields.WEEK_BASED_YEAR);
         int weekOfTheYear = currentWeek.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
 
-        return new ResponseEntity<>(leaderBoardService.getTopNUsers(year, weekOfTheYear, 15), HttpStatus.OK);
+        List<ZSetOperations.TypedTuple<String>> tuples = leaderBoardService.getTopNUsers(year, weekOfTheYear, 15);
+
+        List<UserScoreRankDTO> result = new java.util.ArrayList<>();
+        for (int i = 0; i < tuples.size(); i++) {
+            ZSetOperations.TypedTuple<String> tuple = tuples.get(i);
+            String userName = tuple.getValue() != null ? tuple.getValue() : "";
+            int score = tuple.getScore() != null ? tuple.getScore().intValue() : 0;
+            result.add(new UserScoreRankDTO(userName, score, (long) (i + 1)));
+        }
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @GetMapping("/getUserRank")
-    public ResponseEntity<UserScoreRankDTO> getUserRank(@RequestHeader String userName) {
+    public ResponseEntity<UserScoreRankDTO> getUserRank(@RequestHeader("X-User-Sub") String userName) {
 
         LocalDate currentWeek = LocalDate.now();
 

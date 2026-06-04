@@ -12,6 +12,8 @@ import {
   Gamepad2,
   Medal,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getAllUserGameSessions, computeTotalXP } from "@/lib/api/gamificationService";
 
 interface HomeNavBarProps {
   userPicture: string;
@@ -19,6 +21,13 @@ interface HomeNavBarProps {
 }
 
 export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
+  const [totalXP, setTotalXP] = useState<number | null>(null);
+
+  useEffect(() => {
+    getAllUserGameSessions().then((sessions) => {
+      setTotalXP(computeTotalXP(sessions));
+    });
+  }, []);
   return (
     <nav className="bg-white border-b-4 border-parla-dark px-4 py-3 sticky top-0 z-50 animate-fade-in-down">
       <div className="max-w-5xl mx-auto flex justify-between items-center">
@@ -42,7 +51,7 @@ export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
             className="hidden sm:flex items-center gap-1.5 bg-parla-mist px-3.5 py-1.5 rounded-full border-2 border-parla-blue/30 font-extrabold text-sm text-parla-blue hover:bg-parla-blue/10 transition-colors"
           >
             <Trophy className="w-4 h-4 text-yellow-500" />
-            <span>120 XP</span>
+            <span>{totalXP !== null ? `${totalXP} XP` : "... XP"}</span>
           </Link>
 
           {/* Leaderboard link */}
@@ -94,7 +103,7 @@ export default function HomeNavBar({ userPicture, initials }: HomeNavBarProps) {
             className="inline-block transition-transform hover:-translate-y-1 hover:scale-105 cursor-pointer rounded-full"
           >
             <Avatar className="w-9 h-9 border-2 border-parla-dark shadow-[0_2px_0_0_#254159]">
-              <AvatarImage src={userPicture} />
+              <AvatarImage src={userPicture} referrerPolicy="no-referrer" />
               <AvatarFallback className="font-extrabold text-parla-dark bg-parla-mist text-sm">
                 {initials}
               </AvatarFallback>
