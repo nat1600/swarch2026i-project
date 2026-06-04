@@ -30,5 +30,6 @@ spec:
       containers:
       - name: component
         image: mateov/reliability-component:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: component-deployment-vps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reliability-component
+  template:
+    metadata:
+      labels:
+        app: reliability-component
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: srv1686154
+      containers:
+      - name: component
+        image: mateov/reliability-component:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
