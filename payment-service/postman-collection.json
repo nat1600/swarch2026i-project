@@ -1,0 +1,122 @@
+{
+  "info": {
+    "name": "Payment Service - MercadoPago",
+    "description": "Colección para probar endpoints de Payment Service con MercadoPago",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Crear Preferencia de Pago",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  var jsonData = pm.response.json();",
+              "  pm.environment.set('preference_id', jsonData.preference_id);",
+              "  pm.environment.set('init_point', jsonData.init_point);",
+              "  console.log('✓ Preferencia creada: ' + jsonData.preference_id);",
+              "  console.log('✓ URL de checkout (Sandbox): ' + jsonData.sandbox_init_point);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"external_reference\": \"ORDER-{{$timestamp}}\",\n  \"payer_email\": \"customer@example.com\",\n  \"back_urls\": {\n    \"success\": \"http://localhost:3000/payment/success\",\n    \"failure\": \"http://localhost:3000/payment/failure\",\n    \"pending\": \"http://localhost:3000/payment/pending\"\n  },\n  \"notification_url\": \"http://localhost:8005/api/payments/webhook\",\n  \"items\": [\n    {\n      \"id\": \"item-001\",\n      \"title\": \"Producto Sample\",\n      \"description\": \"Descripción del producto\",\n      \"quantity\": 1,\n      \"unit_price\": 99.99,\n      \"currency\": \"ARS\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8005/api/payments/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8005",
+          "path": ["api", "payments", "create"]
+        }
+      }
+    },
+    {
+      "name": "Obtener Estado de Pago",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8005/api/payments/{{preference_id}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8005",
+          "path": ["api", "payments", "{{preference_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8005/api/payments/health/check",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8005",
+          "path": ["api", "payments", "health", "check"]
+        }
+      }
+    },
+    {
+      "name": "Webhook Test - Payment Approved",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"123456\",\n  \"type\": \"payment\",\n  \"action\": \"approved\",\n  \"data\": {\n    \"id\": \"{{preference_id}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8005/api/payments/webhook",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8005",
+          "path": ["api", "payments", "webhook"]
+        }
+      }
+    },
+    {
+      "name": "Webhook Test - Payment Denied",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"123457\",\n  \"type\": \"payment\",\n  \"action\": \"denied\",\n  \"data\": {\n    \"id\": \"{{preference_id}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8005/api/payments/webhook",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8005",
+          "path": ["api", "payments", "webhook"]
+        }
+      }
+    }
+  ]
+}
