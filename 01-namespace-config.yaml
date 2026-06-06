@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: parla-ns
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: parla-ns
+data:
+  PORT: "8080"
+  ALLOWED_ORIGINS: "https://localhost"
+  # These URLs use K8s Service names - K3s DNS will resolve them automatically!
+  SERVICE_AUTH_URL: "http://auth-service:8000"
+  SERVICE_CORE_URL: "http://core-service:8000"
+  SERVICE_FORUM_URL: "http://forum-service:8003"
+  SERVICE_GAME_URL: "http://gamification-service:8080"
+  SERVICE_PAYMENT_URL: "http://payment-service:8005"

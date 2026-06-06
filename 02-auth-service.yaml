@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: parla-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: auth-service:local
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        # Non-sensitive config (can stay in YAML)
+        - name: POSTGRES_DB
+          value: "auth_db"
+        - name: POSTGRES_USER
+          value: "root"
+        - name: POSTGRES_HOST
+          value: "postgres"
+        - name: POSTGRES_PORT
+          value: "5432"
+        
+        # Sensitive data from Secret
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: auth-service-secrets
+              key: POSTGRES_PASSWORD
+        - name: DEBUG
+          valueFrom:
+            secretKeyRef:
+              name: auth-service-secrets
+              key: DEBUG
+        
+        # Or load ALL secrets at once:
+        # envFrom:
+        # - secretRef:
+        #     name: auth-service-secrets
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: parla-ns
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP
