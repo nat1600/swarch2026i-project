@@ -82,15 +82,8 @@ services:
       - ./core-service/.env
     environment:
       POSTGRES_DB: core_db
-      POSTGRES_USER: root
-      POSTGRES_HOST: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_PORT: 5432
-      MONGO_URL: mongodb://mongo:27018
-      MONGO_DB: core_db
-    depends_on:
-      postgres:
-        condition: service_healthy
+      
+   
 
   payment_migration:
     container_name: payment_migration
@@ -174,15 +167,6 @@ services:
     env_file:
       - ./core-service/.env
     environment:
-      POSTGRES_DB: core_db
-      POSTGRES_USER: neondb_owner
-      POSTGRES_HOST: ep-bitter-surf-aqxe2ctq-pooler.c-8.us-east-1.aws.neon.tech
-      POSTGRES_PASSWORD: npg_VyRLDBMX4g6N
-      POSTGRES_PORT: 5432
-      MONGO_URL: mongodb+srv://parla-forum-adm:GTPuA3rAjEitTqO5@forum-db.klj4qxo.mongodb.net
-      MONGO_DB: core_db
-      DEBUG: "true"
-      LIBRETRANSLATE_URL: "https://libretranslate.com"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
