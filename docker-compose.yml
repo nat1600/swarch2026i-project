@@ -83,7 +83,6 @@ services:
     environment:
       POSTGRES_DB: core_db
       
-   
 
   payment_migration:
     container_name: payment_migration
@@ -194,18 +193,13 @@ services:
         - linux/amd64
     platform: linux/amd64
     container_name: gamification-service
+    env_file:
+      - ./gamification-service/.env
     environment:
-      LOCAL_DB_URL: jdbc:postgresql://postgres:5432/gamification_db
-      LOCAL_DB_USERNAME: root
-      LOCAL_DB_PASSWORD: password
-      JPA_DDL_AUTO: update
-      JPA_SHOW_SQL: "true"
       REDIS_HOST: redis
       REDIS_PORT: 6379
       ENRICHMENT_SERVICE_URL: http://enrichment-service:8006
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       enrichment-service:
