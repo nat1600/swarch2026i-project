@@ -89,29 +89,18 @@ services:
     container_name: payment_migration
     build: ./payment-service/
     command: bash scripts/migrate.sh
+    env_file:
+    - ./payment-service/.env
     environment:
       POSTGRES_DB: payment_db
-      POSTGRES_USER: root
-      POSTGRES_HOST: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_PORT: 5432
-    depends_on:
-      postgres:
-        condition: service_healthy
+    
 
   forum_seed:
     container_name: forum_seed
     build: ./forum-service/api/
     command: python -m scripts.seed_categories
-    environment:
-      MONGO_URI: mongodb://mongo:27017
-      DB_NAME: forum_db
-      ATLAS_USER: dummy
-      ATLAS_PASS: dummy
-      ATLAS_CLUSTER: dummy
-    depends_on:
-      mongo:
-        condition: service_healthy
+    env_file:
+      - ./forum-service/.env
 
   # ─── API GATEWAY ────────────────────────────────────────────────────────────
   api-gateway:
@@ -185,12 +174,8 @@ services:
   forum-service:
     build: ./forum-service/api
     container_name: forum-service
-    environment:
-      MONGO_URI: mongodb://mongo:27017
-      DB_NAME: forum_db
-      ATLAS_USER: dummy
-      ATLAS_PASS: dummy
-      ATLAS_CLUSTER: dummy
+    env_file:
+      - ./forum-service/.env
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       start_period: 10s
@@ -231,12 +216,6 @@ services:
     container_name: payment-service
     env_file:
       - ./payment-service/.env
-    environment:
-      POSTGRES_DB: payment_db
-      POSTGRES_USER: neondb_owner
-      POSTGRES_HOST: ep-bitter-surf-aqxe2ctq-pooler.c-8.us-east-1.aws.neon.tech
-      POSTGRES_PASSWORD: npg_VyRLDBMX4g6N
-      POSTGRES_PORT: 5432
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8005/health/check"]
       start_period: 15s
