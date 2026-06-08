@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: parla
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: parla/api-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: ALLOWED_ORIGINS
+              value: "https://parla.local"
+            - name: SERVICE_AUTH_URL
+              value: "http://auth-service:8000"
+            - name: SERVICE_CORE_URL
+              value: "http://core-service:8000"
+            - name: SERVICE_FORUM_URL
+              value: "http://forum-service:8003"
+            - name: SERVICE_GAME_URL
+              value: "http://gamification-service:8080"
+            - name: SERVICE_PAYMENT_URL
+              value: "http://payment-service:8005"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
