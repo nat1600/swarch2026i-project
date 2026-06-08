@@ -17,9 +17,12 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-MONGO_URI="mongodb+srv://parla_user:F7dfPAnbiGaMVJGD@cluster0.m7efwsi.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority"
-MONGO_URI_SECONDARY="mongodb+srv://parla_user:F7dfPAnbiGaMVJGD@cluster0.m7efwsi.mongodb.net/?appName=Cluster0&readPreference=secondary"
-MONGO_DB="core_db"
+
+
+
+MONGO_URI="${MONGO_URI:?ERROR: MONGO_URI is not set. Run: source .env.test}"
+MONGO_URI_SECONDARY="${MONGO_URI_SECONDARY:?ERROR: MONGO_URI_SECONDARY is not set. Run: source .env.test}"
+MONGO_DB="${MONGO_DB:?ERROR: MONGO_DB is not set. Run: source .env.test}"
 NS="parla"
 TEST_ID="repl_test_$(date +%s)"
 

@@ -22,3 +22,6 @@ web-app/parla/.*
 web-app/parla/skills-lock.json
 
 nginx/certs/
+
+
+.env.test
