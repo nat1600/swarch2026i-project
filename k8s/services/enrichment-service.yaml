@@ -1,0 +1,50 @@
+# ------------------------------ DEPLOYMENT ------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enrichment-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: enrichment-microservice
+  template:
+    metadata:
+      labels:
+        app: enrichment-microservice
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["enrichment-microservice"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: enrichment-microservice
+        image: vmoras/enrichment-microservice-container:v1.0.0
+        imagePullPolicy: Always
+        envFrom:
+          - secretRef:
+              name: enrichment-secret
+        ports:
+        - containerPort: 8006
+
+---
+
+# ------------------------------ SERVICE ------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: enrichment-service
+spec:
+  type: ClusterIP
+  selector:
+    app: enrichment-microservice
+  ports:
+  - port: 80
+    targetPort: 8006

@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - web-app.yaml
+  - extension.yaml
+configMapGenerator:
+  - name: nginx-web-app-config
+    files:
+      - nginx.conf=../../nginx/web-app/nginx.conf
+  - name: nginx-snippets-config
+    files:
+      - security-headers.conf=../../nginx/snippets/security-headers.conf
+  - name: nginx-extension-config
+    files:
+      - nginx.conf=../../nginx/extension/nginx.conf

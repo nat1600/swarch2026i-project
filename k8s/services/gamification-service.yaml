@@ -1,0 +1,79 @@
+# ------------------------------ DEPLOYMENT ------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamification-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gamification-microservice
+  template:
+    metadata:
+      labels:
+        app: gamification-microservice
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["gamification-microservice"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: gamification-microservice
+        image: vmoras/gamification-microservice-container:v1.0.0
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: gamification-config
+          - secretRef:
+              name: gamification-secret
+        ports:
+        - containerPort: 8080
+
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 3
+
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          failureThreshold: 5
+          timeoutSeconds: 3
+
+---
+
+# ------------------------------ SERVICE ------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: gamification-service
+spec:
+  type: ClusterIP
+  selector:
+    app: gamification-microservice
+  ports:
+  - port: 80
+    targetPort: 8080
+
+---
+
+# ------------------------------ CONFIG MAP ------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gamification-config
+data:
+  JPA_DDL_AUTO: "update"
+  JPA_SHOW_SQL: "true"
+  ENRICHMENT_SERVICE_URL: "http://enrichment-service"
