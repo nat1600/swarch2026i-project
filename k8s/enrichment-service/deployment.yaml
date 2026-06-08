@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enrichment-service
+  namespace: parla
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enrichment-service
+  template:
+    metadata:
+      labels:
+        app: enrichment-service
+    spec:
+      containers:
+        - name: enrichment-service
+          image: parla/enrichment:latest
+          imagePullPolicy: Never
+          envFrom:
+            - secretRef:
+                name: db-credentials
+          env:
+            - name: MONGO_DB
+              value: "enrichment_db"
+            - name: MONGO_COLLECTION
+              value: "enriched_phrases"
+            - name: QUEUE_NAME
+              value: "word.enrichment"
