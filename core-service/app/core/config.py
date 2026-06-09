@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     mongo_db: str
 
     rabbitmq_url: str = "amqp://guest:guest@rabbitmq/"
+    redis_url: str = "redis://redis:6379/0"
 
     @property
     def database_url(self) -> str:

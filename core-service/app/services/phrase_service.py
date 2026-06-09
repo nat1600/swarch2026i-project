@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.services.sm2 import apply_sm2
 from app.core.config import get_settings
+from app.core.cache import invalidate_cache
 from app.schemas.phrases import PhraseCreate, PhraseUpdate
 from app.models.phrase import Phrase, ReviewData
 
@@ -51,6 +52,10 @@ class PhraseService:
             ## We are going to send a message to RabbitMQ, in a second thread
 
             await self._publish_enrichment(phrase)
+            
+            # Invalidate user's phrases cache
+            invalidate_cache(f"*:{user_id}")
+            
             return phrase
 
         except Exception:
@@ -69,6 +74,10 @@ class PhraseService:
         try:
             self.db.commit()
             self.db.refresh(phrase)
+            
+            # Invalidate user's phrases cache
+            invalidate_cache(f"*:{phrase.user_id}")
+            
             return phrase
         except Exception:
             self.db.rollback()
@@ -148,4 +157,8 @@ class PhraseService:
         self.db.commit()
         self.db.refresh(review)
         self.db.refresh(phrase)
+        
+        # Invalidate user's due phrases cache
+        invalidate_cache(f"*:{phrase.user_id}")
+        
         return review
