@@ -36,7 +36,6 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		middleware.RequestID,
 		middleware.Logging,
 		middleware.CORS(cfg.AllowedOrigins),
-		middleware.RateLimit(defaultRPS, defaultBurst),
 	}
 	middlewaresWithAuth := append(baseMiddlewares, authMiddleware, middleware.AuditInterceptor, middleware.InputValidator)
 	middlewaresWithoutAuth := baseMiddlewares
@@ -49,6 +48,29 @@ func New(cfg *config.GeneralConfig) (*http.ServeMux, error) {
 		handler := middleware.Chain(prx, middlewaresWithAuth...)
 		mux.Handle(route.PathPrefix+"/", handler)
 	}
+
+	// /test/heavy is an intentionally expensive, UNAUTHENTICATED endpoint used
+	// only by the DDoS / rate-limit load test in k8s/loadtest/. Each call burns
+	// CPU and allocates ~1MB so that, under a flood, a resource-constrained
+	// gateway pod is driven to exhaustion — making the "without nginx" half of
+	// the test visibly fail while the nginx-rate-limited half stays healthy. It
+	// is deliberately on middlewaresWithoutAuth so the flood is not bounced by
+	// JWT/audit before it reaches the work. Keep this OFF production images.
+	mux.Handle("GET /test/heavy", middleware.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allocate ~1MB per request to apply memory pressure.
+		buf := make([]byte, 1_000_000)
+		for i := range buf {
+			buf[i] = byte(i % 256)
+		}
+		// Burn CPU.
+		result := 0.0
+		for i := 0; i < 2_000_000; i++ {
+			result += float64(i) * 0.0001 / (float64(i) + 1.0)
+		}
+		time.Sleep(100 * time.Millisecond)
+		w.Header().Set("X-Burn", fmt.Sprintf("%f%d", result, buf[0]))
+		w.WriteHeader(http.StatusOK)
+	}), middlewaresWithoutAuth...))
 
 	mux.Handle("GET /health", middleware.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

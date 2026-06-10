@@ -23,3 +23,7 @@ web-app/parla/skills-lock.json
 
 nginx/certs/
 k8s/secrets/*.yaml
+
+# Load-test output (k8s/loadtest/)
+ddos-test-results/
+performance-analysis/

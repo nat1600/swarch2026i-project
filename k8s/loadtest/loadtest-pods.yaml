@@ -1,0 +1,46 @@
+# Two single-container pods that act as the load-test clients.
+#
+# Running them as SEPARATE pods is the whole point: each gets its own pod IP,
+# so nginx sees the attacker and the legitimate user as two distinct
+# $binary_remote_addr values — the same "different IP" property the original
+# docker-compose test got from host (attacker) vs. container (legit).
+#
+# Pod -> ClusterIP traffic is NOT source-NAT'd by kube-proxy, so the real pod
+# IP reaches nginx. That is exactly why we test from inside the cluster instead
+# of flooding the NodePort/Cloudflare tunnel from a laptop: those outside paths
+# rewrite the source IP (SNAT to the node IP / collapse to 127.0.0.1 via
+# cloudflared), which would lump attacker and legit user into one rate-limit
+# bucket and invalidate the test.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: loadtest-attacker
+  labels:
+    app: loadtest
+    role: attacker
+spec:
+  restartPolicy: Never
+  containers:
+    - name: hey
+      # Bundles the `hey` load generator. Alpine-based, so it has /bin/sh and
+      # `sleep`; we keep it alive and `kubectl exec hey ...` into it per phase.
+      # hey sets InsecureSkipVerify on its TLS transport, so it can flood the
+      # self-signed HTTPS endpoint without a cert error.
+      image: williamyeh/hey:latest
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: loadtest-legit
+  labels:
+    app: loadtest
+    role: legit
+spec:
+  restartPolicy: Never
+  containers:
+    - name: curl
+      # Same image the docker-compose `legit-user` used. We `kubectl exec` curl
+      # into it to sample the legitimate user's experience during each flood.
+      image: curlimages/curl:latest
+      command: ["sleep", "infinity"]
