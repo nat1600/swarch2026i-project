@@ -1,0 +1,79 @@
+# ------------------------------ DEPLOYMENT ------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: auth-microservice
+  template:
+    metadata:
+      labels:
+        app: auth-microservice
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["auth-microservice"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: auth-microservice
+        image: vmoras/auth-microservice-container:v1.0.0
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secret
+        ports:
+        - containerPort: 8000
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 2
+          failureThreshold: 5
+          timeoutSeconds: 3
+
+---
+
+# ------------------------------ SERVICE ------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-microservice
+  ports:
+  - port: 80
+    targetPort: 8000
+
+---
+
+# ------------------------------ CONFIG MAP ------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-config
+data:
+  DEBUG: "false"

@@ -1,0 +1,85 @@
+# ------------------------------ DEPLOYMENT ------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["api-gateway"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: gateway
+        image: vmoras/api-gateway-container:v1.0.0
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: gateway-config
+          - secretRef:
+              name: gateway-secret
+        ports:
+        - containerPort: 8080
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 2
+          failureThreshold: 5
+          timeoutSeconds: 3
+
+---
+
+# ------------------------------ SERVICE ------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: api-gateway
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+---
+
+# ------------------------------ CONFIG MAP ------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+data:
+  PORT: "8080"
+  ALLOWED_ORIGINS: "https://localhost"
+  SERVICE_AUTH_URL: "http://auth-service"
+  SERVICE_CORE_URL: "http://core-service"
+  SERVICE_FORUM_URL: "http://forum-service"
+  SERVICE_GAME_URL: "http://gamification-service"
+  SERVICE_PAYMENT_URL: "http://payment-service"

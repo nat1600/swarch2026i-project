@@ -22,3 +22,4 @@ web-app/parla/.*
 web-app/parla/skills-lock.json
 
 nginx/certs/
+k8s/secrets/*.yaml

@@ -1,0 +1,80 @@
+# ------------------------------ DEPLOYMENT ------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: core-microservice
+  template:
+    metadata:
+      labels:
+        app: core-microservice
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["core-microservice"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: core-microservice
+        image: vmoras/core-microservice-container:v1.0.0
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: core-config
+          - secretRef:
+              name: core-secret
+        ports:
+        - containerPort: 8000
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 2
+          failureThreshold: 5
+          timeoutSeconds: 3
+
+---
+
+# ------------------------------ SERVICE ------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-service
+spec:
+  type: ClusterIP
+  selector:
+    app: core-microservice
+  ports:
+  - port: 80
+    targetPort: 8000
+
+---
+
+# ------------------------------ CONFIG MAP ------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: core-config
+data:
+  DEBUG: "false"
+  LIBRETRANSLATE_URL: "https://libretranslate.com"

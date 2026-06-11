@@ -10,7 +10,7 @@
 
 importScripts('./auth.js');
 
-const BASE_URL = 'https://localhost:8443';
+const BASE_URL = 'https://api.parla.bar';
 
 // ===========================
 // API HELPER

@@ -1,0 +1,85 @@
+# ------------------------------ DEPLOYMENT ------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["web-app"]
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: web-app
+        image: vmoras/web-app-container:v1.0.0
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: web-app-config
+          - secretRef:
+              name: web-app-secret
+        ports:
+        - containerPort: 3000
+
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 3
+
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 2
+          failureThreshold: 5
+          timeoutSeconds: 3
+
+---
+
+# ------------------------------ SERVICE ------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app
+spec:
+  type: ClusterIP
+  selector:
+    app: web-app
+  ports:
+  - port: 3000
+    targetPort: 3000
+
+---
+
+# ------------------------------ CONFIG MAP ------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-app-config
+data:
+  API_GATEWAY_URL: "http://api-gateway:8080"
+  SERVER_AUTH_URL: "http://api-gateway:8080/api/auth"
+  SERVER_CORE_URL: "http://api-gateway:8080/api/core"
+  SERVER_GRAPHQL_URL: "http://api-gateway:8080/api/auth/graphql"
+  SERVER_FORUM_URL: "http://api-gateway:8080/api/forum"
+  SERVER_GAME_URL: "http://api-gateway:8080/api/game"
+  SERVER_GAMIFICATION_URL: "http://api-gateway:8080/api/gamification"
