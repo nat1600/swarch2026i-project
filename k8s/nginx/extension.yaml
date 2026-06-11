@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: nginx-extension-deployment
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: nginx-extension

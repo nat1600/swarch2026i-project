@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: forum-deployment
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: forum-microservice
